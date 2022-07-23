@@ -7,6 +7,7 @@ Dependency-free cross-platform PowerShell profile based on version 7.2+.
 Note that you need administrator privileges in order to create symbolic links.
 
 ```powershell
+# note: initialize as submodule if used in a dotfile repository
 git clone git@github.com:StefanGreve/profile.git
 
 # recommended profile path: CurrentUserAllHosts
@@ -15,7 +16,9 @@ $PROFILE | Get-Member -Type NoteProperty | Format-List
 # create a new symbolic link and dot-source profile.ps1
 $ProfilePath = $HOME\Documents\PowerShell\profile.ps1
 New-Item -ItemType SymbolicLink -Path $ProfilePath -Target .\profile\profile.ps1
-. $Path
+
+# load profile with $psrc after successful bootstrapping
+. $ProfilePath
 ```
 
 ## Related Repositories
