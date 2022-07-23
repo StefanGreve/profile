@@ -19,6 +19,8 @@ $PSStyle.Progress.View = "Classic"
 $Host.PrivateData.ProgressBackgroundColor = "Cyan"
 $Host.PrivateData.ProgressForegroundColor = "Yellow"
 
+Set-PSReadLineOption -PredictionSource History
+
 #endregion configurations
 
 #region functions
