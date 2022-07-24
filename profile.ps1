@@ -14,6 +14,7 @@ $global:Desktop = [Environment]::GetFolderPath("Desktop")
 $global:Natural = { [Regex]::Replace($_.Name, '\d+', { $Args[0].Value.PadLeft(20) }) }
 
 $env:VIRTUAL_ENV_DISABLE_PROMPT = 1
+$env:POWERSHELL_TELEMETRY_OPTOUT = 1
 $env:POWERSHELL_UPDATECHECK = "Stable"
 
 $PSStyle.Progress.View = "Classic"
@@ -139,12 +140,14 @@ function Get-FileCount {
     [OutputType([int])]
     param(
         [Parameter(Position = 0, Mandatory, ValueFromPipeline)]
-        [string[]] $Path
+        [string[]] $Path,
+
+        [System.IO.SearchOption] $SearchOption = [System.IO.SearchOption]::TopDirectoryOnly
     )
 
     process {
         foreach ($p in $Path) {
-            $FileCount = [System.IO.Directory]::GetFiles($p, "*", [System.IO.SearchOption]::AllDirectories).Length
+            $FileCount = [System.IO.Directory]::GetFiles($p, "*", $SearchOption).Length
             Write-Output $FileCount
         }
     }
