@@ -27,6 +27,38 @@ Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
 
 #region functions
 
+function Get-NameOf
+{
+    [Alias("nameof")]
+    [OutputType([string])]
+    param(
+        [scriptblock] $ScriptBlock
+    )
+
+    begin {
+        $Name = $null
+        $Element = @($ScriptBlock.Ast.EndBlock.Statements.PipelineElements)[0]
+    }
+    process {
+        if($Element -is [System.Management.Automation.Language.CommandExpressionAst])
+        {
+            switch($Element.Expression)
+            {
+                { $_ -is [System.Management.Automation.Language.TypeExpressionAst] } { $Name = $_.TypeName.Name }
+                { $_ -is [System.Management.Automation.Language.MemberExpressionAst] } { $Name = $_.Member.Value }
+                { $_ -is [System.Management.Automation.Language.VariableExpressionAst] } { $Name = $_.VariablePath.UserPath }
+            }
+        }
+        elseif($Element -is [System.Management.Automation.Language.CommandAst])
+        {
+            $Name = $Element.CommandElements[0].Value
+        }
+    }
+    end {
+        Write-Output $Name
+    }
+}
+
 function Update-Configuration {
     git --git-dir="$HOME\Desktop\repos\confiles" --work-tree=$HOME $Args
 }
@@ -79,7 +111,7 @@ function Get-FileSize {
         [string[]] $Path,
 
         [Parameter()]
-        [ValidateSet('B', 'KB', 'MB', 'GB', 'TB')]
+        [ValidateSet('B', 'KB', 'MB', 'GB', 'TB', 'PB')]
         [string] $Unit = 'B'
     )
 
@@ -118,23 +150,96 @@ function Get-FileCount {
     }
 }
 
-function New-Password {
+function Get-RandomPassword {
+    <#
+        .SYNOPSIS
+        Generates a random password of the specified length.
+
+        .DESCRIPTION
+        Generates a random password of the specified length. The implementation of this function is based on the
+        Membership.GeneratePassword method from the System.Web.Security namespace from the .NET framework.
+
+        .PARAMETER Length
+        The number of characters in the generated password. The length must be between 1 and 128 characters.
+
+        .PARAMETER NumberOfNonAlphanumericCharacters
+        The minimum number of non-alphanumeric characters (such as @, #, !, %, &, and so on) in the generated password.
+
+        .LINK
+        https://docs.microsoft.com/en-us/dotnet/api/system.web.security.membership.generatepassword?view=netframework-4.8
+
+        .LINK
+        https://referencesource.microsoft.com/#System.Web/Security/Membership.cs,302
+
+        .EXAMPLE
+        PS> Get-RandomPassword -Length 32
+
+        .OUTPUTS
+        A random password of the specified length.
+    #>
     [OutputType([string])]
     param(
         [Parameter(Position = 0)]
+        [ValidateRange(1, 128)]
         [int] $Length = 64,
 
         [Parameter(Position = 1)]
         [int] $NumberOfNonAlphanumericCharacters = 16
     )
 
-    Add-Type -AssemblyName System.Web
-    $Password = [System.Web.Security.Membership]::GeneratePassword($Length, $NumberOfAlphanumericCharacters)
-    Write-Output $Password
-}
+    begin {
+        Add-Type -AssemblyName System.Security
+        [char[]] $Punctuations = "!@#$%^&*()_-+=[{]};:>|./?".ToCharArray()
+        $RandomNumberGenerator = [System.Security.Cryptography.RNGCryptoServiceProvider]::new()
+    }
+    process {
+        if ($NumberOfNonAlphanumericCharacters -gt $Length || $NumberOfNonAlphanumericCharacters -lt 0) {
+            Write-Error -Message "Invalid argument for $(nameof{ $NumberOfNonAlphanumericCharacters }): '$NumberOfNonAlphanumericCharacters'" -Category InvalidArgument -ErrorAction Stop
+        }
 
-function Get-Uptime {
-    Write-Output $((Get-Date) - (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime)
+        [int] $Count = 0
+        $ByteBuffer = New-Object byte[] $Length
+        $CharacterBuffer = New-Object char[] $Length
+        $RandomNumberGenerator.GetBytes($ByteBuffer)
+
+        for ([int] $i = 0; $i -lt $Length; $i++) {
+            [int] $j = [int]($ByteBuffer[$i] % 87)
+
+            if ($j -lt 10) {
+                $CharacterBuffer[$i] = [char]([int]([char]'0') + $j)
+            }
+            elseif ($j -lt 36) {
+                $CharacterBuffer[$i] = [char]([int]([char]'A') + $j - 10)
+            }
+            elseif ($j -lt 62) {
+                $CharacterBuffer[$i] = [char]([int]([char]'a') + $j - 36)
+            }
+            else {
+                $CharacterBuffer[$i] = $Punctuations[$j - 62]
+                $Count++
+            }
+        }
+
+        if ($count -lt $NumberOfNonAlphanumericCharacters) {
+            return $([string]::new($CharacterBuffer))
+        }
+
+        $PRNG = [System.Random]::new()
+
+        for ([int] $k = 0; $k -lt $NumberOfNonAlphanumericCharacters - $Count; $k++) {
+            do {
+                [int] $r = $PRNG.Next(0, $Length)
+            }
+            while (-not [char]::IsLetterOrDigit($CharacterBuffer[$r]))
+
+            $CharacterBuffer[$r] = $Punctuations[$PRNG.Next(0, $Punctuations.Count)]
+        }
+
+        return $([string]::new($CharacterBuffer))
+    }
+    end {
+        $RandomNumberGenerator.Dispose()
+    }
 }
 
 function Set-PowerState {
@@ -168,7 +273,7 @@ function Set-PowerState {
 
 function Set-EnvironmentVariable {
     [OutputType([void])]
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low")]
     param(
         [Parameter(Position = 0)]
         [string] $Key = "PATH",
@@ -181,7 +286,11 @@ function Set-EnvironmentVariable {
     )
 
     $NewValue = [Environment]::GetEnvironmentVariable($Key, $Scope) + ";${Value}"
-    [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)
+    $ExampleOutput = "`n$($PSStyle.Foreground.Yellow)$($NewValue -split ";" -join "`n")$($PSStyle.Foreground.White)`n`n"
+
+    if ($PSCmdlet.ShouldProcess("Adding $Value to $Key", "Are you sure you want to add '$Value' to the environment variable '$Key'?$ExampleOutput", "Add '$Value' to '$Key'")) {
+        [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)
+    }
 }
 
 function Get-EnvironmentVariable {
@@ -213,7 +322,7 @@ function Remove-EnvironmentVariable {
     )
 
     $RemoveValue = $Key -eq "PATH" ? $([Environment]::GetEnvironmentVariable("PATH", $Scope) -Split ";" | Where-Object { $_ -ne $Value }) -join ";" : $null
-    $ExampleOutput = $Key -eq "PATH" ? "`n`n$($PSStyle.Foreground.Green)NEW PATH VALUE`n==============$($PSStyle.Foreground.White)`n`n$($RemoveValue -split ";" -join "`n")`n`n" : $null
+    $ExampleOutput = $Key -eq "PATH" ? "`n`n$($PSStyle.Foreground.Yellow)$($RemoveValue -split ";" -join "`n")$($PSStyle.Foreground.White)`n`n" : $null
 
     if ($PSCmdlet.ShouldProcess("Removing value '$Value' from environment variable '$Key'", "Are you sure you want to remove '$Value' from the environment variable '$Key'?$ExampleOutput", "Remove '$Value' from '$Key'")) {
         [Environment]::SetEnvironmentVariable($Key, $RemoveValue, $Scope)
@@ -240,32 +349,44 @@ Set-Alias -Name update -Value Update-System
 
 function prompt {
     $ExecTime = Get-ExecutionTime
-    $Time = " ($($ExecTime.Hours.ToString('D2')):$($ExecTime.Minutes.ToString('D2')):$($ExecTime.Seconds.ToString('D2')):$($ExecTime.Milliseconds.ToString('D3')))"
+    $ResetForeground = [string]::Intern($PSStyle.Foreground.White)
 
-    git rev-parse --is-inside-work-tree 2>&1 | Out-Null
-
-    $Branch = if ($?) {
-        $PSStyle.Foreground.Blue + " ($(git branch --show-current))" + $PSStyle.Foreground.White
+    $Branch = if ($(git rev-parse --is-inside-work-tree 2>&1) -eq $true) {
+          [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Blue, $(git branch --show-current), $ResetForeground)
     }
 
     $Venv = if ($env:VIRTUAL_ENV) {
-        $PSStyle.Foreground.Yellow + " ($([System.IO.Path]::GetFileName($env:VIRTUAL_ENV))" + $PSStyle.Foreground.White
+        [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Magenta, [System.IO.Path]::GetFileName($env:VIRTUAL_ENV), $ResetForeground)
     }
 
-    $Path = (Get-Item "$($ExecutionContext.SessionState.Path.CurrentLocation)").BaseName
-
-    return @(
-        '[',
-        $PSStyle.Foreground.BrightCyan + $env:USERNAME + $PSStyle.Foreground.White,
-        '@',
+    return [System.Collections.ArrayList]@(
+        "[",
+        $PSStyle.Foreground.BrightCyan,
+        $env:USERNAME,
+        $ResetForeground,
+        "@",
         $env:COMPUTERNAME,
-        ' ',
-        $PSStyle.Foreground.Green + $Path + $PSStyle.Foreground.White,
-        ']'
+        " ",
+        $PSStyle.Foreground.Green,
+        [System.IO.DirectoryInfo]::new($ExecutionContext.SessionState.Path.CurrentLocation).BaseName,
+        $ResetForeground,
+        "]",
+        " ",
+        $PSStyle.Foreground.Yellow,
+        "(",
+        $ExecTime.Hours.ToString('D2'),
+        ":",
+        $ExecTime.Minutes.ToString('D2'),
+        ":",
+        $ExecTime.Seconds.ToString('D2'),
+        ":",
+        $ExecTime.Milliseconds.ToString('D3'),
+        ")",
+        $ResetForeground,
         $Branch,
         $Venv,
-        $PSStyle.Foreground.BrightYellow + $Time + $PSStyle.Foreground.White,
         "`n",
-        "$('>' * ($NestedPromptLevel + 1)) "
+        [string]::new(">", $NestedPromptLevel + 1),
+        " "
     ) -join ''
 }
