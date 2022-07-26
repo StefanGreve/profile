@@ -245,6 +245,11 @@ function Get-RandomPassword {
     }
 }
 
+function Stop-Work {
+    $Apps = @("TEAMS", "OUTLOOK", "LYNC")
+    Get-Process | Where-Object { $Apps.Contains($_.Name.ToUpper()) } | Stop-Process -Force
+}
+
 function Set-PowerState {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "High")]
     param(
@@ -330,6 +335,125 @@ function Remove-EnvironmentVariable {
     }
 }
 
+function Measure-ScriptBlock {
+    <#
+        .SYNOPSIS
+        Measures the time it takes to run script blocks and cmdlets.
+
+        .DESCRIPTION
+        The `Measure-ScriptBlock` cmdlet runs a script block or cmdlet internally -Round times, measures the execution of
+        the operation, and returns the execution time.
+
+        .PARAMETER ScriptBlock
+        PowerShell script block to test.
+
+        .PARAMETER Path
+        Path to PowerShell script to create a script block from.
+
+        .PARAMETER Rounds
+        Defines the number of times the script block code is executed.
+
+        .PARAMETER NoGC
+        Don't invoke the garbage collector.
+
+        .PARAMETER NoWarmUp
+        Skip the warm-up routine (and omit the first 5 command invocations). The warm-up routine is used to stabilize the
+        performance measurements and are not part of the actual test run.
+
+        .NOTES
+        A single tick represents one hundred nanoseconds or one ten-millionth of a second. There are 10,000 ticks in a
+        millisecond (see `[System.TimeSpan]`) and 10 million ticks in a second.
+
+        Use the built-in `Measure-Command` cmdlet from Microsoft if you only want to run the script block once.
+
+        .EXAMPLE
+        PS > $Result = timeit -ScriptBlock { Test-Command | Out-Null } -Rounds 100 -Verbose
+
+        Always pipe the script block section to `Out-Null` so that the result of the command being run doesn't get mixed
+        up with the measurements returned by `Measure-Command`.
+
+        .EXAMPLE
+        PS > $Result = Measure-ScriptBlock -Path .\script.ps1 -Rounds 10000 -Verbose
+
+        You can also test scripts directly. Here you don't have to pipe anything to `Out-Null`.
+
+        .EXAMPLE
+        PS > $Command = { Get-Random -Minimum 1 -Maximum 1000 | Out-Null }
+        PS > $Result = Measure-ScriptBlock -ScriptBlock $Command -Rounds 10000 -Verbose
+        PS > $Result.Average / [System.TimeSpan]::TicksPerSecond
+
+        You can convert elapsed ticks to seconds (or minutes, etc.) by using the fields exposed by `[System.TimeSpan]`.
+    #>
+    [Alias("timeit")]
+    [OutputType([Microsoft.PowerShell.Commands.GenericMeasureInfo])]
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory, ParameterSetName = "ScriptBlock")]
+        [scriptblock] $ScriptBlock,
+
+        [Parameter(Mandatory, ParameterSetName = "Path")]
+        [string] $Path,
+
+        [Parameter(Mandatory)]
+        [int] $Rounds,
+
+        [Parameter()]
+        [switch] $NoGC,
+
+        [Parameter()]
+        [switch] $NoWarmUp
+    )
+
+    begin {
+        $StopWatch = [System.Diagnostics.Stopwatch]::new()
+        $Measurements = New-Object System.Collections.Generic.List[System.TimeSpan]
+
+        if (-not [System.Diagnostics.Stopwatch]::IsHighResolution) {
+            Write-Error -Message "Your hardware doesn't support the high resolution counter required to run this test" -Category DeviceError -ErrorAction Stop
+        }
+
+        $Command = switch ($PSCmdlet.ParameterSetName) {
+            "ScriptBlock" { $ScriptBlock }
+            "Path" { Get-Command $Path | Select-Object -ExpandProperty ScriptBlock }
+        }
+
+        $CurrentProcess = [System.Diagnostics.Process]::GetCurrentProcess()
+        $CurrentProcess.ProcessorAffinity = [System.IntPtr]::new(2)
+        $CurrentProcess.PriorityClass = [System.Diagnostics.ProcessPriorityClass]::High
+        [System.Threading.Thread]::CurrentThread.Priority = [System.Threading.ThreadPriority]::Highest
+
+        if (-not $NoGC.IsPresent) {
+            Write-Verbose "Calling garbage collector and waiting for pending finalizers . . ."
+            [System.GC]::Collect()
+            [System.GC]::WaitForPendingFinalizers()
+            [System.GC]::Collect()
+        }
+
+        if (-not $NoWarmUp.IsPresent) {
+            [int] $Reps = 5
+            Write-Verbose "Running warmup routine . . ."
+
+            while ($Repos -ge 0) {
+                Invoke-Command -ScriptBlock $Command
+                $Reps--
+            }
+        }
+    }
+    process {
+        Write-Verbose "Running performance test . . ."
+
+        for ($r = 0; $r -lt $Rounds; $r++) {
+            $StopWatch.Restart()
+            Invoke-Command -ScriptBlock $Command
+            $StopWatch.Stop()
+            $Measurements.Add($StopWatch.Elapsed)
+        }
+    }
+    end {
+        Write-Output $($Measurements | Measure-Object -Property Ticks -AllStats)
+    }
+}
+
 function Get-ExecutionTime {
     $History = Get-History
     $ExecTime = if ($History) { $History[-1].EndExecutionTime - $History[-1].StartExecutionTime } else { New-TimeSpan }
@@ -345,6 +469,7 @@ Set-Alias -Name man -Value Get-Help -Option AllScope
 Set-Alias -Name touch -Value New-Item
 Set-Alias -Name config -Value Update-Configuration
 Set-Alias -Name update -Value Update-System
+Set-Alias -Name bye -Value Stop-Work
 
 #endregion aliases
 
