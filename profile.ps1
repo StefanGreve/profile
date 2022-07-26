@@ -68,6 +68,36 @@ function Update-System {
     Update-Help -UICulture "en-US" -ErrorAction SilentlyContinue -ErrorVariable UpdateErrors -Force
 }
 
+function Export-Icon {
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low")]
+    param(
+        [Parameter(Mandatory, HelpMessage = "Path to SVG file")]
+        [string] $Path,
+
+        [Parameter()]
+        [string] $Destination = $CWD
+    )
+
+    begin {
+        [int] $Size = 1024
+        $File = Get-Item -Path $Path
+
+        if ($File.Extension -ne ".svg") {
+            Write-Error -Message "Not a SVG file" -Category InvalidArgument -ErrorAction Stop
+        }
+    }
+    process {
+        if ($PSCmdlet.ShouldProcess($File.Name)) {
+            while ($Size -gt 16) {
+                $FullName = Join-Path -Path $Destination -ChildPath "$($Size)x$($Size)-$($File.BaseName).png"
+                Write-Verbose "Exporting ${Fullname} . . ."
+                inkscape $Path -w $Size -h $Size -o $FullName
+                $Size /= 2
+            }
+        }
+    }
+}
+
 function Get-StringHash {
     [OutputType([string])]
     param(
@@ -470,6 +500,8 @@ Set-Alias -Name touch -Value New-Item
 Set-Alias -Name config -Value Update-Configuration
 Set-Alias -Name update -Value Update-System
 Set-Alias -Name bye -Value Stop-Work
+Set-Alias -Name np -Value notepad.exe
+Set-Alias -Name exp -Value explorer.exe
 
 #endregion aliases
 
