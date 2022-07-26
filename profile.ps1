@@ -250,18 +250,18 @@ function Set-PowerState {
     param(
         [ValidateSet("Hibernate", "Suspend")]
         [Parameter(Position = 0)]
-        [string] $State = "Suspend",
-
-        [switch] $Force,
+        [string] $PowerState = "Suspend",
 
         [Parameter(ParameterSetName = "Windows")]
-        [switch] $DisableWake
+        [switch] $DisableWake,
+
+        [switch] $Force
     )
 
-    if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, $State)) {
+    if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, $PowerState)) {
         if ([System.OperatingSystem]::IsWindows()) {
             Add-Type -AssemblyName System.Windows.Forms
-            $State = $State -eq "Hibernate" ? [System.Windows.Forms.PowerState]::Hibernate : [System.Windows.Forms.PowerState]::Suspend
+            $PowerState = $PowerState -eq "Hibernate" ? [System.Windows.Forms.PowerState]::Hibernate : [System.Windows.Forms.PowerState]::Suspend
             [System.Windows.Forms.Application]::SetSuspendState($PowerState, $Force, $DisableWake)
         }
         elseif ([System.OperatingSystem]::IsLinux()) {
@@ -289,9 +289,8 @@ function Set-EnvironmentVariable {
     )
 
     $NewValue = [Environment]::GetEnvironmentVariable($Key, $Scope) + ";${Value}"
-    $ExampleOutput = "`n$($PSStyle.Foreground.Yellow)$($NewValue -split ";" -join "`n")$($PSStyle.Foreground.White)`n`n"
 
-    if ($PSCmdlet.ShouldProcess("Adding $Value to $Key", "Are you sure you want to add '$Value' to the environment variable '$Key'?$ExampleOutput", "Add '$Value' to '$Key'")) {
+    if ($PSCmdlet.ShouldProcess("Adding $Value to $Key", "Are you sure you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
         [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)
     }
 }
@@ -325,9 +324,8 @@ function Remove-EnvironmentVariable {
     )
 
     $RemoveValue = $Key -eq "PATH" ? $([Environment]::GetEnvironmentVariable("PATH", $Scope) -Split ";" | Where-Object { $_ -ne $Value }) -join ";" : $null
-    $ExampleOutput = $Key -eq "PATH" ? "`n`n$($PSStyle.Foreground.Yellow)$($RemoveValue -split ";" -join "`n")$($PSStyle.Foreground.White)`n`n" : $null
 
-    if ($PSCmdlet.ShouldProcess("Removing value '$Value' from environment variable '$Key'", "Are you sure you want to remove '$Value' from the environment variable '$Key'?$ExampleOutput", "Remove '$Value' from '$Key'")) {
+    if ($PSCmdlet.ShouldProcess("Removing value '$Value' from environment variable '$Key'", "Are you sure you want to remove '$Value' from the environment variable '$Key'?", "Remove '$Value' from '$Key'")) {
         [Environment]::SetEnvironmentVariable($Key, $RemoveValue, $Scope)
     }
 }
