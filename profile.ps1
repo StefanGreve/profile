@@ -367,10 +367,10 @@ function Measure-ScriptBlock {
         Use the built-in `Measure-Command` cmdlet from Microsoft if you only want to run the script block once.
 
         .EXAMPLE
-        PS > $Result = timeit -ScriptBlock { Test-Command | Out-Null } -Rounds 100 -Verbose
+        PS > $Result = timeit -ScriptBlock { prompt | Out-Null } -Rounds 100 -Verbose
 
         Always pipe the script block section to `Out-Null` so that the result of the command being run doesn't get mixed
-        up with the measurements returned by `Measure-Command`.
+        up with the measurements returned by `Measure-ScriptBlock`.
 
         .EXAMPLE
         PS > $Result = Measure-ScriptBlock -Path .\script.ps1 -Rounds 10000 -Verbose
@@ -378,8 +378,8 @@ function Measure-ScriptBlock {
         You can also test scripts directly. Here you don't have to pipe anything to `Out-Null`.
 
         .EXAMPLE
-        PS > $Command = { Get-Random -Minimum 1 -Maximum 1000 | Out-Null }
-        PS > $Result = Measure-ScriptBlock -ScriptBlock $Command -Rounds 10000 -Verbose
+        PS > $ScriptBlock = { Get-Random -Minimum 1 -Maximum 1000 | Out-Null }
+        PS > $Result = Measure-ScriptBlock -ScriptBlock $ScriptBlock -Rounds 10000 -Verbose
         PS > $Result.Average / [System.TimeSpan]::TicksPerSecond
 
         You can convert elapsed ticks to seconds (or minutes, etc.) by using the fields exposed by `[System.TimeSpan]`.
