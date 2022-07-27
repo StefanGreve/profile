@@ -280,6 +280,30 @@ function Stop-Work {
     Get-Process | Where-Object { $Apps.Contains($_.Name.ToUpper()) } | Stop-Process -Force
 }
 
+function Get-WorldClock {
+    $TimeZoneIds = @(
+        "Mountain Standard Time",
+        "Paraguay Standard Time",
+        "W. Europe Standard Time",
+        "Russian Standard Time",
+        "Tokyo Standard Time"
+    )
+
+    $WorldClock = foreach ($TimeZoneId in $TimeZoneIds) {
+        $TimeZoneInfo = [System.TimeZoneInfo]::FindSystemTimeZoneById($TimeZoneId)
+        $Date = [System.TimeZoneInfo]::ConvertTimeFromUtc([System.DateTime]::Now.ToUniversalTime(), $TimeZoneInfo)
+
+        Write-Output $([PSCustomObject]@{
+            Offset     = $TimeZoneInfo.GetUtcOffset([System.DateTimeKind]::Local).Hours
+            Date       = $Date.ToShortDateString()
+            Time       = $Date.ToString("HH:mm:ss")
+            Name       = $TimeZoneInfo.StandardName
+        })
+    }
+
+    Write-Output $WorldClock
+}
+
 function Set-PowerState {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "High")]
     param(
