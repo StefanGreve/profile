@@ -28,8 +28,7 @@ Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
 
 #region functions
 
-function Get-NameOf
-{
+function Get-NameOf {
     [Alias("nameof")]
     [OutputType([string])]
     param(
@@ -302,6 +301,158 @@ function Get-WorldClock {
     }
 
     Write-Output $WorldClock
+}
+
+class XKCD {
+    [int] $Id
+    [string] $Title
+    [string] $Alt
+    [string] $Img
+    [datetime] $Date
+    [string] $Path
+    hidden [System.Net.Http.HttpClient] $Client
+
+    [void] Download([bool] $Force = $false) {
+        [System.Net.Http.HttpResponseMessage] $Response = $this.Client.GetAsync($this.Img).GetAwaiter().GetResult()
+        $Response.EnsureSuccessStatusCode()
+        $ReponseStream = $Response.Content.ReadAsStream()
+
+        if ([System.IO.File]::Exists($this.Path) -and $Force) {
+            Write-Warning -Message "$($this.Path) already exists, deleting file"
+            [System.IO.File]::Delete($this.Path)
+        }
+
+        $FileStream = [System.IO.FileStream]::new($this.Path, [System.IO.FileMode]::Create)
+        $ReponseStream.CopyTo($FileStream)
+        $FileStream.Close()
+    }
+
+    XKCD([int] $Id, [string] $Path, [System.Net.Http.HttpClient] $Client) {
+        $this.Client = $Client
+        $Response = ConvertFrom-Json $this.Client.GetStringAsync("https://xkcd.com/$Id/info.0.json").GetAwaiter().GetResult()
+
+        $this.Id = $Response.Num
+        $this.Title = $Response.Title
+        $this.Alt = $Response.Alt
+        $this.Img = $Response.Img
+        $this.Date = [System.DateTime]::new($Response.Year, $Response.Month, $Response.Day)
+        $this.Path = [System.IO.Path]::Combine($Path, "$($Response.Num).$($this.Img.Split("/")[-1].Split(".")[1])")
+    }
+}
+
+function Get-XKCD {
+    <#
+        .SYNOPSIS
+        The Get-XKCD cmdlet gets and/or downloads the details of one or more comics from the XKCD API.
+
+        .DESCRIPTION
+        The Get-XKCD cmdlet gets and/or downloads the details of one or more comics from the XKCD API. This includes the
+        properties Id, Title, Alt, Img, Date and Path.
+
+        .PARAMETER Number
+        Define an array of XKCD IDs.
+
+        .PARAMETER All
+        Target all XKCD IDs
+
+        .PARAMETER Random
+        Use a random XKCD ID.
+
+        .PARAMETER Last
+        Target the last `n` XKCD IDs.
+
+        .PARAMETER NoDownload
+        Return an XKCD object with meta data, but don't download anything.
+
+        .PARAMETER Path
+        Download destination. Defaults to the current working directory.
+
+        .PARAMETER Force
+        Delete a file if it already exists, then download it again.
+
+        .EXAMPLE
+        PS > xkcd -Last 1 -Verbose | Invoke-Item
+
+        Download the latest XKCD and open the file with the default image application.
+
+        .EXAMPLE
+        PS > Get-XKCD -Last 10 -NoDownload | foreach { Write-Output $_.Title }
+
+        Get the last ten titles without downloading any images.
+
+        .EXAMPLE
+        PS > Get-XKCD -All -Path $HOME\Desktop\XKCD -Verbose
+
+        Download all known XKCDs and store these images in a specific folder.
+
+        .LINK
+        https://xkcd.com
+
+        .LINK
+        https://xkcd.com/json.html
+    #>
+    [Alias("xkcd")]
+    [OutputType([XKCD])]
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, ParameterSetName = "Number", Position = 0, ValueFromPipeline)]
+        [int[]] $Number,
+
+        [Parameter(Mandatory, ParameterSetName = "All")]
+        [switch] $All,
+
+        [Parameter(Mandatory, ParameterSetName = "Random")]
+        [switch] $Random,
+
+        [Parameter(ParameterSetName = "Last")]
+        [int] $Last = 1,
+
+        [Parameter()]
+        [switch] $NoDownload,
+
+        [Parameter()]
+        [string] $Path = $PWD.Path,
+
+        [Parameter()]
+        [switch] $Force
+    )
+
+    begin {
+        $Client = [System.Net.Http.HttpClient]::new()
+        [void] $Client.DefaultRequestHeaders.UserAgent.TryParseAdd("${env:USERNAME}@profile.ps1")
+        [void] $Client.DefaultRequestHeaders.Accept.Add([System.Net.Http.Headers.MediaTypeWithQualityHeaderValue]::new("application/json"))
+
+        $Info = if ($All.IsPresent -or $MyInvocation.BoundParameters.ContainsKey("Last") -or $Random.IsPresent) {
+            ConvertFrom-Json $Client.GetStringAsync("https://xkcd.com/info.0.json").GetAwaiter().GetResult()
+        }
+    }
+    process {
+        $Ids = switch ($PSCmdlet.ParameterSetName) {
+            "Number" {
+                $Number
+            }
+            "All" {
+                1..$Info.Num
+            }
+            "Random" {
+                @([System.Random]::new().Next(1, $Info.Num))
+            }
+            default {
+                ($Info.Num - $Last + 1)..$Info.Num
+            }
+        }
+
+        foreach ($Id in $Ids) {
+            $XKCD = [XKCD]::new($Id, $Path, $Client)
+
+            if (-not $NoDownload.IsPresent) {
+                Write-Verbose "Downloading XKCD #$Id . . ."
+                $XKCD.Download($Force.IsPresent)
+            }
+
+            Write-Output $XKCD
+        }
+    }
 }
 
 function Set-PowerState {
