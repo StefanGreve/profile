@@ -442,10 +442,12 @@ function Get-XKCD {
             }
         }
 
-        foreach ($Id in $Ids) {
+        for ([int] $n = 1; $n -le $Ids.Count; $n++) {
+            $Id = $Ids[$n - 1]
             $XKCD = [XKCD]::new($Id, $Path, $Client)
 
             if (-not $NoDownload.IsPresent -and $PSCmdlet.ShouldProcess($XKCD.Img, "Download $($XKCD.Path)")) {
+                Write-Progress -Activity "Download XKCD $Id" -PercentComplete ($n * 100 / $Ids.Count) -Status "$(([System.Math]::Round(($n / $Ids.Count * 100), 0)))%"
                 $XKCD.Download($Force.IsPresent)
             }
 
