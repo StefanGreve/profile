@@ -393,7 +393,7 @@ function Get-XKCD {
     #>
     [Alias("xkcd")]
     [OutputType([XKCD])]
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = "Last", SupportsShouldProcess, ConfirmImpact = "Low")]
     param(
         [Parameter(Mandatory, ParameterSetName = "Number", Position = 0, ValueFromPipeline)]
         [int[]] $Number,
@@ -422,7 +422,7 @@ function Get-XKCD {
         [void] $Client.DefaultRequestHeaders.UserAgent.TryParseAdd("${env:USERNAME}@profile.ps1")
         [void] $Client.DefaultRequestHeaders.Accept.Add([System.Net.Http.Headers.MediaTypeWithQualityHeaderValue]::new("application/json"))
 
-        $Info = if ($All.IsPresent -or $MyInvocation.BoundParameters.ContainsKey("Last") -or $Random.IsPresent) {
+        $Info = if (-not $MyInvocation.BoundParameters.ContainsKey("Number") -or $null -eq $Number) {
             ConvertFrom-Json $Client.GetStringAsync("https://xkcd.com/info.0.json").GetAwaiter().GetResult()
         }
     }
@@ -445,8 +445,7 @@ function Get-XKCD {
         foreach ($Id in $Ids) {
             $XKCD = [XKCD]::new($Id, $Path, $Client)
 
-            if (-not $NoDownload.IsPresent) {
-                Write-Verbose "Downloading XKCD #$Id . . ."
+            if (-not $NoDownload.IsPresent -and $PSCmdlet.ShouldProcess($XKCD.Img, "Download $($XKCD.Path)")) {
                 $XKCD.Download($Force.IsPresent)
             }
 
