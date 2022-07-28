@@ -1,8 +1,17 @@
+using namespace System
+using namespace System.Diagnostics
+using namespace System.IO
+using namespace System.Management.Automation
+using namespace System.Net.Http
+using namespace System.Security
+using namespace System.Text
+using namespace System.Threading
+
 #region configurations
 
 $PSDefaultParameterValues['*:Encoding'] = "utf8"
 
-if ([System.OperatingSystem]::IsWindows()) {
+if ([OperatingSystem]::IsWindows()) {
     $global:PSRC = "$HOME\Documents\PowerShell\profile.ps1"
     $global:VSRC = "$env:APPDATA\Code\User\settings.json"
     $global:VIRC = "$env:LOCALAPPDATA\nvim\init.vim"
@@ -40,16 +49,16 @@ function Get-NameOf {
         $Element = @($ScriptBlock.Ast.EndBlock.Statements.PipelineElements)[0]
     }
     process {
-        if($Element -is [System.Management.Automation.Language.CommandExpressionAst])
+        if($Element -is [Language.CommandExpressionAst])
         {
             switch($Element.Expression)
             {
-                { $_ -is [System.Management.Automation.Language.TypeExpressionAst] } { $Name = $_.TypeName.Name }
-                { $_ -is [System.Management.Automation.Language.MemberExpressionAst] } { $Name = $_.Member.Value }
-                { $_ -is [System.Management.Automation.Language.VariableExpressionAst] } { $Name = $_.VariablePath.UserPath }
+                { $_ -is [Language.TypeExpressionAst] } { $Name = $_.TypeName.Name }
+                { $_ -is [Language.MemberExpressionAst] } { $Name = $_.Member.Value }
+                { $_ -is [Language.VariableExpressionAst] } { $Name = $_.VariablePath.UserPath }
             }
         }
-        elseif($Element -is [System.Management.Automation.Language.CommandAst])
+        elseif($Element -is [Language.CommandAst])
         {
             $Name = $Element.CommandElements[0].Value
         }
@@ -107,7 +116,7 @@ function Get-StringHash {
         [string] $Salt = [string]::Empty,
 
         [Parameter()]
-        [System.Security.Authentication.HashAlgorithmType] $Algorithm = [System.Security.Authentication.HashAlgorithmType]::Md5
+        [Authentication.HashAlgorithmType] $Algorithm = [Authentication.HashAlgorithmType]::Md5
     )
 
     begin {
@@ -117,15 +126,15 @@ function Get-StringHash {
         foreach ($s in $String) {
             $Constructor = switch ($Algorithm) {
                 None { Write-Error "Algorithm must not be unset" -Category InvalidArgument -ErrorAction Stop }
-                SHA1 { [System.Security.Cryptography.SHA1]::Create() }
-                SHA256 { [System.Security.Cryptography.SHA256]::Create() }
-                SHA384 { [System.Security.Cryptography.SHA384]::Create() }
-                SHA512 { [System.Security.Cryptography.SHA512]::Create() }
-                Default { [System.Security.Cryptography.MD5]::Create() }
+                SHA1 { [Cryptography.SHA1]::Create() }
+                SHA256 { [Cryptography.SHA256]::Create() }
+                SHA384 { [Cryptography.SHA384]::Create() }
+                SHA512 { [Cryptography.SHA512]::Create() }
+                Default { [Cryptography.MD5]::Create() }
             }
 
-            $Bytes = $Constructor.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($s + $Salt))
-            $Hash = [System.BitConverter]::ToString($Bytes).Replace("-", [string]::Empty)
+            $Bytes = $Constructor.ComputeHash([Encoding]::UTF8.GetBytes($s + $Salt))
+            $Hash = [BitConverter]::ToString($Bytes).Replace("-", [string]::Empty)
             Write-Output $Hash
         }
     }
@@ -147,7 +156,7 @@ function Get-FileSize {
 
     process {
         foreach ($p in $Path) {
-            $FileInfo = [System.IO.FileInfo]::new($p)
+            $FileInfo = [FileInfo]::new($p)
             $Length = $FileInfo.Length
 
             $Size = switch ($Unit) {
@@ -171,12 +180,12 @@ function Get-FileCount {
         [Parameter(Position = 0, Mandatory, ValueFromPipeline)]
         [string[]] $Path,
 
-        [System.IO.SearchOption] $SearchOption = [System.IO.SearchOption]::TopDirectoryOnly
+        [SearchOption] $SearchOption = [SearchOption]::TopDirectoryOnly
     )
 
     process {
         foreach ($p in $Path) {
-            $FileCount = [System.IO.Directory]::GetFiles($p, "*", $SearchOption).Length
+            $FileCount = [Directory]::GetFiles($p, "*", $SearchOption).Length
             Write-Output $FileCount
         }
     }
@@ -222,7 +231,7 @@ function Get-RandomPassword {
     begin {
         Add-Type -AssemblyName System.Security
         [char[]] $Punctuations = "!@#$%^&*()_-+=[{]};:>|./?".ToCharArray()
-        $RandomNumberGenerator = [System.Security.Cryptography.RNGCryptoServiceProvider]::new()
+        $RandomNumberGenerator = [Cryptography.RNGCryptoServiceProvider]::new()
     }
     process {
         if ($NumberOfNonAlphanumericCharacters -gt $Length || $NumberOfNonAlphanumericCharacters -lt 0) {
@@ -256,7 +265,7 @@ function Get-RandomPassword {
             return $([string]::new($CharacterBuffer))
         }
 
-        $PRNG = [System.Random]::new()
+        $PRNG = [Random]::new()
 
         for ([int] $k = 0; $k -lt $NumberOfNonAlphanumericCharacters - $Count; $k++) {
             do {
@@ -289,11 +298,11 @@ function Get-WorldClock {
     )
 
     $WorldClock = foreach ($TimeZoneId in $TimeZoneIds) {
-        $TimeZoneInfo = [System.TimeZoneInfo]::FindSystemTimeZoneById($TimeZoneId)
-        $Date = [System.TimeZoneInfo]::ConvertTimeFromUtc([System.DateTime]::Now.ToUniversalTime(), $TimeZoneInfo)
+        $TimeZoneInfo = [TimeZoneInfo]::FindSystemTimeZoneById($TimeZoneId)
+        $Date = [TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::Now.ToUniversalTime(), $TimeZoneInfo)
 
         Write-Output $([PSCustomObject]@{
-            Offset     = $TimeZoneInfo.GetUtcOffset([System.DateTimeKind]::Local).Hours
+            Offset     = $TimeZoneInfo.GetUtcOffset([DateTimeKind]::Local).Hours
             Date       = $Date.ToShortDateString()
             Time       = $Date.ToString("HH:mm:ss")
             Name       = $TimeZoneInfo.StandardName
@@ -310,24 +319,24 @@ class XKCD {
     [string] $Img
     [datetime] $Date
     [string] $Path
-    hidden [System.Net.Http.HttpClient] $Client
+    hidden [HttpClient] $Client
 
     [void] Download([bool] $Force = $false) {
-        [System.Net.Http.HttpResponseMessage] $Response = $this.Client.GetAsync($this.Img).GetAwaiter().GetResult()
+        [HttpResponseMessage] $Response = $this.Client.GetAsync($this.Img).GetAwaiter().GetResult()
         $Response.EnsureSuccessStatusCode()
         $ReponseStream = $Response.Content.ReadAsStream()
 
-        if ([System.IO.File]::Exists($this.Path) -and $Force) {
+        if ([File]::Exists($this.Path) -and $Force) {
             Write-Warning -Message "$($this.Path) already exists, deleting file"
-            [System.IO.File]::Delete($this.Path)
+            [File]::Delete($this.Path)
         }
 
-        $FileStream = [System.IO.FileStream]::new($this.Path, [System.IO.FileMode]::Create)
+        $FileStream = [FileStream]::new($this.Path, [FileMode]::Create)
         $ReponseStream.CopyTo($FileStream)
         $FileStream.Close()
     }
 
-    XKCD([int] $Id, [string] $Path, [System.Net.Http.HttpClient] $Client) {
+    XKCD([int] $Id, [string] $Path, [HttpClient] $Client) {
         $this.Client = $Client
         $Response = ConvertFrom-Json $this.Client.GetStringAsync("https://xkcd.com/$Id/info.0.json").GetAwaiter().GetResult()
 
@@ -335,8 +344,8 @@ class XKCD {
         $this.Title = $Response.Title
         $this.Alt = $Response.Alt
         $this.Img = $Response.Img
-        $this.Date = [System.DateTime]::new($Response.Year, $Response.Month, $Response.Day)
-        $this.Path = [System.IO.Path]::Combine($Path, "$($Response.Num).$($this.Img.Split("/")[-1].Split(".")[1])")
+        $this.Date = [DateTime]::new($Response.Year, $Response.Month, $Response.Day)
+        $this.Path = [Path]::Combine($Path, "$($Response.Num).$($this.Img.Split("/")[-1].Split(".")[1])")
     }
 }
 
@@ -418,9 +427,9 @@ function Get-XKCD {
     )
 
     begin {
-        $Client = [System.Net.Http.HttpClient]::new()
+        $Client = [HttpClient]::new()
         [void] $Client.DefaultRequestHeaders.UserAgent.TryParseAdd("${env:USERNAME}@profile.ps1")
-        [void] $Client.DefaultRequestHeaders.Accept.Add([System.Net.Http.Headers.MediaTypeWithQualityHeaderValue]::new("application/json"))
+        [void] $Client.DefaultRequestHeaders.Accept.Add([Headers.MediaTypeWithQualityHeaderValue]::new("application/json"))
 
         $Info = if (-not $MyInvocation.BoundParameters.ContainsKey("Number") -or $null -eq $Number) {
             ConvertFrom-Json $Client.GetStringAsync("https://xkcd.com/info.0.json").GetAwaiter().GetResult()
@@ -435,19 +444,19 @@ function Get-XKCD {
                 1..$Info.Num
             }
             "Random" {
-                @([System.Random]::new().Next(1, $Info.Num))
+                @([Random]::new().Next(1, $Info.Num))
             }
             default {
                 ($Info.Num - $Last + 1)..$Info.Num
             }
         }
 
-        for ([int] $n = 1; $n -le $Ids.Count; $n++) {
-            $Id = $Ids[$n - 1]
+        for ([int] $i = 1; $i -le $Ids.Count; $i++) {
+            $Id = $Ids[$i - 1]
             $XKCD = [XKCD]::new($Id, $Path, $Client)
 
             if (-not $NoDownload.IsPresent -and $PSCmdlet.ShouldProcess($XKCD.Img, "Download $($XKCD.Path)")) {
-                Write-Progress -Activity "Download XKCD $Id" -PercentComplete ($n * 100 / $Ids.Count) -Status "$(([System.Math]::Round(($n / $Ids.Count * 100), 0)))%"
+                Write-Progress -Activity "Download XKCD $Id" -PercentComplete ($i * 100 / $Ids.Count) -Status "$(([Math]::Round(($i / $Ids.Count * 100), 0)))%"
                 $XKCD.Download($Force.IsPresent)
             }
 
@@ -470,12 +479,12 @@ function Set-PowerState {
     )
 
     if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, $PowerState)) {
-        if ([System.OperatingSystem]::IsWindows()) {
+        if ([OperatingSystem]::IsWindows()) {
             Add-Type -AssemblyName System.Windows.Forms
             $PowerState = $PowerState -eq "Hibernate" ? [System.Windows.Forms.PowerState]::Hibernate : [System.Windows.Forms.PowerState]::Suspend
             [System.Windows.Forms.Application]::SetSuspendState($PowerState, $Force, $DisableWake)
         }
-        elseif ([System.OperatingSystem]::IsLinux()) {
+        elseif ([OperatingSystem]::IsLinux()) {
             systemctl $State.ToLower() $($Force ? "--force" : [string]::Empty)
         }
         else { # macOS
@@ -496,7 +505,7 @@ function Set-EnvironmentVariable {
         [string] $Value,
 
         [Parameter(Position = 2)]
-        [System.EnvironmentVariableTarget] $Scope = [System.EnvironmentVariableTarget]::User
+        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
     $NewValue = [Environment]::GetEnvironmentVariable($Key, $Scope) + ";${Value}"
@@ -514,7 +523,7 @@ function Get-EnvironmentVariable {
         [string] $Key = "PATH",
 
         [Parameter(Position = 1)]
-        [System.EnvironmentVariableTarget] $Scope = [System.EnvironmentVariableTarget]::User
+        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
     $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope) -Split ";"
@@ -531,7 +540,7 @@ function Remove-EnvironmentVariable {
         [Parameter()]
         [string] $Value,
 
-        [System.EnvironmentVariableTarget] $Scope = [System.EnvironmentVariableTarget]::User
+        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
     $RemoveValue = $Key -eq "PATH" ? $([Environment]::GetEnvironmentVariable("PATH", $Scope) -Split ";" | Where-Object { $_ -ne $Value }) -join ";" : $null
@@ -611,10 +620,10 @@ function Measure-ScriptBlock {
     )
 
     begin {
-        $StopWatch = [System.Diagnostics.Stopwatch]::new()
+        $StopWatch = [Stopwatch]::new()
         $Measurements = New-Object System.Collections.Generic.List[System.TimeSpan]
 
-        if (-not [System.Diagnostics.Stopwatch]::IsHighResolution) {
+        if (-not [Stopwatch]::IsHighResolution) {
             Write-Error -Message "Your hardware doesn't support the high resolution counter required to run this test" -Category DeviceError -ErrorAction Stop
         }
 
@@ -623,16 +632,16 @@ function Measure-ScriptBlock {
             "Path" { Get-Command $Path | Select-Object -ExpandProperty ScriptBlock }
         }
 
-        $CurrentProcess = [System.Diagnostics.Process]::GetCurrentProcess()
-        $CurrentProcess.ProcessorAffinity = [System.IntPtr]::new(2)
-        $CurrentProcess.PriorityClass = [System.Diagnostics.ProcessPriorityClass]::High
-        [System.Threading.Thread]::CurrentThread.Priority = [System.Threading.ThreadPriority]::Highest
+        $CurrentProcess = [Process]::GetCurrentProcess()
+        $CurrentProcess.ProcessorAffinity = [IntPtr]::new(2)
+        $CurrentProcess.PriorityClass = [ProcessPriorityClass]::High
+        [Thread]::CurrentThread.Priority = [ThreadPriority]::Highest
 
         if (-not $NoGC.IsPresent) {
             Write-Verbose "Calling garbage collector and waiting for pending finalizers . . ."
-            [System.GC]::Collect()
-            [System.GC]::WaitForPendingFinalizers()
-            [System.GC]::Collect()
+            [GC]::Collect()
+            [GC]::WaitForPendingFinalizers()
+            [GC]::Collect()
         }
 
         if (-not $NoWarmUp.IsPresent) {
@@ -690,7 +699,7 @@ function prompt {
     }
 
     $Venv = if ($env:VIRTUAL_ENV) {
-        [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Magenta, [System.IO.Path]::GetFileName($env:VIRTUAL_ENV), $ResetForeground)
+        [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Magenta, [Path]::GetFileName($env:VIRTUAL_ENV), $ResetForeground)
     }
 
     return [System.Collections.ArrayList]@(
@@ -702,7 +711,7 @@ function prompt {
         $env:COMPUTERNAME,
         " ",
         $PSStyle.Foreground.Green,
-        [System.IO.DirectoryInfo]::new($ExecutionContext.SessionState.Path.CurrentLocation).BaseName,
+        [DirectoryInfo]::new($ExecutionContext.SessionState.Path.CurrentLocation).BaseName,
         $ResetForeground,
         "]",
         " ",
