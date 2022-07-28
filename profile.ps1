@@ -299,12 +299,10 @@ function Get-WorldClock {
 
     $WorldClock = foreach ($TimeZoneId in $TimeZoneIds) {
         $TimeZoneInfo = [TimeZoneInfo]::FindSystemTimeZoneById($TimeZoneId)
-        $Date = [TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::Now.ToUniversalTime(), $TimeZoneInfo)
 
         Write-Output $([PSCustomObject]@{
             Offset     = $TimeZoneInfo.GetUtcOffset([DateTimeKind]::Local).Hours
-            Date       = $Date.ToShortDateString()
-            Time       = $Date.ToString("HH:mm:ss")
+            Date       = [TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::Now.ToUniversalTime(), $TimeZoneInfo)
             Name       = $TimeZoneInfo.StandardName
         })
     }
