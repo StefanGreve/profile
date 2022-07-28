@@ -669,6 +669,10 @@ function Measure-ScriptBlock {
     }
 }
 
+function Start-ElevatedConsole {
+    Start-Process (Get-Process -Id $PID).Path -Verb RunAs -ArgumentList @("-NoExit", "-Command", "Set-Location '$($PWD.Path)'")
+}
+
 function Get-ExecutionTime {
     $History = Get-History
     $ExecTime = if ($History) { $History[-1].EndExecutionTime - $History[-1].StartExecutionTime } else { New-TimeSpan }
@@ -685,6 +689,8 @@ Set-Alias -Name touch -Value New-Item
 Set-Alias -Name config -Value Update-Configuration
 Set-Alias -Name update -Value Update-System
 Set-Alias -Name bye -Value Stop-Work
+Set-Alias -Name elevate -Value Start-ElevatedConsole
+Set-Alias -Name activate -Value .\venv\Scripts\Activate.ps1
 Set-Alias -Name np -Value notepad.exe
 Set-Alias -Name exp -Value explorer.exe
 
