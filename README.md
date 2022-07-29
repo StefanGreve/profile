@@ -1,6 +1,6 @@
 # PowerShell Core Profile
 
-Dependency-free cross-platform PowerShell profile based on version 7.2+.
+PowerShell Core profile.
 
 ## Setup
 
@@ -16,12 +16,33 @@ $PROFILE | Get-Member -Type NoteProperty | Format-List
 # create a new symbolic link and dot-source profile.ps1
 $ProfilePath = $HOME\Documents\PowerShell\profile.ps1
 New-Item -ItemType SymbolicLink -Path $ProfilePath -Target .\profile\profile.ps1
-
-# load profile with $psrc after successful bootstrapping
-. $ProfilePath
 ```
+
+## Remarks
+
+Some optional external dependencies may be added over time, although they will never
+interfere with the core features of this profile.
+
+<details>
+<summary>Additional Features</summary>
+
+## Winfetch
+
+Created an alias for [`winfetch`](https://github.com/kiedtl/winfetch) as a faster
+replacement for `neofetch` on Windows.
+
+```powershell
+Install-Script -Name pwshfetch-test-1 -Scope CurrentUser
+```
+
+</details>
+
+---
 
 ## Related Repositories
 
+Other projects you might also be interested into:
+
 - https://github.com/StefanGreve/confiles
+- https://github.com/Advanced-Systems/todo
 - https://github.com/Advanced-Systems/repomanager
