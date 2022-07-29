@@ -9,6 +9,12 @@ using namespace System.Threading
 
 #region configurations
 
+$global:ProfileVersion = [PSCustomObject]@{
+    Major = 1
+    Minor = 0
+    Patch = 0
+}
+
 $PSDefaultParameterValues['*:Encoding'] = "utf8"
 
 if ([OperatingSystem]::IsWindows()) {
