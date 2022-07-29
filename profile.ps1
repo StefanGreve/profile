@@ -17,6 +17,8 @@ if ([OperatingSystem]::IsWindows()) {
     $global:VIRC = "$env:LOCALAPPDATA\nvim\init.vim"
     $global:WTRC = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
     $global:WGRC = "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\settings.json"
+
+    Set-Alias -Name winfetch -Value pwshfetch-test-1
 }
 
 $global:Desktop = [Environment]::GetFolderPath("Desktop")
