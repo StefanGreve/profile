@@ -291,6 +291,56 @@ function Get-RandomPassword {
     }
 }
 
+function New-DotnetProject {
+    param(
+        [Parameter(Mandatory)]
+        [string] $Name,
+
+        [string] $Path = $PWD,
+
+        [ValidateSet("console", "classlib", "wpf", "winforms", "page", "blazorserver", "blazorwasm", "web", "mvc", "razor", "webapi")]
+        [string] $Template = "console",
+
+        [ValidateSet("C#", "F#", "VB")]
+        [string] $Language = "C#",
+
+        [string[]] $Packages,
+
+        [switch] $InitRepository
+    )
+
+    begin {
+        $OutputDirectory = Join-Path -Path $Path -ChildPath $Name
+        $RootDirectory = New-Item -ItemType Directory -Path $(Join-Path -Path $OutputDirectory -ChildPath $Name)
+        Push-Location $OutputDirectory
+    }
+    process {
+        dotnet new sln
+        dotnet new $Template --name $Name --language $Language --output $RootDirectory
+        dotnet new gitignore --output $OutputDirectory
+        dotnet new editorconfig --output $OutputDirectory
+        dotnet sln add $Name
+        dotnet restore $OutputDirectory
+        dotnet build $OutputDirectory
+
+        $Readme = New-Item -ItemType File -Name "README.md" -Path $OutputDirectory
+        Set-Content $Readme -Value "# $Name"
+
+        $Packages | ForEach-Object {
+            dotnet add $RootDirectory package $_
+        }
+
+        if ($InitRepository.IsPresent) {
+            git init
+            git add --all
+            git commit -m "Init commit"
+        }
+    }
+    end {
+        Pop-Location
+    }
+}
+
 function Stop-Work {
     $Apps = @("TEAMS", "OUTLOOK", "LYNC")
     Get-Process | Where-Object { $Apps.Contains($_.Name.ToUpper()) } | Stop-Process -Force
@@ -674,6 +724,48 @@ function Measure-ScriptBlock {
     end {
         Write-Output $($Measurements | Measure-Object -Property Ticks -AllStats)
     }
+}
+
+function Publish-DotnetProject {
+    param(
+        [string] $Path = $PWD,
+
+        [ValidateSet("Debug", "Release")]
+        [string] $Mode = "Release",
+
+        [ValidateSet("win-x64", "win-x86", "win-arm", "win-arm64", "linux-x64", "linux-musl-x64", "linux-arm", "linux-arm64", "osx-x64")]
+        [string] $Runtime = "win-x64",
+
+        [string] $OutputDirectory = [Environment]::GetFolderPath("Desktop")
+    )
+
+    dotnet build $Path
+
+    $Parameters = switch ($Mode) {
+        "Debug" {
+            @(
+                "--configuration", $Mode
+                "--runtime", $Runtime
+                "--self-contained", $true
+            )
+        }
+        "Release" {
+            @(
+                "--configuration", $Mode
+                "--runtime", $Runtime
+                "--self-contained", $true
+                "--output", $OutputDirectory
+                "-p:PublishSingleFile=true"
+                "-p:PublishTrimmed=true"
+                "-p:IncludeNativeLibrariesForSelfExtract=true"
+                "-p:TrimMode=Link"
+                "-p:DebugType=None"
+                "-p:DebugSymbols=false"
+            )
+        }
+    }
+
+    dotnet publish $Path @Parameters
 }
 
 function Start-Timer {
