@@ -726,48 +726,6 @@ function Measure-ScriptBlock {
     }
 }
 
-function Publish-DotnetProject {
-    param(
-        [string] $Path = $PWD,
-
-        [ValidateSet("Debug", "Release")]
-        [string] $Mode = "Release",
-
-        [ValidateSet("win-x64", "win-x86", "win-arm", "win-arm64", "linux-x64", "linux-musl-x64", "linux-arm", "linux-arm64", "osx-x64")]
-        [string] $Runtime = "win-x64",
-
-        [string] $OutputDirectory = [Environment]::GetFolderPath("Desktop")
-    )
-
-    dotnet build $Path
-
-    $Parameters = switch ($Mode) {
-        "Debug" {
-            @(
-                "--configuration", $Mode
-                "--runtime", $Runtime
-                "--self-contained", $true
-            )
-        }
-        "Release" {
-            @(
-                "--configuration", $Mode
-                "--runtime", $Runtime
-                "--self-contained", $true
-                "--output", $OutputDirectory
-                "-p:PublishSingleFile=true"
-                "-p:PublishTrimmed=true"
-                "-p:IncludeNativeLibrariesForSelfExtract=true"
-                "-p:TrimMode=Link"
-                "-p:DebugType=None"
-                "-p:DebugSymbols=false"
-            )
-        }
-    }
-
-    dotnet publish $Path @Parameters
-}
-
 function Start-Timer {
     [CmdletBinding()]
     param(
