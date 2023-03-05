@@ -1,0 +1,10 @@
+Two notes here why I didn't use the FileInfo class here
+to read the file size in bytes in the Get-FileSize Cmdlet:
+
+* [IO.FileInfo]::new($p).Length does not throw an exception
+  in pwsh if the file doesn't exist like in C#, but rather
+  returns $null instead
+* .NET methods default to $home in the path resolution unless
+  you pass an absolute path or use the Convert-Path method,
+  which can sometimes cause for unexpected issues if you use
+  relative paths as parameters
