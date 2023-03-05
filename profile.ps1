@@ -11,7 +11,7 @@ using namespace System.Threading
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 0
+    Minor = 1
     Patch = 0
 }
 
@@ -24,7 +24,9 @@ if ([OperatingSystem]::IsWindows()) {
     $global:WTRC = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
     $global:WGRC = "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\settings.json"
 
-    Set-Alias -Name winfetch -Value pwshfetch-test-1
+    if (Get-Command "pwshfetch-test-1" -ErrorAction SilentlyContinue) {
+        Set-Alias -Name winfetch -Value pwshfetch-test-1
+    }
 }
 
 $global:Desktop = [Environment]::GetFolderPath("Desktop")
@@ -85,19 +87,20 @@ function Update-System {
 }
 
 function Export-Icon {
+    [OutputType([void])]
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low")]
     param(
         [Parameter(Mandatory, HelpMessage = "Path to SVG file")]
         [string] $Path,
 
         [Parameter()]
-        [int] $MaxSize = 1024,
+        [string] $Destination = $PWD,
 
         [Parameter()]
         [int] $MinSize = 16,
 
         [Parameter()]
-        [string] $Destination = $PWD,
+        [int] $MaxSize = 1024,
 
         [Parameter()]
         [switch] $Compress
@@ -126,7 +129,6 @@ function Export-Icon {
             }
         }
     }
-
     end {
         if (-not $Compress.IsPresent) { return }
         Write-Verbose "Compressing $Directory . . ."
@@ -183,22 +185,31 @@ function Get-FileSize {
         [string[]] $Path,
 
         [Parameter()]
-        [ValidateSet('B', 'KB', 'MB', 'GB', 'TB', 'PB')]
+        [ValidateSet('B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB')]
         [string] $Unit = 'B'
     )
 
     process {
         foreach ($p in $Path) {
-            $FileInfo = [FileInfo]::new($p)
-            $Length = $FileInfo.Length
+            $Bytes = [Math]::Abs($(Get-Item $p).Length)
 
             $Size = switch ($Unit) {
-                PB { $Length / 1PB }
-                TB { $Length / 1TB }
-                GB { $Length / 1GB }
-                MB { $Length / 1MB }
-                KB { $Length / 1KB }
-                Default { $Length }
+                "PiB" {
+                    $Bytes / 1PB
+                }
+                "TiB" {
+                    $Bytes / 1TB
+                }
+                "GiB" {
+                    $Bytes / 1GB
+                }
+                "MiB" {
+                    $Bytes / 1MB
+                }
+                "KiB" {
+                    $Bytes / 1KB
+                }
+                Default { $Bytes }
             }
 
             Write-Output $Size
