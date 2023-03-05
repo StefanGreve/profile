@@ -199,6 +199,20 @@ function Get-FileCount {
     }
 }
 
+function Copy-FilePath {
+    [Alias("copy")]
+    [OutputType([void])]
+    param (
+        [Parameter(Position = 0, Mandatory)]
+        [string] $Path
+    )
+
+    process {
+        $FullName = [IO.FileInfo]::new($Path).FullName
+        Set-Clipboard -Value $FullName
+    }
+}
+
 function Get-RandomPassword {
     <#
         .SYNOPSIS
