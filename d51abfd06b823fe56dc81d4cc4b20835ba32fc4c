@@ -1,0 +1,3 @@
+Example usage for the $Natural RegEx in the shell:
+
+Get-ChildItem . | Sort-Object $Natural
