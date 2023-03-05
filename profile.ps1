@@ -91,26 +91,51 @@ function Export-Icon {
         [string] $Path,
 
         [Parameter()]
-        [string] $Destination = $CWD
+        [int] $MaxSize = 1024,
+
+        [Parameter()]
+        [int] $MinSize = 16,
+
+        [Parameter()]
+        [string] $Destination = $PWD,
+
+        [Parameter()]
+        [switch] $Compress
     )
 
     begin {
-        [int] $Size = 1024
         $File = Get-Item -Path $Path
 
         if ($File.Extension -ne ".svg") {
             Write-Error -Message "Not a SVG file" -Category InvalidArgument -ErrorAction Stop
         }
+
+        $BaseName = $File.BaseName
     }
     process {
         if ($PSCmdlet.ShouldProcess($File.Name)) {
-            while ($Size -gt 16) {
-                $FullName = Join-Path -Path $Destination -ChildPath "$($Size)x$($Size)-$($File.BaseName).png"
-                Write-Verbose "Exporting ${Fullname} . . ."
-                inkscape $Path -w $Size -h $Size -o $FullName
-                $Size /= 2
+            $Directory = [IO.Directory]::CreateDirectory([IO.Path]::Combine($Destination, $BaseName))
+
+            while ($MaxSize -ge $MinSize) {
+                $FullName = Join-Path -Path $Destination -ChildPath "${MaxSize}x$MaxSize-$BaseName.png"
+                Write-Verbose "Exporting $Fullname . . ."
+                inkscape $Path -w $MaxSize -h $MaxSize -o $FullName
+                $MaxSize /= 2
+
+                Move-Item -Path $FullName -Destination $Directory
             }
         }
+    }
+
+    end {
+        if (-not $Compress.IsPresent) { return }
+        Write-Verbose "Compressing $Directory . . ."
+
+        Get-ChildItem -Path $Directory | ForEach-Object {
+            Compress-Archive -Path $_ -DestinationPath $Directory -CompressionLevel Optimal -Update
+        }
+
+        Remove-Item -Path $Directory -Recurse
     }
 }
 
