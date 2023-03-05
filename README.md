@@ -28,12 +28,17 @@ interfere with the core features of this profile.
 
 ## Winfetch
 
-Created an alias for [`winfetch`](https://github.com/kiedtl/winfetch) as a faster
+Creates an alias for [`winfetch`](https://github.com/kiedtl/winfetch) as a faster
 replacement for `neofetch` on Windows.
 
 ```powershell
 Install-Script -Name pwshfetch-test-1 -Scope CurrentUser
 ```
+
+## Export-Icon
+
+Utility function to export SVGs as increasingly larger quadratic PNG files,
+requires [`inkscape`](https://inkscape.org/) for the actual image conversion.
 
 </details>
 
