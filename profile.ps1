@@ -12,7 +12,7 @@ using namespace System.Threading
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
     Minor = 1
-    Patch = 0
+    Patch = 1
 }
 
 $PSDefaultParameterValues['*:Encoding'] = "utf8"
@@ -194,21 +194,11 @@ function Get-FileSize {
             $Bytes = [Math]::Abs($(Get-Item $p).Length)
 
             $Size = switch ($Unit) {
-                "PiB" {
-                    $Bytes / 1PB
-                }
-                "TiB" {
-                    $Bytes / 1TB
-                }
-                "GiB" {
-                    $Bytes / 1GB
-                }
-                "MiB" {
-                    $Bytes / 1MB
-                }
-                "KiB" {
-                    $Bytes / 1KB
-                }
+                "PiB" { $Bytes / 1PB }
+                "TiB" { $Bytes / 1TB }
+                "GiB" { $Bytes / 1GB }
+                "MiB" { $Bytes / 1MB }
+                "KiB" { $Bytes / 1KB }
                 Default { $Bytes }
             }
 
@@ -244,7 +234,7 @@ function Copy-FilePath {
     )
 
     process {
-        $FullName = [IO.FileInfo]::new($Path).FullName
+        $FullName = $(Get-Item $Path).FullName
         Set-Clipboard -Value $FullName
     }
 }
@@ -573,6 +563,7 @@ function Get-XKCD {
 }
 
 function Set-PowerState {
+    [OutputType([void])]
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "High")]
     param(
         [ValidateSet("Hibernate", "Suspend")]
@@ -777,6 +768,7 @@ function Measure-ScriptBlock {
 }
 
 function Start-Timer {
+    [OutputType([void])]
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, ParameterSetName = "Seconds")]
