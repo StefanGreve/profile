@@ -672,17 +672,19 @@ function Set-PowerState {
     )
 
     if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, $PowerState)) {
-        if ([OperatingSystem]::IsWindows()) {
-            Add-Type -AssemblyName System.Windows.Forms
-            $PowerState = $PowerState -eq "Hibernate" ? [System.Windows.Forms.PowerState]::Hibernate : [System.Windows.Forms.PowerState]::Suspend
-            [System.Windows.Forms.Application]::SetSuspendState($PowerState, $Force, $DisableWake)
-        }
-        elseif ([OperatingSystem]::IsLinux()) {
-            systemctl $State.ToLower() $($Force ? "--force" : [string]::Empty)
-        }
-        else { # macOS
-            sudo pmset -a hibernatemode $($State -eq "Hibernate" ? 25 : 3)
-            pmset sleepnow
+        switch ($global:OperatingSystem) {
+            'Windows' {
+                Add-Type -AssemblyName System.Windows.Forms
+                $PowerState = $PowerState -eq "Hibernate" ? [System.Windows.Forms.PowerState]::Hibernate : [System.Windows.Forms.PowerState]::Suspend
+                [System.Windows.Forms.Application]::SetSuspendState($PowerState, $Force, $DisableWake)
+            }
+            'Linux' {
+                systemctl $State.ToLower() $($Force ? "--force" : [string]::Empty)
+            }
+            'MacOS' {
+                sudo pmset -a hibernatemode $($State -eq "Hibernate" ? 25 : 3)
+                pmset sleepnow
+            }
         }
     }
 }
