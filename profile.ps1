@@ -55,6 +55,26 @@ Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
 
 #endregion configurations
 
+#regions enums
+
+enum Month
+{
+    January = 1
+    Febraury = 2
+    March = 3
+    April = 4
+    May = 5
+    June = 6
+    July = 7
+    August = 8
+    September = 9
+    October = 10
+    November = 11
+    December = 12
+}
+
+#endregion
+
 #region functions
 
 function Get-NameOf {
@@ -332,6 +352,27 @@ function Get-Battery {
             # TODO
         }
     })
+}
+
+function Get-Calendar {
+    [Alias('cal')]
+    [CmdletBinding(DefaultParameterSetName = 'Year')]
+    param (
+        [Parameter(ParameterSetName = 'Month')]
+        [Month] $Month,
+
+        [Parameter(ParameterSetName = 'Year')]
+        [Parameter(ParameterSetName = 'Month')]
+        [ValidateRange(0, 9999)]
+        [int] $Year = [datetime]::Now.Year
+    )
+
+    process {
+        switch ($PSCmdlet.ParameterSetName) {
+            'Month' { python -c "import calendar; print(calendar.month($Year, $($Month.value__)))" }
+            'Year' { python -c "import calendar; print(calendar.calendar($Year))" }
+        }
+    }
 }
 
 function Get-RandomPassword {

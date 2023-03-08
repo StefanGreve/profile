@@ -40,6 +40,11 @@ Install-Script -Name pwshfetch-test-1 -Scope CurrentUser
 Utility function to export SVGs as increasingly larger quadratic PNG files,
 requires [`inkscape`](https://inkscape.org/) for the actual image conversion.
 
+## Get-Calendar
+
+Thin wrapper over Python's built-in `calendar` module to pretty print a calendar.
+Notice that this Cmdlet does *not* emit a PowerShell object.
+
 </details>
 
 ---
