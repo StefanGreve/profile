@@ -11,8 +11,18 @@ using namespace System.Threading
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 1
-    Patch = 1
+    Minor = 2
+    Patch = 0
+}
+
+$global:OperatingSystem = if ([OperatingSystem]::IsWindows()) {
+    'Windows'
+} elseif ([OperatingSystem]::IsLinux()) {
+    'Linux'
+} elseif ([OperatingSystem]::IsMacOS()) {
+    'MacOS'
+} else {
+    'Other'
 }
 
 $PSDefaultParameterValues['*:Encoding'] = "utf8"
@@ -237,6 +247,91 @@ function Copy-FilePath {
         $FullName = $(Get-Item $Path).FullName
         Set-Clipboard -Value $FullName
     }
+}
+
+class Battery
+{
+    [int] $ChargeRemaining
+    [timespan] $Runtime
+    [bool] $IsCharging
+    [string] $Status
+
+    Battery([int] $ChargeRemaining, [timespan] $Runtime, [bool] $IsCharging, [string] $Status)
+    {
+        $this.ChargeRemaining = $ChargeRemaining
+        $this.Runtime = $Runtime
+        $this.IsCharging = $IsCharging
+        $this.Status = $Status
+    }
+
+    [string] ToString()
+    {
+        $Color = $White = $global:PSStyle.Foreground.White
+
+        switch ($this.ChargeRemaining) {
+            { $_ -ge 70 -and $_ -le 100 } { $Color = $global:PSStyle.Foreground.Green }
+            { $_ -ge 30 -and $_ -le 69 } { $Color = $global:PSStyle.Foreground.Yellow }
+            { $_ -ge 1 -and $_ -le 29 } { $Color = $global:PSStyle.Foreground.Red }
+        }
+
+        $MinutesLeft = [string]::Format("Estimated Runtime: {0}", $this.Runtime.ToString())
+
+        return [string]::Format("Capacity: {1}{3}%{0} ({2}{4}{0}) - {5}",
+            $White,
+            $Color,
+            $global:PSStyle.Foreground.Yellow,
+            $this.ChargeRemaining,
+            $this.Status,
+            $MinutesLeft
+        )
+    }
+}
+
+function Get-Battery {
+    [Alias('battery')]
+    [OutputType([Battery])]
+    param()
+
+    Write-Output $(switch ($global:OperatingSystem) {
+        'Windows' {
+            $Win32Battery = Get-CimInstance -ClassName Win32_Battery
+            $ChargeRemaining = $Win32Battery.EstimatedChargeRemaining
+            # An unhandled 32-bit integer overflow is the reason why Win32_Battery
+            # sometimes reports (2^32)/60 as the estimated runtime. This property
+            # will only yield an estimate if the utility power is off, is lost and
+            # remains off, or if a laptop is disconnected from a power source.
+            $Minutes = $Win32Battery.EstimatedRunTime ?? 0
+            $IsCharging = $Minutes -eq 0x04444444 -or ($Win32Battery.BatteryStatus -ge 6 -and $Win32Battery.BatteryStatus -le 9)
+            $Runtime = New-TimeSpan -Minutes $($IsCharging ? 0 : $Minutes)
+
+            # The first two statuses were renamed to reduce ambiguity.
+            # The second status indicates whether a device has access to AC, which
+            # means that no battery is being discharged. However, the battery is
+            # not necessarily charging, either.
+            $Status = switch ($Win32Battery.BatteryStatus) {
+                1 { "Discharging" } # Other
+                2 { "Connected to AC" } # Unknown
+                3 { "Fully Charged" }
+                4 { "Low" }
+                5 { "Critical" }
+                6 { "Charging" }
+                7 { "Charging and High" }
+                8 { "Charging and Low" }
+                9 { "Charging and Critical" }
+                10 { "Undefined" }
+                11 { "Partially Charged" }
+                Default { "Unknown" }
+            }
+
+            [Battery]::new($ChargeRemaining, $Runtime, $IsCharging, $Status)
+        }
+        'Linux' {
+            # TODO
+        }
+        'MacOS'  {
+            # TODO
+        }
+    })
 }
 
 function Get-RandomPassword {
