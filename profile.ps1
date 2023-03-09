@@ -42,6 +42,7 @@ if ([OperatingSystem]::IsWindows()) {
 }
 
 $global:Desktop = [Environment]::GetFolderPath("Desktop")
+$global:Documents = [Environment]::GetFolderPath("MyDocuments")
 $global:Natural = { [Regex]::Replace($_.Name, '\d+', { $Args[0].Value.PadLeft(20) }) }
 
 $env:VIRTUAL_ENV_DISABLE_PROMPT = 1
@@ -954,6 +955,32 @@ function Start-ElevatedConsole {
     Start-Process (Get-Process -Id $PID).Path -Verb RunAs -ArgumentList @("-NoExit", "-Command", "Set-Location '$($PWD.Path)'")
 }
 
+function Start-DailyTranscript {
+    [Alias("transcript")]
+    [OutputType([string])]
+    [CmdletBinding()]
+    param(
+        [string] $OutputDirectory = $global:Documents
+    )
+
+    begin {
+        $Transcripts = [IO.Path]::Join($OutputDirectory, "Transcripts")
+
+        if (!(Test-Path $Transcripts)) {
+            New-Item -Path $Transcripts -ItemType Directory | Out-Null
+        }
+
+        $Filename = [IO.Path]::Join($Transcripts, [string]::Format("{0}.txt", [datetime]::Now.ToString("yyyy-MM-dd")))
+    }
+    process {
+        Write-Verbose "Started a new transcript, output file is $Filename"
+        Start-Transcript -Path $Filename -Append -IncludeInvocationHeader -UseMinimalHeader | Out-Null
+    }
+    end {
+        Write-Output $Filename
+    }
+}
+
 function Get-ExecutionTime {
     $History = Get-History
     $ExecTime = if ($History) { $History[-1].EndExecutionTime - $History[-1].StartExecutionTime } else { New-TimeSpan }
@@ -988,6 +1015,8 @@ function prompt {
     $Venv = if ($env:VIRTUAL_ENV) {
         [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Magenta, [Path]::GetFileName($env:VIRTUAL_ENV), $ResetForeground)
     }
+
+    Start-DailyTranscript | Out-Null
 
     return [System.Collections.ArrayList]@(
         "[",
