@@ -37,6 +37,8 @@ if ([OperatingSystem]::IsWindows()) {
     if (Get-Command "pwshfetch-test-1" -ErrorAction SilentlyContinue) {
         Set-Alias -Name winfetch -Value pwshfetch-test-1
     }
+
+    $global:IsAdmin = ([Principal.WindowsPrincipal][Principal.WindowsIdentity]::GetCurrent()).IsInRole([Principal.WindowsBuiltInRole]::Administrator)
 }
 
 $global:Desktop = [Environment]::GetFolderPath("Desktop")
@@ -1014,7 +1016,7 @@ function prompt {
         $Branch,
         $Venv,
         "`n",
-        [string]::new(">", $NestedPromptLevel + 1),
+        [string]::new($global:IsAdmin ? "#" : ">", $NestedPromptLevel + 1),
         " "
     ) -join ''
 }
