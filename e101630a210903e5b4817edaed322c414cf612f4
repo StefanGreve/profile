@@ -1,0 +1,2 @@
+Might be worth a shot to write a Test-AdminRole Cmdlet later on,
+with an optional -User parameter and Linux+MacOS support.
