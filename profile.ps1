@@ -172,7 +172,7 @@ function Export-Icon {
     }
     process {
         if ($PSCmdlet.ShouldProcess($File.Name)) {
-            $Directory = [IO.Directory]::CreateDirectory([IO.Path]::Combine($Destination, $BaseName))
+            $Directory = [Directory]::CreateDirectory([Path]::Combine($Destination, $BaseName))
 
             while ($MaxSize -ge $MinSize) {
                 $FullName = Join-Path -Path $Destination -ChildPath "${MaxSize}x$MaxSize-$BaseName.png"
@@ -986,13 +986,13 @@ function Start-DailyTranscript {
     )
 
     begin {
-        $Transcripts = [IO.Path]::Combine($OutputDirectory, "Transcripts")
+        $Transcripts = [Path]::Combine($OutputDirectory, "Transcripts")
 
         if (!(Test-Path $Transcripts)) {
             New-Item -Path $Transcripts -ItemType Directory | Out-Null
         }
 
-        $Filename = [IO.Path]::Combine($Transcripts, [string]::Format("{0}.txt", [datetime]::Now.ToString("yyyy-MM-dd")))
+        $Filename = [Path]::Combine($Transcripts, [string]::Format("{0}.txt", [datetime]::Now.ToString("yyyy-MM-dd")))
     }
     process {
         Write-Verbose "Started a new transcript, output file is $Filename"
