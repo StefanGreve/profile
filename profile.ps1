@@ -185,7 +185,7 @@ function Export-Icon {
         }
     }
     end {
-        if (-not $Compress.IsPresent) { return }
+        if (!$Compress.IsPresent) { return }
         Write-Verbose "Compressing $Directory . . ."
 
         Get-ChildItem -Path $Directory | ForEach-Object {
@@ -480,7 +480,7 @@ function Get-RandomPassword {
             do {
                 [int] $r = $PRNG.Next(0, $Length)
             }
-            while (-not [char]::IsLetterOrDigit($CharacterBuffer[$r]))
+            while (![char]::IsLetterOrDigit($CharacterBuffer[$r]))
 
             $CharacterBuffer[$r] = $Punctuations[$PRNG.Next(0, $Punctuations.Count)]
         }
@@ -688,7 +688,7 @@ function Get-XKCD {
         [void] $Client.DefaultRequestHeaders.UserAgent.TryParseAdd("${env:USERNAME}@profile.ps1")
         [void] $Client.DefaultRequestHeaders.Accept.Add([Headers.MediaTypeWithQualityHeaderValue]::new("application/json"))
 
-        $Info = if (-not $MyInvocation.BoundParameters.ContainsKey("Number") -or $null -eq $Number) {
+        $Info = if (!$MyInvocation.BoundParameters.ContainsKey("Number") -or $null -eq $Number) {
             ConvertFrom-Json $Client.GetStringAsync("https://xkcd.com/info.0.json").GetAwaiter().GetResult()
         }
     }
@@ -712,7 +712,7 @@ function Get-XKCD {
             $Id = $Ids[$i - 1]
             $XKCD = [XKCD]::new($Id, $Path, $Client)
 
-            if (-not $NoDownload.IsPresent -and $PSCmdlet.ShouldProcess($XKCD.Img, "Download $($XKCD.Path)")) {
+            if (!$NoDownload.IsPresent -and $PSCmdlet.ShouldProcess($XKCD.Img, "Download $($XKCD.Path)")) {
                 [int] $PercentComplete = [Math]::Round($i / $Ids.Count * 100, 0)
                 Write-Progress -Activity "Download XKCD $Id" -Status "$PercentComplete%" -PercentComplete $PercentComplete
                 $XKCD.Download($Force.IsPresent)
@@ -884,7 +884,7 @@ function Measure-ScriptBlock {
         $StopWatch = [Stopwatch]::new()
         $Measurements = New-Object System.Collections.Generic.List[System.TimeSpan]
 
-        if (-not [Stopwatch]::IsHighResolution) {
+        if (![Stopwatch]::IsHighResolution) {
             Write-Error -Message "Your hardware doesn't support the high resolution counter required to run this test" -Category DeviceError -ErrorAction Stop
         }
 
@@ -898,14 +898,14 @@ function Measure-ScriptBlock {
         $CurrentProcess.PriorityClass = [ProcessPriorityClass]::High
         [Thread]::CurrentThread.Priority = [ThreadPriority]::Highest
 
-        if (-not $NoGC.IsPresent) {
+        if (!$NoGC.IsPresent) {
             Write-Verbose "Calling garbage collector and waiting for pending finalizers . . ."
             [GC]::Collect()
             [GC]::WaitForPendingFinalizers()
             [GC]::Collect()
         }
 
-        if (-not $NoWarmUp.IsPresent) {
+        if (!$NoWarmUp.IsPresent) {
             [int] $Reps = 5
             Write-Verbose "Running warmup routine . . ."
 
@@ -986,13 +986,13 @@ function Start-DailyTranscript {
     )
 
     begin {
-        $Transcripts = [IO.Path]::Join($OutputDirectory, "Transcripts")
+        $Transcripts = [IO.Path]::Combine($OutputDirectory, "Transcripts")
 
         if (!(Test-Path $Transcripts)) {
             New-Item -Path $Transcripts -ItemType Directory | Out-Null
         }
 
-        $Filename = [IO.Path]::Join($Transcripts, [string]::Format("{0}.txt", [datetime]::Now.ToString("yyyy-MM-dd")))
+        $Filename = [IO.Path]::Combine($Transcripts, [string]::Format("{0}.txt", [datetime]::Now.ToString("yyyy-MM-dd")))
     }
     process {
         Write-Verbose "Started a new transcript, output file is $Filename"
