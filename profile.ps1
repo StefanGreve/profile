@@ -116,7 +116,29 @@ function Update-Configuration {
 }
 
 function Update-System {
-    Update-Help -UICulture "en-US" -ErrorAction SilentlyContinue -ErrorVariable UpdateErrors -Force
+    [Alias('update')]
+    [OutputType([void])]
+    [CmdletBinding()]
+    param(
+        [Parameter(ParameterSetName = 'Option')]
+        [switch] $Help,
+
+        [Parameter(ParameterSetName = 'Option')]
+        [switch] $Applications,
+
+        [Parameter(ParameterSetName = 'All')]
+        [switch] $All
+    )
+
+    process {
+        if ($Help.IsPresent -or $All.IsPresent) {
+            Update-Help -UICulture "en-US" -ErrorAction SilentlyContinue -ErrorVariable UpdateErrors -Force
+        }
+
+        if ($Applications.IsPresent -or $All.IsPresent) {
+            winget upgrade --all --silent
+        }
+    }
 }
 
 function Export-Icon {
@@ -995,7 +1017,6 @@ Set-Alias -Name ^ -Value Select-Object
 Set-Alias -Name man -Value Get-Help -Option AllScope
 Set-Alias -Name touch -Value New-Item
 Set-Alias -Name config -Value Update-Configuration
-Set-Alias -Name update -Value Update-System
 Set-Alias -Name bye -Value Stop-Work
 Set-Alias -Name elevate -Value Start-ElevatedConsole
 Set-Alias -Name activate -Value .\venv\Scripts\Activate.ps1
