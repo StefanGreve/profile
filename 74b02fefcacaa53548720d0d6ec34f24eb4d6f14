@@ -1,0 +1,7 @@
+There is a -OutputDirectory paramater for the Start-Transcript
+Cmdlet that could make the Start-DailyTranscript function
+redundant, but with this parameter you have no control over the
+file name that gets created.
+
+Source:
+https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.host/start-transcript?view=powershell-7.3#-outputdirectory
