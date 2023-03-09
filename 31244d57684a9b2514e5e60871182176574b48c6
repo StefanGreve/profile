@@ -1,4 +1,0 @@
-There is a -OutputDirectory paramater for the Start-Transcript
-Cmdlet that could make the Start-DailyTranscript function
-redundant, but with this parameter you have no control over the
-file name that gets created.
