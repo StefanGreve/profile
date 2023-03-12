@@ -53,8 +53,19 @@ $PSStyle.Progress.View = "Classic"
 $Host.PrivateData.ProgressBackgroundColor = "Cyan"
 $Host.PrivateData.ProgressForegroundColor = "Yellow"
 
-Set-PSReadLineOption -PredictionSource History
 Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
+Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
+Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
+
+$PSReadLineOptions = @{
+    PredictionSource = "History"
+    HistoryNoDuplicates = $true
+    HistorySearchCursorMovesToEnd = $true
+    ShowTooltips = $true
+    EditMode = "Vi"
+    BellStyle = "None"
+}
+Set-PSReadLineOption @PSReadLineOptions
 
 #endregion configurations
 
