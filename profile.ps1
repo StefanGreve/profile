@@ -131,11 +131,11 @@ function Update-System {
     )
 
     process {
-        if ($Help.IsPresent -or $All.IsPresent) {
+        if ($Help.IsPresent || $All.IsPresent) {
             Update-Help -UICulture "en-US" -ErrorAction SilentlyContinue -ErrorVariable UpdateErrors -Force
         }
 
-        if ($Applications.IsPresent -or $All.IsPresent) {
+        if ($Applications.IsPresent || $All.IsPresent) {
             winget upgrade --all --silent
         }
     }
@@ -314,9 +314,9 @@ class Battery
         $Color = $White = $global:PSStyle.Foreground.White
 
         switch ($this.ChargeRemaining) {
-            { $_ -ge 70 -and $_ -le 100 } { $Color = $global:PSStyle.Foreground.Green }
-            { $_ -ge 30 -and $_ -le 69 } { $Color = $global:PSStyle.Foreground.Yellow }
-            { $_ -ge 1 -and $_ -le 29 } { $Color = $global:PSStyle.Foreground.Red }
+            { $_ -ge 70 && $_ -le 100 } { $Color = $global:PSStyle.Foreground.Green }
+            { $_ -ge 30 && $_ -le 69 } { $Color = $global:PSStyle.Foreground.Yellow }
+            { $_ -ge 1 && $_ -le 29 } { $Color = $global:PSStyle.Foreground.Red }
         }
 
         $MinutesLeft = [string]::Format("Estimated Runtime: {0}", $this.Runtime.ToString())
@@ -346,7 +346,7 @@ function Get-Battery {
             # will only yield an estimate if the utility power is off, is lost and
             # remains off, or if a laptop is disconnected from a power source.
             $Minutes = $Win32Battery.EstimatedRunTime ?? 0
-            $IsCharging = $Minutes -eq 0x04444444 -or ($Win32Battery.BatteryStatus -ge 6 -and $Win32Battery.BatteryStatus -le 9)
+            $IsCharging = $Minutes -eq 0x04444444 || ($Win32Battery.BatteryStatus -ge 6 && $Win32Battery.BatteryStatus -le 9)
             $Runtime = New-TimeSpan -Minutes $($IsCharging ? 0 : $Minutes)
 
             # The first two statuses were renamed to reduce ambiguity.
@@ -583,7 +583,7 @@ class XKCD {
         $Response.EnsureSuccessStatusCode()
         $ReponseStream = $Response.Content.ReadAsStream()
 
-        if ([File]::Exists($this.Path) -and $Force) {
+        if ([File]::Exists($this.Path) && $Force) {
             Write-Warning -Message "$($this.Path) already exists, deleting file"
             [File]::Delete($this.Path)
         }
@@ -688,7 +688,7 @@ function Get-XKCD {
         [void] $Client.DefaultRequestHeaders.UserAgent.TryParseAdd("${env:USERNAME}@profile.ps1")
         [void] $Client.DefaultRequestHeaders.Accept.Add([Headers.MediaTypeWithQualityHeaderValue]::new("application/json"))
 
-        $Info = if (!$MyInvocation.BoundParameters.ContainsKey("Number") -or $null -eq $Number) {
+        $Info = if (!$MyInvocation.BoundParameters.ContainsKey("Number") || $null -eq $Number) {
             ConvertFrom-Json $Client.GetStringAsync("https://xkcd.com/info.0.json").GetAwaiter().GetResult()
         }
     }
@@ -712,7 +712,7 @@ function Get-XKCD {
             $Id = $Ids[$i - 1]
             $XKCD = [XKCD]::new($Id, $Path, $Client)
 
-            if (!$NoDownload.IsPresent -and $PSCmdlet.ShouldProcess($XKCD.Img, "Download $($XKCD.Path)")) {
+            if (!$NoDownload.IsPresent && $PSCmdlet.ShouldProcess($XKCD.Img, "Download $($XKCD.Path)")) {
                 [int] $PercentComplete = [Math]::Round($i / $Ids.Count * 100, 0)
                 Write-Progress -Activity "Download XKCD $Id" -Status "$PercentComplete%" -PercentComplete $PercentComplete
                 $XKCD.Download($Force.IsPresent)
