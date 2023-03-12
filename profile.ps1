@@ -191,6 +191,9 @@ function Update-System {
         [Parameter(ParameterSetName = 'Option')]
         [switch] $Applications,
 
+        [Parameter(ParameterSetName = 'Option')]
+        [switch] $Modules,
+
         [Parameter(ParameterSetName = 'All')]
         [switch] $All
     )
@@ -203,9 +206,17 @@ function Update-System {
         if ($Applications.IsPresent || $All.IsPresent) {
             winget upgrade --all --silent
         }
+
+        if ($Modules.IsPresent || $All.IsPresent) {
+            $InstalledModules = @(
+                "Az.Tools.Predictor"
+                "Az.Accounts"
+            )
+
+            $InstalledModules | Update-Module -ErrorAction SilentlyContinue
+        }
     }
 }
-
 function Export-Icon {
     [OutputType([void])]
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low")]
