@@ -350,7 +350,7 @@ function Get-FileCount {
 
     process {
         foreach ($p in $Path) {
-            $FileCount = [Directory]::GetFiles($p, "*", $SearchOption).Length
+            $FileCount = [Directory]::GetFiles([IO.Path]::Combine($PWD, $p), "*", $SearchOption).Length
             Write-Output $FileCount
         }
     }
