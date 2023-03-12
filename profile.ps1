@@ -7,12 +7,24 @@ using namespace System.Security
 using namespace System.Text
 using namespace System.Threading
 
+using namespace Microsoft.PowerShell
+
 #region configurations
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 1
-    Patch = 1
+    Minor = 2
+    Patch = 0
+}
+
+$global:OperatingSystem = if ([OperatingSystem]::IsWindows()) {
+    'Windows'
+} elseif ([OperatingSystem]::IsLinux()) {
+    'Linux'
+} elseif ([OperatingSystem]::IsMacOS()) {
+    'MacOS'
+} else {
+    'Other'
 }
 
 $PSDefaultParameterValues['*:Encoding'] = "utf8"
@@ -27,9 +39,12 @@ if ([OperatingSystem]::IsWindows()) {
     if (Get-Command "pwshfetch-test-1" -ErrorAction SilentlyContinue) {
         Set-Alias -Name winfetch -Value pwshfetch-test-1
     }
+
+    $global:IsAdmin = ([Principal.WindowsPrincipal][Principal.WindowsIdentity]::GetCurrent()).IsInRole([Principal.WindowsBuiltInRole]::Administrator)
 }
 
 $global:Desktop = [Environment]::GetFolderPath("Desktop")
+$global:Documents = [Environment]::GetFolderPath("MyDocuments")
 $global:Natural = { [Regex]::Replace($_.Name, '\d+', { $Args[0].Value.PadLeft(20) }) }
 
 $env:VIRTUAL_ENV_DISABLE_PROMPT = 1
@@ -40,10 +55,93 @@ $PSStyle.Progress.View = "Classic"
 $Host.PrivateData.ProgressBackgroundColor = "Cyan"
 $Host.PrivateData.ProgressForegroundColor = "Yellow"
 
-Set-PSReadLineOption -PredictionSource History
-Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
+$PSReadLineOptions = @{
+    PredictionSource = "HistoryAndPlugin"
+    PredictionViewStyle = "ListView"
+    HistoryNoDuplicates = $true
+    HistorySearchCursorMovesToEnd = $true
+    ShowTooltips = $true
+    EditMode = "Windows"
+    BellStyle = "None"
+}
+Set-PSReadLineOption @PSReadLineOptions
+
+Set-PSReadLineKeyHandler -Key Tab -Function Complete
+Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
+Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
+Set-PSReadLineKeyHandler -Key Ctrl+u -Function RevertLine
+Set-PSReadLineKeyHandler -Key Ctrl+s -BriefDescription SaveInHistory -LongDescription "Save current line in history without execution" -ScriptBlock {
+    param($Key, $Arg)
+
+    $Line = $null
+    $Cursor = $null
+
+    [PSConsoleReadLine]::GetBufferState([ref]$Line, [ref]$Cursor)
+    [PSConsoleReadLine]::AddToHistory($Line)
+    [PSConsoleReadLine]::RevertLine()
+}
+Set-PSReadLineKeyHandler -Key '(', '[', '{' -BriefDescription InsertPairedBraces -LongDescription "Insert matching braces" -ScriptBlock {
+    param($Key, $Arg)
+
+    $CloseChar = switch ($Key.KeyChar) {
+        <#case#> '(' { [char]')'; break }
+        <#case#> '[' { [char]']'; break }
+        <#case#> '{' { [char]'}'; break }
+    }
+
+    $SelectionStart = $null
+    $SelectionLength = $null
+    [PSConsoleReadLine]::GetSelectionState([ref]$SelectionStart, [ref]$SelectionLength)
+
+    $Line = $null
+    $Cursor = $null
+    [PSConsoleReadLine]::GetBufferState([ref]$Line, [ref]$Cursor)
+
+    if ($SelectionStart -ne -1) {
+        [PSConsoleReadLine]::Replace($SelectionStart, $SelectionLength, $Key.KeyChar + $Line.SubString($SelectionStart, $SelectionLength) + $CloseChar)
+        [PSConsoleReadLine]::SetCursorPosition($SelectionStart + $SelectionLength + 2)
+    }
+    else {
+        [PSConsoleReadLine]::Insert("$($Key.KeyChar)$CloseChar")
+        [PSConsoleReadLine]::SetCursorPosition($Cursor + 1)
+    }
+}
+Set-PSReadLineKeyHandler -Key ')', ']', '}' -BriefDescription SmartClosingBraces -LongDescription "Insert closing brace or skip" -ScriptBlock {
+    param($Key, $Arg)
+
+    $Line = $null
+    $Cursor = $null
+    [PSConsoleReadLine]::GetBufferState([ref]$Line, [ref]$Cursor)
+
+    if ($Line[$Cursor] -and $Key.KeyChar) {
+        [PSConsoleReadLine]::SetCursorPosition($Cursor + 1)
+    }
+    else {
+        [PSConsoleReadLine]::Insert("$($Key.KeyChar)")
+    }
+}
 
 #endregion configurations
+
+#regions enums
+
+enum Month
+{
+    January = 1
+    Febraury = 2
+    March = 3
+    April = 4
+    May = 5
+    June = 6
+    July = 7
+    August = 8
+    September = 9
+    October = 10
+    November = 11
+    December = 12
+}
+
+#endregion
 
 #region functions
 
@@ -83,9 +181,42 @@ function Update-Configuration {
 }
 
 function Update-System {
-    Update-Help -UICulture "en-US" -ErrorAction SilentlyContinue -ErrorVariable UpdateErrors -Force
-}
+    [Alias('update')]
+    [OutputType([void])]
+    [CmdletBinding()]
+    param(
+        [Parameter(ParameterSetName = 'Option')]
+        [switch] $Help,
 
+        [Parameter(ParameterSetName = 'Option')]
+        [switch] $Applications,
+
+        [Parameter(ParameterSetName = 'Option')]
+        [switch] $Modules,
+
+        [Parameter(ParameterSetName = 'All')]
+        [switch] $All
+    )
+
+    process {
+        if ($Help.IsPresent || $All.IsPresent) {
+            Update-Help -UICulture "en-US" -ErrorAction SilentlyContinue -ErrorVariable UpdateErrors -Force
+        }
+
+        if ($Applications.IsPresent || $All.IsPresent) {
+            winget upgrade --all --silent
+        }
+
+        if ($Modules.IsPresent || $All.IsPresent) {
+            $InstalledModules = @(
+                "Az.Tools.Predictor"
+                "Az.Accounts"
+            )
+
+            $InstalledModules | Update-Module -ErrorAction SilentlyContinue
+        }
+    }
+}
 function Export-Icon {
     [OutputType([void])]
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low")]
@@ -117,7 +248,7 @@ function Export-Icon {
     }
     process {
         if ($PSCmdlet.ShouldProcess($File.Name)) {
-            $Directory = [IO.Directory]::CreateDirectory([IO.Path]::Combine($Destination, $BaseName))
+            $Directory = [Directory]::CreateDirectory([Path]::Combine($Destination, $BaseName))
 
             while ($MaxSize -ge $MinSize) {
                 $FullName = Join-Path -Path $Destination -ChildPath "${MaxSize}x$MaxSize-$BaseName.png"
@@ -130,7 +261,7 @@ function Export-Icon {
         }
     }
     end {
-        if (-not $Compress.IsPresent) { return }
+        if (!$Compress.IsPresent) { return }
         Write-Verbose "Compressing $Directory . . ."
 
         Get-ChildItem -Path $Directory | ForEach-Object {
@@ -219,7 +350,7 @@ function Get-FileCount {
 
     process {
         foreach ($p in $Path) {
-            $FileCount = [Directory]::GetFiles($p, "*", $SearchOption).Length
+            $FileCount = [Directory]::GetFiles([IO.Path]::Combine($PWD, $p), "*", $SearchOption).Length
             Write-Output $FileCount
         }
     }
@@ -236,6 +367,112 @@ function Copy-FilePath {
     process {
         $FullName = $(Get-Item $Path).FullName
         Set-Clipboard -Value $FullName
+    }
+}
+
+class Battery
+{
+    [int] $ChargeRemaining
+    [timespan] $Runtime
+    [bool] $IsCharging
+    [string] $Status
+
+    Battery([int] $ChargeRemaining, [timespan] $Runtime, [bool] $IsCharging, [string] $Status)
+    {
+        $this.ChargeRemaining = $ChargeRemaining
+        $this.Runtime = $Runtime
+        $this.IsCharging = $IsCharging
+        $this.Status = $Status
+    }
+
+    [string] ToString()
+    {
+        $Color = $White = $global:PSStyle.Foreground.White
+
+        switch ($this.ChargeRemaining) {
+            { $_ -ge 70 && $_ -le 100 } { $Color = $global:PSStyle.Foreground.Green }
+            { $_ -ge 30 && $_ -le 69 } { $Color = $global:PSStyle.Foreground.Yellow }
+            { $_ -ge 1 && $_ -le 29 } { $Color = $global:PSStyle.Foreground.Red }
+        }
+
+        $MinutesLeft = [string]::Format("Estimated Runtime: {0}", $this.Runtime.ToString())
+
+        return [string]::Format("Capacity: {1}{3}%{0} ({2}{4}{0}) - {5}",
+            $White,
+            $Color,
+            $global:PSStyle.Foreground.Yellow,
+            $this.ChargeRemaining,
+            $this.Status,
+            $MinutesLeft
+        )
+    }
+}
+
+function Get-Battery {
+    [Alias('battery')]
+    [OutputType([Battery])]
+    param()
+
+    Write-Output $(switch ($global:OperatingSystem) {
+        'Windows' {
+            $Win32Battery = Get-CimInstance -ClassName Win32_Battery
+            $ChargeRemaining = $Win32Battery.EstimatedChargeRemaining
+            # An unhandled 32-bit integer overflow is the reason why Win32_Battery
+            # sometimes reports (2^32)/60 as the estimated runtime. This property
+            # will only yield an estimate if the utility power is off, is lost and
+            # remains off, or if a laptop is disconnected from a power source.
+            $Minutes = $Win32Battery.EstimatedRunTime ?? 0
+            $IsCharging = $Minutes -eq 0x04444444 || ($Win32Battery.BatteryStatus -ge 6 && $Win32Battery.BatteryStatus -le 9)
+            $Runtime = New-TimeSpan -Minutes $($IsCharging ? 0 : $Minutes)
+
+            # The first two statuses were renamed to reduce ambiguity.
+            # The second status indicates whether a device has access to AC, which
+            # means that no battery is being discharged. However, the battery is
+            # not necessarily charging, either.
+            $Status = switch ($Win32Battery.BatteryStatus) {
+                1 { "Discharging" } # Other
+                2 { "Connected to AC" } # Unknown
+                3 { "Fully Charged" }
+                4 { "Low" }
+                5 { "Critical" }
+                6 { "Charging" }
+                7 { "Charging and High" }
+                8 { "Charging and Low" }
+                9 { "Charging and Critical" }
+                10 { "Undefined" }
+                11 { "Partially Charged" }
+                Default { "Unknown" }
+            }
+
+            [Battery]::new($ChargeRemaining, $Runtime, $IsCharging, $Status)
+        }
+        'Linux' {
+            # TODO
+        }
+        'MacOS'  {
+            # TODO
+        }
+    })
+}
+
+function Get-Calendar {
+    [Alias('cal')]
+    [CmdletBinding(DefaultParameterSetName = 'Year')]
+    param (
+        [Parameter(ParameterSetName = 'Month')]
+        [Month] $Month,
+
+        [Parameter(ParameterSetName = 'Year')]
+        [Parameter(ParameterSetName = 'Month')]
+        [ValidateRange(0, 9999)]
+        [int] $Year = [datetime]::Now.Year
+    )
+
+    process {
+        switch ($PSCmdlet.ParameterSetName) {
+            'Month' { python -c "import calendar; print(calendar.month($Year, $($Month.value__)))" }
+            'Year' { python -c "import calendar; print(calendar.calendar($Year))" }
+        }
     }
 }
 
@@ -319,7 +556,7 @@ function Get-RandomPassword {
             do {
                 [int] $r = $PRNG.Next(0, $Length)
             }
-            while (-not [char]::IsLetterOrDigit($CharacterBuffer[$r]))
+            while (![char]::IsLetterOrDigit($CharacterBuffer[$r]))
 
             $CharacterBuffer[$r] = $Punctuations[$PRNG.Next(0, $Punctuations.Count)]
         }
@@ -422,7 +659,7 @@ class XKCD {
         $Response.EnsureSuccessStatusCode()
         $ReponseStream = $Response.Content.ReadAsStream()
 
-        if ([File]::Exists($this.Path) -and $Force) {
+        if ([File]::Exists($this.Path) && $Force) {
             Write-Warning -Message "$($this.Path) already exists, deleting file"
             [File]::Delete($this.Path)
         }
@@ -527,7 +764,7 @@ function Get-XKCD {
         [void] $Client.DefaultRequestHeaders.UserAgent.TryParseAdd("${env:USERNAME}@profile.ps1")
         [void] $Client.DefaultRequestHeaders.Accept.Add([Headers.MediaTypeWithQualityHeaderValue]::new("application/json"))
 
-        $Info = if (-not $MyInvocation.BoundParameters.ContainsKey("Number") -or $null -eq $Number) {
+        $Info = if (!$MyInvocation.BoundParameters.ContainsKey("Number") || $null -eq $Number) {
             ConvertFrom-Json $Client.GetStringAsync("https://xkcd.com/info.0.json").GetAwaiter().GetResult()
         }
     }
@@ -551,7 +788,7 @@ function Get-XKCD {
             $Id = $Ids[$i - 1]
             $XKCD = [XKCD]::new($Id, $Path, $Client)
 
-            if (-not $NoDownload.IsPresent -and $PSCmdlet.ShouldProcess($XKCD.Img, "Download $($XKCD.Path)")) {
+            if (!$NoDownload.IsPresent && $PSCmdlet.ShouldProcess($XKCD.Img, "Download $($XKCD.Path)")) {
                 [int] $PercentComplete = [Math]::Round($i / $Ids.Count * 100, 0)
                 Write-Progress -Activity "Download XKCD $Id" -Status "$PercentComplete%" -PercentComplete $PercentComplete
                 $XKCD.Download($Force.IsPresent)
@@ -577,17 +814,19 @@ function Set-PowerState {
     )
 
     if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, $PowerState)) {
-        if ([OperatingSystem]::IsWindows()) {
-            Add-Type -AssemblyName System.Windows.Forms
-            $PowerState = $PowerState -eq "Hibernate" ? [System.Windows.Forms.PowerState]::Hibernate : [System.Windows.Forms.PowerState]::Suspend
-            [System.Windows.Forms.Application]::SetSuspendState($PowerState, $Force, $DisableWake)
-        }
-        elseif ([OperatingSystem]::IsLinux()) {
-            systemctl $State.ToLower() $($Force ? "--force" : [string]::Empty)
-        }
-        else { # macOS
-            sudo pmset -a hibernatemode $($State -eq "Hibernate" ? 25 : 3)
-            pmset sleepnow
+        switch ($global:OperatingSystem) {
+            'Windows' {
+                Add-Type -AssemblyName System.Windows.Forms
+                $PowerState = $PowerState -eq "Hibernate" ? [System.Windows.Forms.PowerState]::Hibernate : [System.Windows.Forms.PowerState]::Suspend
+                [System.Windows.Forms.Application]::SetSuspendState($PowerState, $Force, $DisableWake)
+            }
+            'Linux' {
+                systemctl $State.ToLower() $($Force ? "--force" : [string]::Empty)
+            }
+            'MacOS' {
+                sudo pmset -a hibernatemode $($State -eq "Hibernate" ? 25 : 3)
+                pmset sleepnow
+            }
         }
     }
 }
@@ -721,7 +960,7 @@ function Measure-ScriptBlock {
         $StopWatch = [Stopwatch]::new()
         $Measurements = New-Object System.Collections.Generic.List[System.TimeSpan]
 
-        if (-not [Stopwatch]::IsHighResolution) {
+        if (![Stopwatch]::IsHighResolution) {
             Write-Error -Message "Your hardware doesn't support the high resolution counter required to run this test" -Category DeviceError -ErrorAction Stop
         }
 
@@ -735,14 +974,14 @@ function Measure-ScriptBlock {
         $CurrentProcess.PriorityClass = [ProcessPriorityClass]::High
         [Thread]::CurrentThread.Priority = [ThreadPriority]::Highest
 
-        if (-not $NoGC.IsPresent) {
+        if (!$NoGC.IsPresent) {
             Write-Verbose "Calling garbage collector and waiting for pending finalizers . . ."
             [GC]::Collect()
             [GC]::WaitForPendingFinalizers()
             [GC]::Collect()
         }
 
-        if (-not $NoWarmUp.IsPresent) {
+        if (!$NoWarmUp.IsPresent) {
             [int] $Reps = 5
             Write-Verbose "Running warmup routine . . ."
 
@@ -814,6 +1053,32 @@ function Start-ElevatedConsole {
     Start-Process (Get-Process -Id $PID).Path -Verb RunAs -ArgumentList @("-NoExit", "-Command", "Set-Location '$($PWD.Path)'")
 }
 
+function Start-DailyTranscript {
+    [Alias("transcript")]
+    [OutputType([string])]
+    [CmdletBinding()]
+    param(
+        [string] $OutputDirectory = $global:Documents
+    )
+
+    begin {
+        $Transcripts = [Path]::Combine($OutputDirectory, "Transcripts")
+
+        if (!(Test-Path $Transcripts)) {
+            New-Item -Path $Transcripts -ItemType Directory | Out-Null
+        }
+
+        $Filename = [Path]::Combine($Transcripts, [string]::Format("{0}.txt", [datetime]::Now.ToString("yyyy-MM-dd")))
+    }
+    process {
+        Write-Verbose "Started a new transcript, output file is $Filename"
+        Start-Transcript -Path $Filename -Append -IncludeInvocationHeader -UseMinimalHeader | Out-Null
+    }
+    end {
+        Write-Output $Filename
+    }
+}
+
 function Get-ExecutionTime {
     $History = Get-History
     $ExecTime = if ($History) { $History[-1].EndExecutionTime - $History[-1].StartExecutionTime } else { New-TimeSpan }
@@ -828,7 +1093,6 @@ Set-Alias -Name ^ -Value Select-Object
 Set-Alias -Name man -Value Get-Help -Option AllScope
 Set-Alias -Name touch -Value New-Item
 Set-Alias -Name config -Value Update-Configuration
-Set-Alias -Name update -Value Update-System
 Set-Alias -Name bye -Value Stop-Work
 Set-Alias -Name elevate -Value Start-ElevatedConsole
 Set-Alias -Name activate -Value .\venv\Scripts\Activate.ps1
@@ -848,6 +1112,8 @@ function prompt {
     $Venv = if ($env:VIRTUAL_ENV) {
         [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Magenta, [Path]::GetFileName($env:VIRTUAL_ENV), $ResetForeground)
     }
+
+    Start-DailyTranscript | Out-Null
 
     return [System.Collections.ArrayList]@(
         "[",
@@ -876,7 +1142,7 @@ function prompt {
         $Branch,
         $Venv,
         "`n",
-        [string]::new(">", $NestedPromptLevel + 1),
+        [string]::new($global:IsAdmin ? "#" : ">", $NestedPromptLevel + 1),
         " "
     ) -join ''
 }
