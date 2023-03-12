@@ -7,6 +7,8 @@ using namespace System.Security
 using namespace System.Text
 using namespace System.Threading
 
+using namespace Microsoft.PowerShell
+
 #region configurations
 
 $global:ProfileVersion = [PSCustomObject]@{
@@ -53,19 +55,71 @@ $PSStyle.Progress.View = "Classic"
 $Host.PrivateData.ProgressBackgroundColor = "Cyan"
 $Host.PrivateData.ProgressForegroundColor = "Yellow"
 
-Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
-Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
-Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
-
 $PSReadLineOptions = @{
-    PredictionSource = "History"
+    PredictionSource = "HistoryAndPlugin"
+    PredictionViewStyle = "ListView"
     HistoryNoDuplicates = $true
     HistorySearchCursorMovesToEnd = $true
     ShowTooltips = $true
-    EditMode = "Vi"
+    EditMode = "Windows"
     BellStyle = "None"
 }
 Set-PSReadLineOption @PSReadLineOptions
+
+Set-PSReadLineKeyHandler -Key Tab -Function Complete
+Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
+Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
+Set-PSReadLineKeyHandler -Key Ctrl+u -Function RevertLine
+Set-PSReadLineKeyHandler -Key Ctrl+s -BriefDescription SaveInHistory -LongDescription "Save current line in history without execution" -ScriptBlock {
+    param($Key, $Arg)
+
+    $Line = $null
+    $Cursor = $null
+
+    [PSConsoleReadLine]::GetBufferState([ref]$Line, [ref]$Cursor)
+    [PSConsoleReadLine]::AddToHistory($Line)
+    [PSConsoleReadLine]::RevertLine()
+}
+Set-PSReadLineKeyHandler -Key '(', '[', '{' -BriefDescription InsertPairedBraces -LongDescription "Insert matching braces" -ScriptBlock {
+    param($Key, $Arg)
+
+    $CloseChar = switch ($Key.KeyChar) {
+        <#case#> '(' { [char]')'; break }
+        <#case#> '[' { [char]']'; break }
+        <#case#> '{' { [char]'}'; break }
+    }
+
+    $SelectionStart = $null
+    $SelectionLength = $null
+    [PSConsoleReadLine]::GetSelectionState([ref]$SelectionStart, [ref]$SelectionLength)
+
+    $Line = $null
+    $Cursor = $null
+    [PSConsoleReadLine]::GetBufferState([ref]$Line, [ref]$Cursor)
+
+    if ($SelectionStart -ne -1) {
+        [PSConsoleReadLine]::Replace($SelectionStart, $SelectionLength, $Key.KeyChar + $Line.SubString($SelectionStart, $SelectionLength) + $CloseChar)
+        [PSConsoleReadLine]::SetCursorPosition($SelectionStart + $SelectionLength + 2)
+    }
+    else {
+        [PSConsoleReadLine]::Insert("$($Key.KeyChar)$CloseChar")
+        [PSConsoleReadLine]::SetCursorPosition($Cursor + 1)
+    }
+}
+Set-PSReadLineKeyHandler -Key ')', ']', '}' -BriefDescription SmartClosingBraces -LongDescription "Insert closing brace or skip" -ScriptBlock {
+    param($Key, $Arg)
+
+    $Line = $null
+    $Cursor = $null
+    [PSConsoleReadLine]::GetBufferState([ref]$Line, [ref]$Cursor)
+
+    if ($Line[$Cursor] -and $Key.KeyChar) {
+        [PSConsoleReadLine]::SetCursorPosition($Cursor + 1)
+    }
+    else {
+        [PSConsoleReadLine]::Insert("$($Key.KeyChar)")
+    }
+}
 
 #endregion configurations
 
