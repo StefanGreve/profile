@@ -13,7 +13,7 @@ using namespace Microsoft.PowerShell
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 2
+    Minor = 3
     Patch = 0
 }
 
@@ -54,6 +54,7 @@ $env:POWERSHELL_UPDATECHECK = "Stable"
 $PSStyle.Progress.View = "Classic"
 $Host.PrivateData.ProgressBackgroundColor = "Cyan"
 $Host.PrivateData.ProgressForegroundColor = "Yellow"
+$ErrorView = 'ConciseView'
 
 $PSReadLineOptions = @{
     PredictionSource = "HistoryAndPlugin"
@@ -350,7 +351,7 @@ function Get-FileCount {
 
     process {
         foreach ($p in $Path) {
-            $FileCount = [Directory]::GetFiles([IO.Path]::Combine($PWD, $p), "*", $SearchOption).Length
+            $FileCount = [Directory]::GetFiles([Path]::Combine($PWD, $p), "*", $SearchOption).Length
             Write-Output $FileCount
         }
     }
