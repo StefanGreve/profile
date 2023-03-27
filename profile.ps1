@@ -846,7 +846,8 @@ function Set-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
-    $NewValue = [Environment]::GetEnvironmentVariable($Key, $Scope) + ";${Value}"
+    $OldValue = [Environment]::GetEnvironmentVariable($Key, $Scope)
+    $NewValue = $OldValue.Length ? [string]::Join(";", $OldValue, $Value) : $Value
 
     if ($PSCmdlet.ShouldProcess("Adding $Value to $Key", "Are you sure you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
         [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)
