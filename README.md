@@ -13,11 +13,11 @@ git clone git@github.com:StefanGreve/profile.git
 $PROFILE | Get-Member -Type NoteProperty | Format-List
 
 # create a PowerShell directory if it doesn't exists already
-New-Item $HOME\Documents\PowerShell -ItemType Directory -ErrorAction SilentlyContinue
+New-Item "$HOME\Documents\PowerShell" -ItemType Directory -ErrorAction SilentlyContinue
 
 # create a new symbolic link and dot-source profile.ps1
-$ProfilePath = $HOME\Documents\PowerShell\profile.ps1
-New-Item -ItemType SymbolicLink -Path $ProfilePath -Target .\profile\profile.ps1
+$ProfilePath = "$HOME\Documents\PowerShell\profile.ps1"
+New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $(Resolve-Path profile.ps1).Path
 ```
 
 ## Remarks
