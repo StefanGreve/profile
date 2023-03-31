@@ -1,6 +1,6 @@
-# PowerShell Core Profile
+# PowerShell Profile
 
-PowerShell profile. Requires version 7.3.2 or higher.
+PowerShell profile. Requires at least version 7.3.2 or higher.
 
 ## Setup
 
