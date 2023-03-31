@@ -305,7 +305,7 @@ function Get-StringHash {
             Write-Output $Hash
         }
     }
-    end {
+    clean {
         $Constructor.Dispose()
     }
 }
@@ -564,7 +564,7 @@ function Get-RandomPassword {
 
         return $([string]::new($CharacterBuffer))
     }
-    end {
+    clean {
         $RandomNumberGenerator.Dispose()
     }
 }
