@@ -1,17 +1,19 @@
 # PowerShell Core Profile
 
-PowerShell Core profile.
+PowerShell profile. Requires version 7.3.2 or higher.
 
 ## Setup
 
-Note that you need administrator privileges in order to create symbolic links.
+Note that you need administrator rights in order to create symbolic links.
 
 ```powershell
-# note: initialize as submodule if used in a dotfile repository
 git clone git@github.com:StefanGreve/profile.git
 
 # recommended profile path: CurrentUserAllHosts
 $PROFILE | Get-Member -Type NoteProperty | Format-List
+
+# create a PowerShell directory if it doesn't exists already
+New-Item $HOME\Documents\PowerShell -ItemType Directory -ErrorAction SilentlyContinue
 
 # create a new symbolic link and dot-source profile.ps1
 $ProfilePath = $HOME\Documents\PowerShell\profile.ps1
@@ -26,7 +28,7 @@ interfere with the core features of this profile.
 <details>
 <summary>Additional Features</summary>
 
-## Winfetch
+### Winfetch
 
 Creates an alias for [`winfetch`](https://github.com/kiedtl/winfetch) as a faster
 replacement for `neofetch` on Windows.
@@ -35,24 +37,14 @@ replacement for `neofetch` on Windows.
 Install-Script -Name pwshfetch-test-1 -Scope CurrentUser
 ```
 
-## Export-Icon
+### Export-Icon
 
 Utility function to export SVGs as increasingly larger quadratic PNG files,
 requires [`inkscape`](https://inkscape.org/) for the actual image conversion.
 
-## Get-Calendar
+### Get-Calendar
 
 Thin wrapper over Python's built-in `calendar` module to pretty print a calendar.
 Notice that this Cmdlet does *not* emit a PowerShell object.
 
 </details>
-
----
-
-## Related Repositories
-
-Other projects you might also be interested into:
-
-- https://github.com/StefanGreve/confiles
-- https://github.com/Advanced-Systems/todo
-- https://github.com/Advanced-Systems/repomanager
