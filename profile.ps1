@@ -13,7 +13,7 @@ using namespace Microsoft.PowerShell
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 2
+    Minor = 3
     Patch = 0
 }
 
@@ -54,6 +54,7 @@ $env:POWERSHELL_UPDATECHECK = "Stable"
 $PSStyle.Progress.View = "Classic"
 $Host.PrivateData.ProgressBackgroundColor = "Cyan"
 $Host.PrivateData.ProgressForegroundColor = "Yellow"
+$ErrorView = 'ConciseView'
 
 $PSReadLineOptions = @{
     PredictionSource = "HistoryAndPlugin"
@@ -304,7 +305,7 @@ function Get-StringHash {
             Write-Output $Hash
         }
     }
-    end {
+    clean {
         $Constructor.Dispose()
     }
 }
@@ -350,7 +351,7 @@ function Get-FileCount {
 
     process {
         foreach ($p in $Path) {
-            $FileCount = [Directory]::GetFiles([IO.Path]::Combine($PWD, $p), "*", $SearchOption).Length
+            $FileCount = [Directory]::GetFiles([Path]::Combine($PWD, $p), "*", $SearchOption).Length
             Write-Output $FileCount
         }
     }
@@ -563,7 +564,7 @@ function Get-RandomPassword {
 
         return $([string]::new($CharacterBuffer))
     }
-    end {
+    clean {
         $RandomNumberGenerator.Dispose()
     }
 }
@@ -845,7 +846,8 @@ function Set-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
-    $NewValue = [Environment]::GetEnvironmentVariable($Key, $Scope) + ";${Value}"
+    $OldValue = [Environment]::GetEnvironmentVariable($Key, $Scope)
+    $NewValue = $OldValue.Length ? [string]::Join(";", $OldValue, $Value) : $Value
 
     if ($PSCmdlet.ShouldProcess("Adding $Value to $Key", "Are you sure you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
         [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)
@@ -1086,6 +1088,21 @@ function Get-ExecutionTime {
 }
 
 #endregions functions
+
+#regions argument completers
+
+$EnvironmentVariableKeyCompleter = {
+    param($Command, $Parameter, $WordToComplete, $CommandAst, $FakeBoundParameters)
+
+    $Scope = $FakeBoundParameters.ContainsKey("Scope") ? $FakeBoundParameters.Scope : [EnvironmentVariableTarget]::User
+    [Environment]::GetEnvironmentVariables($Scope).Keys | ForEach-Object { [CompletionResult]::new($_) }
+}
+
+@("Get-EnvironmentVariable", "Set-EnvironmentVariable", "Remove-EnvironmentVariable") | ForEach-Object {
+    Register-ArgumentCompleter -CommandName $_ -ParameterName Key -ScriptBlock $EnvironmentVariableKeyCompleter
+}
+
+#endregion argument completers
 
 #region aliases
 
