@@ -1083,7 +1083,7 @@ function Export-Branch {
         Write-Host "[2/4] Committing WIP" -ForegroundColor Yellow
         $DefaultMessage = "🔥 Fire! If you are in the same building as $Author, evacuate immediately!"
         $Message = $PSBoundParameters.ContainsKey("Message") ?  $Message : $DefaultMessage
-        git commit -m $Message --no-verify
+        git commit -m $Message --no-verify --no-gpg-sign
 
         Write-Host "[3/4] Push last commit to all remotes" -ForegroundColor Yellow
         $Remotes | ForEach-Object { git push --set-upstream $_ $NewBranch --no-verify }
