@@ -1093,9 +1093,12 @@ function Export-Branch {
         $CurrentBranch = $(git branch --show-current)
         $NewBranch = "fire/$CurrentBranch/${env:COMPUTERNAME}/${env:USERNAME}"
 
-        $IsValidBranchName = $(git check-ref-format --branch $NewBranch 2&>1) -eq $NewBranch
+        $IsValidBranch = $(git check-ref-format --branch $NewBranch 2&>1) -eq $NewBranch
 
-        if (!$IsValidBranchName) {
+        git fetch --all --quiet
+        $RemoteBranches = $(git branch --remote --format="%(refname:lstrip=3)")
+
+        if (!$IsValidBranch || $RemoteBranches.Contains($NewBranch)) {
             $Salt = $(Get-Salt -MaxLength 16)
             $RandomString = [BitConverter]::ToString($Salt).Replace("-", [string]::Empty)
             $NewBranch = "fire/$CurrentBranch/$RandomString"
