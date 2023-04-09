@@ -18,16 +18,16 @@ $global:ProfileVersion = [PSCustomObject]@{
 }
 
 $global:OperatingSystem = if ([OperatingSystem]::IsWindows()) {
-    'Windows'
+    "Windows"
 } elseif ([OperatingSystem]::IsLinux()) {
-    'Linux'
+    "Linux"
 } elseif ([OperatingSystem]::IsMacOS()) {
-    'MacOS'
+    "MacOS"
 } else {
-    'Other'
+    "Other"
 }
 
-$PSDefaultParameterValues['*:Encoding'] = "utf8"
+$PSDefaultParameterValues["*:Encoding"] = "utf8"
 
 if ([OperatingSystem]::IsWindows()) {
     $global:PSRC = "$HOME\Documents\PowerShell\profile.ps1"
@@ -54,7 +54,7 @@ $env:POWERSHELL_UPDATECHECK = "Stable"
 $PSStyle.Progress.View = "Classic"
 $Host.PrivateData.ProgressBackgroundColor = "Cyan"
 $Host.PrivateData.ProgressForegroundColor = "Yellow"
-$ErrorView = 'ConciseView'
+$ErrorView = "ConciseView"
 
 $PSReadLineOptions = @{
     PredictionSource = "HistoryAndPlugin"
@@ -182,20 +182,20 @@ function Update-Configuration {
 }
 
 function Update-System {
-    [Alias('update')]
+    [Alias("update")]
     [OutputType([void])]
     [CmdletBinding()]
     param(
-        [Parameter(ParameterSetName = 'Option')]
+        [Parameter(ParameterSetName = "Option")]
         [switch] $Help,
 
-        [Parameter(ParameterSetName = 'Option')]
+        [Parameter(ParameterSetName = "Option")]
         [switch] $Applications,
 
-        [Parameter(ParameterSetName = 'Option')]
+        [Parameter(ParameterSetName = "Option")]
         [switch] $Modules,
 
-        [Parameter(ParameterSetName = 'All')]
+        [Parameter(ParameterSetName = "All")]
         [switch] $All
     )
 
@@ -317,8 +317,8 @@ function Get-FileSize {
         [string[]] $Path,
 
         [Parameter()]
-        [ValidateSet('B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB')]
-        [string] $Unit = 'B'
+        [ValidateSet("B", "KiB", "MiB", "GiB", "TiB", "PiB")]
+        [string] $Unit = "B"
     )
 
     process {
@@ -410,12 +410,12 @@ class Battery
 }
 
 function Get-Battery {
-    [Alias('battery')]
+    [Alias("battery")]
     [OutputType([Battery])]
     param()
 
     Write-Output $(switch ($global:OperatingSystem) {
-        'Windows' {
+        "Windows" {
             $Win32Battery = Get-CimInstance -ClassName Win32_Battery
             $ChargeRemaining = $Win32Battery.EstimatedChargeRemaining
             # An unhandled 32-bit integer overflow is the reason why Win32_Battery
@@ -447,32 +447,36 @@ function Get-Battery {
 
             [Battery]::new($ChargeRemaining, $Runtime, $IsCharging, $Status)
         }
-        'Linux' {
+        "Linux" {
             # TODO
         }
-        'MacOS'  {
+        "MacOS"  {
             # TODO
         }
     })
 }
 
 function Get-Calendar {
-    [Alias('cal')]
-    [CmdletBinding(DefaultParameterSetName = 'Year')]
+    [Alias("cal")]
+    [CmdletBinding(DefaultParameterSetName = "Year")]
     param (
-        [Parameter(ParameterSetName = 'Month')]
+        [Parameter(ParameterSetName = "Month")]
         [Month] $Month,
 
-        [Parameter(ParameterSetName = 'Year')]
-        [Parameter(ParameterSetName = 'Month')]
+        [Parameter(ParameterSetName = "Year")]
+        [Parameter(ParameterSetName = "Month")]
         [ValidateRange(0, 9999)]
         [int] $Year = [datetime]::Now.Year
     )
 
     process {
         switch ($PSCmdlet.ParameterSetName) {
-            'Month' { python -c "import calendar; print(calendar.month($Year, $($Month.value__)))" }
-            'Year' { python -c "import calendar; print(calendar.calendar($Year))" }
+            "Month" {
+                python -c "import calendar; print(calendar.month($Year, $($Month.value__)))"
+            }
+            "Year" {
+                python -c "import calendar; print(calendar.calendar($Year))"
+            }
         }
     }
 }
@@ -816,15 +820,15 @@ function Set-PowerState {
 
     if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, $PowerState)) {
         switch ($global:OperatingSystem) {
-            'Windows' {
+            "Windows" {
                 Add-Type -AssemblyName System.Windows.Forms
                 $PowerState = $PowerState -eq "Hibernate" ? [System.Windows.Forms.PowerState]::Hibernate : [System.Windows.Forms.PowerState]::Suspend
                 [System.Windows.Forms.Application]::SetSuspendState($PowerState, $Force, $DisableWake)
             }
-            'Linux' {
+            "Linux" {
                 systemctl $State.ToLower() $($Force ? "--force" : [string]::Empty)
             }
-            'MacOS' {
+            "MacOS" {
                 sudo pmset -a hibernatemode $($State -eq "Hibernate" ? 25 : 3)
                 pmset sleepnow
             }
@@ -1202,13 +1206,13 @@ function prompt {
         " ",
         $PSStyle.Foreground.Yellow,
         "(",
-        $ExecTime.Hours.ToString('D2'),
+        $ExecTime.Hours.ToString("D2"),
         ":",
-        $ExecTime.Minutes.ToString('D2'),
+        $ExecTime.Minutes.ToString("D2"),
         ":",
-        $ExecTime.Seconds.ToString('D2'),
+        $ExecTime.Seconds.ToString("D2"),
         ":",
-        $ExecTime.Milliseconds.ToString('D3'),
+        $ExecTime.Milliseconds.ToString("D3"),
         ")",
         $ResetForeground,
         $Branch,
@@ -1216,5 +1220,5 @@ function prompt {
         "`n",
         [string]::new($global:IsAdmin ? "#" : ">", $NestedPromptLevel + 1),
         " "
-    ) -join ''
+    ) -join ""
 }
