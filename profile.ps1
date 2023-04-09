@@ -1096,7 +1096,17 @@ function Export-Branch {
 
         $ExitMessage = "Turn around and evacuate the building immediately".ToUpper()
         $InfoMessage = "This computer will shutdown automatically in $ShutdownDelay seconds . . ."
-        shutdown.exe /s /f /t $ShutdownDelay /d P:4:1 /c $([string]::Format("{0}`n`n{1}", $ExitMessage, $InfoMessage))
+
+        switch ($global:OperatingSystem) {
+            "Windows" {
+                shutdown.exe /s /f /t $ShutdownDelay /d P:4:1 /c $([string]::Format("{0}`n`n{1}", $ExitMessage, $InfoMessage))
+             }
+            "Linux" {
+                Write-Host $ExitMessage -ForegroundColor Red
+                Write-Host $InfoMessage
+                sleep $ShutdownDelay && systemctl poweroff
+            }
+        }
     }
 }
 
