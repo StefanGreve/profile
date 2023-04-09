@@ -310,6 +310,25 @@ function Get-StringHash {
     }
 }
 
+function Get-Salt {
+    [OutputType([Byte[]])]
+    param(
+        [int] $MaxLength = 32
+    )
+
+    begin {
+        $Random = [Cryptography.RNGCryptoServiceProvider]::new()
+    }
+    process {
+        $Salt = [Byte[]]::CreateInstance([Byte], $MaxLength)
+        $Random.GetNonZeroBytes($Salt)
+        Write-Output $Salt
+    }
+    clean {
+        $Random.Dispose()
+    }
+}
+
 function Get-FileSize {
     [OutputType([double])]
     param(
@@ -1072,7 +1091,15 @@ function Export-Branch {
         $Author = $(git config user.name)
         $Remotes = $(git remote)
         $CurrentBranch = $(git branch --show-current)
-        $NewBranch = "fire/$CurrentBranch/${env:COMPUTERNAME}"
+        $NewBranch = "fire/$CurrentBranch/${env:COMPUTERNAME}/${env:USERNAME}"
+
+        $IsValidBranchName = $(git check-ref-format --branch $NewBranch 2&>1) -eq $NewBranch
+
+        if (!$IsValidBranchName) {
+            $Salt = $(Get-Salt -MaxLength 16)
+            $RandomString = [BitConverter]::ToString($Salt).Replace("-", [string]::Empty)
+            $NewBranch = "fire/$CurrentBranch/$RandomString"
+         }
 
         Push-Location $(git rev-parse --show-toplevel)
     }
