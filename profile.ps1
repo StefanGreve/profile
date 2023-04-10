@@ -1,5 +1,6 @@
 using namespace System
 using namespace System.Diagnostics
+using namespace System.Globalization
 using namespace System.IO
 using namespace System.Management.Automation
 using namespace System.Net.Http
@@ -13,7 +14,7 @@ using namespace Microsoft.PowerShell
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 3
+    Minor = 4
     Patch = 0
 }
 
@@ -27,6 +28,7 @@ $global:OperatingSystem = if ([OperatingSystem]::IsWindows()) {
     "Other"
 }
 
+[CultureInfo]::CurrentCulture = "ja-JP"
 $PSDefaultParameterValues["*:Encoding"] = "utf8"
 
 if ([OperatingSystem]::IsWindows()) {
