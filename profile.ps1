@@ -1,5 +1,6 @@
 using namespace System
 using namespace System.Diagnostics
+using namespace System.Globalization
 using namespace System.IO
 using namespace System.Management.Automation
 using namespace System.Net.Http
@@ -13,21 +14,22 @@ using namespace Microsoft.PowerShell
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 3
+    Minor = 4
     Patch = 0
 }
 
 $global:OperatingSystem = if ([OperatingSystem]::IsWindows()) {
-    'Windows'
+    "Windows"
 } elseif ([OperatingSystem]::IsLinux()) {
-    'Linux'
+    "Linux"
 } elseif ([OperatingSystem]::IsMacOS()) {
-    'MacOS'
+    "MacOS"
 } else {
-    'Other'
+    "Other"
 }
 
-$PSDefaultParameterValues['*:Encoding'] = "utf8"
+[CultureInfo]::CurrentCulture = "ja-JP"
+$PSDefaultParameterValues["*:Encoding"] = "utf8"
 
 if ([OperatingSystem]::IsWindows()) {
     $global:PSRC = "$HOME\Documents\PowerShell\profile.ps1"
@@ -54,7 +56,7 @@ $env:POWERSHELL_UPDATECHECK = "Stable"
 $PSStyle.Progress.View = "Classic"
 $Host.PrivateData.ProgressBackgroundColor = "Cyan"
 $Host.PrivateData.ProgressForegroundColor = "Yellow"
-$ErrorView = 'ConciseView'
+$ErrorView = "ConciseView"
 
 $PSReadLineOptions = @{
     PredictionSource = "HistoryAndPlugin"
@@ -182,20 +184,20 @@ function Update-Configuration {
 }
 
 function Update-System {
-    [Alias('update')]
+    [Alias("update")]
     [OutputType([void])]
     [CmdletBinding()]
     param(
-        [Parameter(ParameterSetName = 'Option')]
+        [Parameter(ParameterSetName = "Option")]
         [switch] $Help,
 
-        [Parameter(ParameterSetName = 'Option')]
+        [Parameter(ParameterSetName = "Option")]
         [switch] $Applications,
 
-        [Parameter(ParameterSetName = 'Option')]
+        [Parameter(ParameterSetName = "Option")]
         [switch] $Modules,
 
-        [Parameter(ParameterSetName = 'All')]
+        [Parameter(ParameterSetName = "All")]
         [switch] $All
     )
 
@@ -310,6 +312,25 @@ function Get-StringHash {
     }
 }
 
+function Get-Salt {
+    [OutputType([Byte[]])]
+    param(
+        [int] $MaxLength = 32
+    )
+
+    begin {
+        $Random = [Cryptography.RNGCryptoServiceProvider]::new()
+    }
+    process {
+        $Salt = [Byte[]]::CreateInstance([Byte], $MaxLength)
+        $Random.GetNonZeroBytes($Salt)
+        Write-Output $Salt
+    }
+    clean {
+        $Random.Dispose()
+    }
+}
+
 function Get-FileSize {
     [OutputType([double])]
     param(
@@ -317,8 +338,8 @@ function Get-FileSize {
         [string[]] $Path,
 
         [Parameter()]
-        [ValidateSet('B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB')]
-        [string] $Unit = 'B'
+        [ValidateSet("B", "KiB", "MiB", "GiB", "TiB", "PiB")]
+        [string] $Unit = "B"
     )
 
     process {
@@ -410,12 +431,12 @@ class Battery
 }
 
 function Get-Battery {
-    [Alias('battery')]
+    [Alias("battery")]
     [OutputType([Battery])]
     param()
 
     Write-Output $(switch ($global:OperatingSystem) {
-        'Windows' {
+        "Windows" {
             $Win32Battery = Get-CimInstance -ClassName Win32_Battery
             $ChargeRemaining = $Win32Battery.EstimatedChargeRemaining
             # An unhandled 32-bit integer overflow is the reason why Win32_Battery
@@ -447,32 +468,36 @@ function Get-Battery {
 
             [Battery]::new($ChargeRemaining, $Runtime, $IsCharging, $Status)
         }
-        'Linux' {
+        "Linux" {
             # TODO
         }
-        'MacOS'  {
+        "MacOS"  {
             # TODO
         }
     })
 }
 
 function Get-Calendar {
-    [Alias('cal')]
-    [CmdletBinding(DefaultParameterSetName = 'Year')]
+    [Alias("cal")]
+    [CmdletBinding(DefaultParameterSetName = "Year")]
     param (
-        [Parameter(ParameterSetName = 'Month')]
+        [Parameter(ParameterSetName = "Month")]
         [Month] $Month,
 
-        [Parameter(ParameterSetName = 'Year')]
-        [Parameter(ParameterSetName = 'Month')]
+        [Parameter(ParameterSetName = "Year")]
+        [Parameter(ParameterSetName = "Month")]
         [ValidateRange(0, 9999)]
         [int] $Year = [datetime]::Now.Year
     )
 
     process {
         switch ($PSCmdlet.ParameterSetName) {
-            'Month' { python -c "import calendar; print(calendar.month($Year, $($Month.value__)))" }
-            'Year' { python -c "import calendar; print(calendar.calendar($Year))" }
+            "Month" {
+                python -c "import calendar; print(calendar.month($Year, $($Month.value__)))"
+            }
+            "Year" {
+                python -c "import calendar; print(calendar.calendar($Year))"
+            }
         }
     }
 }
@@ -816,15 +841,15 @@ function Set-PowerState {
 
     if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, $PowerState)) {
         switch ($global:OperatingSystem) {
-            'Windows' {
+            "Windows" {
                 Add-Type -AssemblyName System.Windows.Forms
                 $PowerState = $PowerState -eq "Hibernate" ? [System.Windows.Forms.PowerState]::Hibernate : [System.Windows.Forms.PowerState]::Suspend
                 [System.Windows.Forms.Application]::SetSuspendState($PowerState, $Force, $DisableWake)
             }
-            'Linux' {
+            "Linux" {
                 systemctl $State.ToLower() $($Force ? "--force" : [string]::Empty)
             }
-            'MacOS' {
+            "MacOS" {
                 sudo pmset -a hibernatemode $($State -eq "Hibernate" ? 25 : 3)
                 pmset sleepnow
             }
@@ -1055,6 +1080,72 @@ function Start-ElevatedConsole {
     Start-Process (Get-Process -Id $PID).Path -Verb RunAs -ArgumentList @("-NoExit", "-Command", "Set-Location '$($PWD.Path)'")
 }
 
+function Export-Branch {
+    [OutputType([void])]
+    [Alias("git-fire")]
+    param(
+        [string] $Message,
+
+        [int] $ShutdownDelay = 15
+    )
+
+    begin {
+        $Author = $(git config user.name)
+        $Remotes = $(git remote)
+        $CurrentBranch = $(git branch --show-current)
+        $NewBranch = "fire/$CurrentBranch/${env:COMPUTERNAME}/${env:USERNAME}"
+
+        $IsValidBranch = $(git check-ref-format --branch $NewBranch 2>&1) -eq $NewBranch
+
+        git fetch --all --quiet
+        $RemoteBranches = $(git branch --remote --format="%(refname:lstrip=3)")
+
+        if (!$IsValidBranch || $RemoteBranches.Contains($NewBranch)) {
+            $Salt = Get-Salt -MaxLength 16
+            $RandomString = [BitConverter]::ToString($Salt).Replace("-", [string]::Empty)
+            $NewBranch = "fire/$CurrentBranch/$RandomString"
+         }
+
+        Push-Location $(git rev-parse --show-toplevel)
+    }
+    process {
+        Write-Host "$Author, leave the building now!".ToUpper()  -ForegroundColor Red
+        Write-Host "We will take it from here.`n"
+
+        Write-Host "[1/4] Creating a new branch and moving all files to the staging area" -ForegroundColor Yellow
+        git checkout -b $NewBranch
+        git add --all
+
+        Write-Host "[2/4] Committing WIP" -ForegroundColor Yellow
+        $DefaultMessage = "🔥 Fire! If you are in the same building as $Author, evacuate immediately!"
+        $Message = $PSBoundParameters.ContainsKey("Message") ?  $Message : $DefaultMessage
+        git commit -m $Message --no-verify --no-gpg-sign
+
+        Write-Host "[3/4] Push last commit to all remotes" -ForegroundColor Yellow
+        $Remotes | ForEach-Object { git push --set-upstream $_ $NewBranch --no-verify }
+
+        Write-Host "[4/4] Push all notes to all remotes" -ForegroundColor Yellow
+        $Remotes | ForEach-Object { git push $_ refs/notes/* --no-verify }
+    }
+    clean {
+        Pop-Location
+
+        $ExitMessage = "Turn around and evacuate the building immediately".ToUpper()
+        $InfoMessage = "This computer will shutdown automatically in $ShutdownDelay seconds . . ."
+
+        switch ($global:OperatingSystem) {
+            "Windows" {
+                shutdown.exe /s /f /t $ShutdownDelay /d P:4:1 /c $([string]::Format("{0}`n`n{1}", $ExitMessage, $InfoMessage))
+             }
+            "Linux" {
+                Write-Host $ExitMessage -ForegroundColor Red
+                Write-Host $InfoMessage
+                sleep $ShutdownDelay && systemctl poweroff
+            }
+        }
+    }
+}
+
 function Start-DailyTranscript {
     [Alias("transcript")]
     [OutputType([string])]
@@ -1147,13 +1238,13 @@ function prompt {
         " ",
         $PSStyle.Foreground.Yellow,
         "(",
-        $ExecTime.Hours.ToString('D2'),
+        $ExecTime.Hours.ToString("D2"),
         ":",
-        $ExecTime.Minutes.ToString('D2'),
+        $ExecTime.Minutes.ToString("D2"),
         ":",
-        $ExecTime.Seconds.ToString('D2'),
+        $ExecTime.Seconds.ToString("D2"),
         ":",
-        $ExecTime.Milliseconds.ToString('D3'),
+        $ExecTime.Milliseconds.ToString("D3"),
         ")",
         $ResetForeground,
         $Branch,
@@ -1161,5 +1252,5 @@ function prompt {
         "`n",
         [string]::new($global:IsAdmin ? "#" : ">", $NestedPromptLevel + 1),
         " "
-    ) -join ''
+    ) -join ""
 }
