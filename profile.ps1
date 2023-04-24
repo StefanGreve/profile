@@ -871,8 +871,10 @@ function Set-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
+    $Token = $global:OperatingSystem -eq "Windows" ? ";" : ":"
+
     $OldValue = [Environment]::GetEnvironmentVariable($Key, $Scope)
-    $NewValue = $OldValue.Length ? [string]::Join(";", $OldValue, $Value) : $Value
+    $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
 
     if ($PSCmdlet.ShouldProcess("Adding $Value to $Key", "Are you sure you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
         [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)
@@ -890,7 +892,9 @@ function Get-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
-    $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope) -Split ";"
+    $Token = $global:OperatingSystem -eq "Windows" ? ";" : ":"
+
+    $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope) -Split $Token
     Write-Output $EnvironmentVariables
 }
 
@@ -907,7 +911,9 @@ function Remove-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
-    $RemoveValue = $Key -eq "PATH" ? $([Environment]::GetEnvironmentVariable("PATH", $Scope) -Split ";" | Where-Object { $_ -ne $Value }) -join ";" : $null
+    $Token = $global:OperatingSystem -eq "Windows" ? ";" : ":"
+
+    $RemoveValue = $Key -eq "PATH" ? $([Environment]::GetEnvironmentVariable("PATH", $Scope) -Split $Token | Where-Object { $_ -ne $Value }) -join $Token : $null
 
     if ($PSCmdlet.ShouldProcess("Removing value '$Value' from environment variable '$Key'", "Are you sure you want to remove '$Value' from the environment variable '$Key'?", "Remove '$Value' from '$Key'")) {
         [Environment]::SetEnvironmentVariable($Key, $RemoveValue, $Scope)
