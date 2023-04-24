@@ -38,8 +38,7 @@ interfere with the core features of this profile.
 
 ### Winfetch
 
-Creates an alias for [`winfetch`](https://github.com/kiedtl/winfetch) as a faster
-replacement for `neofetch` on Windows.
+Creates an alias for `neofetch` using https://github.com/kiedtl/winfetch on Windows.
 
 ```powershell
 Install-Script -Name pwshfetch-test-1 -Scope CurrentUser
