@@ -14,8 +14,8 @@ using namespace Microsoft.PowerShell
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 4
-    Patch = 1
+    Minor = 5
+    Patch = 0
 }
 
 $global:OperatingSystem = if ([OperatingSystem]::IsWindows()) {
@@ -879,7 +879,7 @@ function Set-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
-    $Token = $global:OperatingSystem -eq [OS]::Windows ? ";" : ":"
+    $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
 
     $OldValue = [Environment]::GetEnvironmentVariable($Key, $Scope)
     $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
@@ -900,7 +900,7 @@ function Get-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
-    $Token = $global:OperatingSystem -eq [OS]::Windows ? ";" : ":"
+    $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
 
     $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope) -Split $Token
     Write-Output $EnvironmentVariables
@@ -919,7 +919,7 @@ function Remove-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
-    $Token = $global:OperatingSystem -eq [OS]::Windows ? ";" : ":"
+    $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
 
     $RemoveValue = $Key -eq "PATH" ? $([Environment]::GetEnvironmentVariable("PATH", $Scope) -Split $Token | Where-Object { $_ -ne $Value }) -join $Token : $null
 
