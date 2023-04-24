@@ -20,6 +20,14 @@ $ProfilePath = "$HOME\Documents\PowerShell\profile.ps1"
 New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $(Resolve-Path profile.ps1).Path
 ```
 
+## Configuration
+
+Enable storing daily transcript:
+
+```powershell
+Set-EnvironmentVariable -Key PROFILE_ENABLE_DAILYTRANSCRIPTS -Value 1
+```
+
 ## Remarks
 
 Some optional external dependencies may be added over time, although they will never

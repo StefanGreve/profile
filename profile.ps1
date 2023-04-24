@@ -1164,8 +1164,10 @@ function Start-DailyTranscript {
         $Filename = [Path]::Combine($Transcripts, [string]::Format("{0}.txt", [datetime]::Now.ToString("yyyy-MM-dd")))
     }
     process {
-        Write-Verbose "Started a new transcript, output file is $Filename"
-        Start-Transcript -Path $Filename -Append -IncludeInvocationHeader -UseMinimalHeader | Out-Null
+        if ($env:PROFILE_ENABLE_DAILYTRANSCRIPTS -eq 1) {
+            Write-Verbose "Started a new transcript, output file is $Filename"
+            Start-Transcript -Path $Filename -Append -IncludeInvocationHeader -UseMinimalHeader | Out-Null
+        }
     }
     end {
         Write-Output $Filename
