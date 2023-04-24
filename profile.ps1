@@ -1213,14 +1213,13 @@ Set-Alias -Name exp -Value explorer.exe
 
 function prompt {
     $ExecTime = Get-ExecutionTime
-    $ResetForeground = [string]::Intern($PSStyle.Foreground.White)
 
     $Branch = if ($(git rev-parse --is-inside-work-tree 2>&1) -eq $true) {
-          [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Blue, $(git branch --show-current), $ResetForeground)
+          [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Blue, $(git branch --show-current), $PSStyle.Foreground.White)
     }
 
     $Venv = if ($env:VIRTUAL_ENV) {
-        [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Magenta, [Path]::GetFileName($env:VIRTUAL_ENV), $ResetForeground)
+        [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Magenta, [Path]::GetFileName($env:VIRTUAL_ENV), $PSStyle.Foreground.White)
     }
 
     switch ($global:OperatingSystem) {
@@ -1244,13 +1243,13 @@ function prompt {
         "[",
         $PSStyle.Foreground.BrightCyan,
         $UserName,
-        $ResetForeground,
+        $PSStyle.Foreground.White,
         "@",
         $HostName,
         " ",
         $PSStyle.Foreground.Green,
         [DirectoryInfo]::new($ExecutionContext.SessionState.Path.CurrentLocation).BaseName,
-        $ResetForeground,
+        $PSStyle.Foreground.White,
         "]",
         " ",
         $PSStyle.Foreground.Yellow,
@@ -1263,7 +1262,7 @@ function prompt {
         ":",
         $ExecTime.Milliseconds.ToString("D3"),
         ")",
-        $ResetForeground,
+        $PSStyle.Foreground.White,
         $Branch,
         $Venv,
         "`n",
