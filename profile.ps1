@@ -215,7 +215,18 @@ function Update-System {
         }
 
         if ($Applications.IsPresent || $All.IsPresent) {
-            winget upgrade --all --silent
+            switch ($global:OperatingSystem) {
+                ([OS]::Windows) {
+                    winget upgrade --all --silent
+                }
+                ([OS]::Linux) {
+                    apt-get update
+                    apt-get full-upgrade --yes
+                }
+                ([OS]::MacOS) {
+                    brew upgrade
+                }
+            }
         }
 
         if ($Modules.IsPresent || $All.IsPresent) {
