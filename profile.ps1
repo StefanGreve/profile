@@ -19,13 +19,13 @@ $global:ProfileVersion = [PSCustomObject]@{
 }
 
 $global:OperatingSystem = if ([OperatingSystem]::IsWindows()) {
-    "Windows"
+    [OS]::Windows
 } elseif ([OperatingSystem]::IsLinux()) {
-    "Linux"
+    [OS]::Linux
 } elseif ([OperatingSystem]::IsMacOS()) {
-    "MacOS"
+    [OS]::MacOS
 } else {
-    "Other"
+    [OS]::Unknown
 }
 
 [CultureInfo]::CurrentCulture = "ja-JP"
@@ -127,6 +127,14 @@ Set-PSReadLineKeyHandler -Key ')', ']', '}' -BriefDescription SmartClosingBraces
 #endregion configurations
 
 #regions enums
+
+enum OS
+{
+    Unknown = 0
+    Windows = 1
+    Linux = 2
+    MacOS = 3
+}
 
 enum Month
 {
@@ -436,7 +444,7 @@ function Get-Battery {
     param()
 
     Write-Output $(switch ($global:OperatingSystem) {
-        "Windows" {
+        ([OS]::Windows) {
             $Win32Battery = Get-CimInstance -ClassName Win32_Battery
             $ChargeRemaining = $Win32Battery.EstimatedChargeRemaining
             # An unhandled 32-bit integer overflow is the reason why Win32_Battery
@@ -468,10 +476,10 @@ function Get-Battery {
 
             [Battery]::new($ChargeRemaining, $Runtime, $IsCharging, $Status)
         }
-        "Linux" {
+        ([OS]::Linux) {
             # TODO
         }
-        "MacOS"  {
+        ([OS]::MacOS) {
             # TODO
         }
     })
@@ -841,15 +849,15 @@ function Set-PowerState {
 
     if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, $PowerState)) {
         switch ($global:OperatingSystem) {
-            "Windows" {
+            ([OS]::Windows) {
                 Add-Type -AssemblyName System.Windows.Forms
                 $PowerState = $PowerState -eq "Hibernate" ? [System.Windows.Forms.PowerState]::Hibernate : [System.Windows.Forms.PowerState]::Suspend
                 [System.Windows.Forms.Application]::SetSuspendState($PowerState, $Force, $DisableWake)
             }
-            "Linux" {
+            ([OS]::Linux) {
                 systemctl $State.ToLower() $($Force ? "--force" : [string]::Empty)
             }
-            "MacOS" {
+            ([OS]::MacOS) {
                 sudo pmset -a hibernatemode $($State -eq "Hibernate" ? 25 : 3)
                 pmset sleepnow
             }
@@ -871,7 +879,7 @@ function Set-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
-    $Token = $global:OperatingSystem -eq "Windows" ? ";" : ":"
+    $Token = $global:OperatingSystem -eq [OS]::Windows ? ";" : ":"
 
     $OldValue = [Environment]::GetEnvironmentVariable($Key, $Scope)
     $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
@@ -892,7 +900,7 @@ function Get-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
-    $Token = $global:OperatingSystem -eq "Windows" ? ";" : ":"
+    $Token = $global:OperatingSystem -eq [OS]::Windows ? ";" : ":"
 
     $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope) -Split $Token
     Write-Output $EnvironmentVariables
@@ -911,7 +919,7 @@ function Remove-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
     )
 
-    $Token = $global:OperatingSystem -eq "Windows" ? ";" : ":"
+    $Token = $global:OperatingSystem -eq [OS]::Windows ? ";" : ":"
 
     $RemoveValue = $Key -eq "PATH" ? $([Environment]::GetEnvironmentVariable("PATH", $Scope) -Split $Token | Where-Object { $_ -ne $Value }) -join $Token : $null
 
@@ -1140,10 +1148,10 @@ function Export-Branch {
         $InfoMessage = "This computer will shutdown automatically in $ShutdownDelay seconds . . ."
 
         switch ($global:OperatingSystem) {
-            "Windows" {
+            ([OS]::Windows) {
                 shutdown.exe /s /f /t $ShutdownDelay /d P:4:1 /c $([string]::Format("{0}`n`n{1}", $ExitMessage, $InfoMessage))
              }
-            "Linux" {
+            ([OS]::Linux) {
                 Write-Host $ExitMessage -ForegroundColor Red
                 Write-Host $InfoMessage
                 sleep $ShutdownDelay && systemctl poweroff
@@ -1228,18 +1236,24 @@ function prompt {
         [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Magenta, [Path]::GetFileName($env:VIRTUAL_ENV), $PSStyle.Foreground.White)
     }
 
-    switch ($global:OperatingSystem) {
-        "Windows" {
-            $UserName = $env:USERNAME
-            $HostName = $env:COMPUTERNAME
+    $Computer = switch ($global:OperatingSystem) {
+        ([OS]::Windows) {
+            [PSCustomObject]@{
+                UserName = $env:USERNAME
+                HostName = $env:COMPUTERNAME
+            }
         }
-        "Linux" {
-            $UserName = $env:USER
-            $HostName = hostname
+        ([OS]::Linux) {
+            [PSCustomObject]@{
+                UserName = $env:USER
+                HostName = hostname
+            }
         }
-        "MacOS" {
-            $UserName = id -un
-            $HostName = scutil --get ComputerName
+        ([OS]::MacOS) {
+            [PSCustomObject]@{
+                UserName = id -un
+                HostName = scutil --get ComputerName
+            }
         }
     }
 
@@ -1248,10 +1262,10 @@ function prompt {
     return [System.Collections.ArrayList]@(
         "[",
         $PSStyle.Foreground.BrightCyan,
-        $UserName,
+        $Computer.UserName,
         $PSStyle.Foreground.White,
         "@",
-        $HostName,
+        $Computer.HostName,
         " ",
         $PSStyle.Foreground.Green,
         [DirectoryInfo]::new($ExecutionContext.SessionState.Path.CurrentLocation).BaseName,
