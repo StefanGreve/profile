@@ -1223,15 +1223,30 @@ function prompt {
         [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Magenta, [Path]::GetFileName($env:VIRTUAL_ENV), $ResetForeground)
     }
 
+    switch ($global:OperatingSystem) {
+        "Windows" {
+            $UserName = $env:USERNAME
+            $HostName = $env:COMPUTERNAME
+        }
+        "Linux" {
+            $UserName = $env:USER
+            $HostName = hostname
+        }
+        "MacOS" {
+            $UserName = id -un
+            $HostName = scutil --get ComputerName
+        }
+    }
+
     Start-DailyTranscript | Out-Null
 
     return [System.Collections.ArrayList]@(
         "[",
         $PSStyle.Foreground.BrightCyan,
-        $env:USERNAME,
+        $UserName,
         $ResetForeground,
         "@",
-        $env:COMPUTERNAME,
+        $HostName,
         " ",
         $PSStyle.Foreground.Green,
         [DirectoryInfo]::new($ExecutionContext.SessionState.Path.CurrentLocation).BaseName,
