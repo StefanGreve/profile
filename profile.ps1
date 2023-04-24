@@ -39,7 +39,7 @@ if ([OperatingSystem]::IsWindows()) {
     $global:WGRC = "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\settings.json"
 
     if (Get-Command "pwshfetch-test-1" -ErrorAction SilentlyContinue) {
-        Set-Alias -Name winfetch -Value pwshfetch-test-1
+        Set-Alias -Name neofetch -Value pwshfetch-test-1
     }
 
     $global:IsAdmin = ([Principal.WindowsPrincipal][Principal.WindowsIdentity]::GetCurrent()).IsInRole([Principal.WindowsBuiltInRole]::Administrator)
