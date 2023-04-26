@@ -28,6 +28,58 @@ Enable storing daily transcript:
 Set-EnvironmentVariable -Key PROFILE_ENABLE_DAILYTRANSCRIPTS -Value 1
 ```
 
+## Enums
+
+- `OS`
+- `Month`
+
+## Cmdlets
+
+### System Maintenance
+
+- `Update-Configuration`
+- `Update-System`
+
+### Utilities
+
+- `Get-Battery`
+- `Get-Calendar`
+- `Set-PowerState`
+- `Set-EnvironmentVariable`
+- `Get-EnvironmentVariable`
+- `Get-WorldClock`
+- `Remove-EnvironmentVariable`
+- `Start-DailyTranscript`
+- `Start-ElevatedConsole`
+- `Start-Timer`
+
+### Development
+
+- `Export-Branch`
+- `Get-NameOf`
+- `Get-ExecutionTime`
+- `Measure-ScriptBlock`
+- `New-DotnetProject`
+- `Stop-Work`
+
+### File Extensions
+
+- `Copy-FilePath`
+- `Export-Icon`
+- `Get-FileCount`
+- `Get-FileSize`
+- `Get-FilePath`
+
+### Cryptography
+
+- `Get-Salt`
+- `Get-StringHash`
+- `Get-RandomPassword`
+
+### Miscellaneous
+
+- `Get-XCKD`
+
 ## Remarks
 
 Some optional external dependencies may be added over time, although they will never
