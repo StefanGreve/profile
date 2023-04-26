@@ -619,6 +619,7 @@ function Get-RandomPassword {
 }
 
 function New-DotnetProject {
+    [OutputType([void])]
     param(
         [Parameter(Mandatory)]
         [string] $Name,
@@ -642,19 +643,19 @@ function New-DotnetProject {
         Push-Location $OutputDirectory
     }
     process {
-        dotnet new sln
         dotnet new $Template --name $Name --language $Language --output $RootDirectory
         dotnet new gitignore --output $OutputDirectory
         dotnet new editorconfig --output $OutputDirectory
-        dotnet sln add $Name
-        dotnet restore $OutputDirectory
-        dotnet build $OutputDirectory
+        dotnet restore $RootDirectory
+        dotnet build $RootDirectory
 
         $Readme = New-Item -ItemType File -Name "README.md" -Path $OutputDirectory
         Set-Content $Readme -Value "# $Name"
 
-        $Packages | ForEach-Object {
-            dotnet add $RootDirectory package $_
+        if ($PSBoundParameters.ContainsKey("Packages")) {
+            $Packages | ForEach-Object {
+                dotnet add $RootDirectory package $_
+            }
         }
 
         if ($InitRepository.IsPresent) {
@@ -663,7 +664,7 @@ function New-DotnetProject {
             git commit -m "Init commit"
         }
     }
-    end {
+    clean {
         Pop-Location
     }
 }
