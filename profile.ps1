@@ -1206,7 +1206,7 @@ function Start-DailyTranscript {
 
 function Get-ExecutionTime {
     $History = Get-History
-    $ExecTime = if ($History) { $History[-1].EndExecutionTime - $History[-1].StartExecutionTime } else { New-TimeSpan }
+    $ExecTime = $History ? ($History[-1].EndExecutionTime - $History[-1].StartExecutionTime) : (New-TimeSpan)
     Write-Output $ExecTime
 }
 
