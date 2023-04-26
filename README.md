@@ -28,12 +28,8 @@ Enable storing daily transcript:
 Set-EnvironmentVariable -Key PROFILE_ENABLE_DAILYTRANSCRIPTS -Value 1
 ```
 
-## Enums
-
-- `OS`
-- `Month`
-
-## Cmdlets
+<details>
+<summary>Cmdlets</summary>
 
 ### System Maintenance
 
@@ -69,6 +65,7 @@ Set-EnvironmentVariable -Key PROFILE_ENABLE_DAILYTRANSCRIPTS -Value 1
 - `Get-FileCount`
 - `Get-FileSize`
 - `Get-FilePath`
+- `Get-MaxPathLength`
 
 ### Cryptography
 
@@ -79,6 +76,13 @@ Set-EnvironmentVariable -Key PROFILE_ENABLE_DAILYTRANSCRIPTS -Value 1
 ### Miscellaneous
 
 - `Get-XCKD`
+
+### Enums
+
+- `OS`
+- `Month`
+
+</details>
 
 ## Remarks
 
