@@ -416,6 +416,31 @@ function Copy-FilePath {
     }
 }
 
+function Get-MaxPathLength {
+    process {
+        switch ($global:OperatingSystem) {
+            ([OS]::Windows) {
+                # On Windows, file names cannot exceed 256 bytes. Starting in Windows 10 (version 1607), the limit max
+                # path limit can be extended via setting this registry key to a value of 1 (property type: DWORD)
+                # https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry
+                $FileSystem = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"
+                $MaxPathLength = $FileSystem.LongPathsEnabled -eq 1 ? 32767 : 260
+                Write-Output $MaxPathLength
+             }
+            ([OS]::Linux) {
+                # On virtually all file systems, file names are restricted to 255 bytes in length (cf. NAME_MAX).
+                # PATH_MAX equals 4096 bytes in Unix environments, though Unix can deal with longer file paths by using
+                # relative paths or symbolic links. To convert bytes to characters, you need to know the encoding ahead
+                # of time. For example, an ASCII or Unicode character in UTF-8 is 8 bits (1 byte), while a Unicode character
+                # in UTF-16 may take between 16 bits (2 bytes) and 32 bits (4 bytes) in memory, whereas UTF-32 encoded
+                # Unicode characters always require 32 bits (4 bytes) of memory
+                $MaxPathLength = getconf PATH_MAX /
+                Write-Output $MaxPathLength
+            }
+        }
+    }
+}
+
 class Battery
 {
     [int] $ChargeRemaining
