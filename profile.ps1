@@ -45,6 +45,10 @@ if ([OperatingSystem]::IsWindows()) {
     $global:IsAdmin = ([Principal.WindowsPrincipal][Principal.WindowsIdentity]::GetCurrent()).IsInRole([Principal.WindowsBuiltInRole]::Administrator)
 }
 
+if ([OperatingSystem]::IsLinux()) {
+    $global:IsAdmin = $EUID -eq 0
+}
+
 $global:Desktop = [Environment]::GetFolderPath("Desktop")
 $global:Documents = [Environment]::GetFolderPath("MyDocuments")
 $global:Natural = { [Regex]::Replace($_.Name, '\d+', { $Args[0].Value.PadLeft(20) }) }
