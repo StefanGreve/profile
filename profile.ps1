@@ -1,4 +1,5 @@
 using namespace System
+using namespace System.Collections.Generic
 using namespace System.Diagnostics
 using namespace System.Globalization
 using namespace System.IO
@@ -1014,7 +1015,7 @@ function Measure-ScriptBlock {
 
     begin {
         $StopWatch = [Stopwatch]::new()
-        $Measurements = New-Object System.Collections.Generic.List[System.TimeSpan]
+        $Measurements = New-Object List[System.TimeSpan]
 
         if (![Stopwatch]::IsHighResolution) {
             Write-Error -Message "Your hardware doesn't support the high resolution counter required to run this test" -Category DeviceError -ErrorAction Stop
