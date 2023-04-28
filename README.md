@@ -22,14 +22,18 @@ New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $(Resolve-Path profile
 
 ## Configuration
 
-Enable storing daily transcript:
+Some additional features can be turned on by setting their respective environment
+variables.
 
 ```powershell
+# enable storing daily terminal transcription in the documents folder
 Set-EnvironmentVariable -Key PROFILE_ENABLE_DAILYTRANSCRIPTS -Value 1
 ```
 
+## Features
+
 <details>
-<summary>Cmdlets</summary>
+<summary>Content</summary>
 
 ### System Maintenance
 
@@ -66,6 +70,7 @@ Set-EnvironmentVariable -Key PROFILE_ENABLE_DAILYTRANSCRIPTS -Value 1
 - `Get-FileSize`
 - `Get-FilePath`
 - `Get-MaxPathLength`
+- `Remove-Directory`
 
 ### Cryptography
 
@@ -86,8 +91,8 @@ Set-EnvironmentVariable -Key PROFILE_ENABLE_DAILYTRANSCRIPTS -Value 1
 
 ## Remarks
 
-Some optional external dependencies may be added over time, although they will never
-interfere with the core features of this profile.
+While this script attempts to be as lightweight as possible, a few externals are
+required to run some of the Cmdlets from this profile.
 
 <details>
 <summary>Additional Features</summary>
@@ -108,6 +113,7 @@ requires [`inkscape`](https://inkscape.org/) for the actual image conversion.
 ### Get-Calendar
 
 Thin wrapper over Python's built-in `calendar` module to pretty print a calendar.
-Notice that this Cmdlet does *not* emit a PowerShell object.
+Notice that this Cmdlet does *not* emit a PowerShell object. The behavior of this
+Cmdlet is subject to future changes, see alo: [issue #9](https://github.com/StefanGreve/profile/issues/9).
 
 </details>
