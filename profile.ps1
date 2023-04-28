@@ -402,6 +402,33 @@ function Get-FileCount {
     }
 }
 
+function Remove-Directory {
+    [Alias("rd")]
+    [OutputType([void])]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "High")]
+    param(
+        [Parameter(Position = 0, ValueFromPipeline, Mandatory)]
+        [string[]] $Path
+    )
+
+    process {
+        foreach ($p in $Path) {
+            $Directory = [Path]::Combine($PWD.Path, $p)
+
+            if (![Directory]::Exists($Directory)) {
+                Write-Warning "Not a directory: $Directory"
+                continue
+            }
+
+            if ($PSCmdlet.ShouldProcess($Directory, "Remove $Path")) {
+                $SystemEntries = [Directory]::GetFileSystemEntries($Directory, "*.*", [SearchOption]::AllDirectories)
+                Remove-Item -Recurse -Force -Path $Directory
+                Write-Verbose "Removed $($SystemEntries.Count) file(s) in $Directory"
+            }
+        }
+    }
+}
+
 function Copy-FilePath {
     [Alias("copy")]
     [OutputType([void])]
