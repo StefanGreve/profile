@@ -47,7 +47,7 @@ if ([OperatingSystem]::IsWindows()) {
 }
 
 if ([OperatingSystem]::IsLinux()) {
-    $global:IsAdmin = $EUID -eq 0
+    $global:IsAdmin = $(id -u) -eq 0
 }
 
 $global:Desktop = [Environment]::GetFolderPath("Desktop")
