@@ -391,7 +391,7 @@ function Get-FileCount {
         [Parameter(Position = 0, Mandatory, ValueFromPipeline)]
         [string[]] $Path,
 
-        [SearchOption] $SearchOption = [SearchOption]::TopDirectoryOnly
+        [SearchOption] $SearchOption = [SearchOption]::AllDirectories
     )
 
     process {
