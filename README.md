@@ -23,12 +23,13 @@ New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $(Resolve-Path profile
 ## Configuration
 
 Some additional features can be turned on by setting their respective environment
-variables.
+variables:
 
-```powershell
-# enable storing daily terminal transcription in the documents folder
-Set-EnvironmentVariable -Key PROFILE_ENABLE_DAILYTRANSCRIPTS -Value 1
-```
+- `PROFILE_ENABLE_DAILY_TRANSCRIPTS`: Set this environment variable to `1` to
+  enable automatic transcript storing in `MyDocuments\Transcripts` (off by default.)
+
+- `PROFILE_LOAD_CUSTOM_SCRIPTS`: Declare a single path to dot-source Powershell
+  scripts from on profile launch.
 
 ## Features
 

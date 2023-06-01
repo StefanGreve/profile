@@ -32,6 +32,12 @@ $global:OperatingSystem = if ([OperatingSystem]::IsWindows()) {
 [CultureInfo]::CurrentCulture = "ja-JP"
 $PSDefaultParameterValues["*:Encoding"] = "utf8"
 
+if ($env:PROFILE_LOAD_CUSTOM_SCRIPTS) {
+    Get-ChildItem -Path $env:PROFILE_LOAD_CUSTOM_SCRIPTS -Filter "*.ps1" | ForEach-Object {
+        . $_.FullName
+    }
+}
+
 if ([OperatingSystem]::IsWindows()) {
     $global:PSRC = "$HOME\Documents\PowerShell\profile.ps1"
     $global:VSRC = "$env:APPDATA\Code\User\settings.json"
@@ -1257,7 +1263,7 @@ function Start-DailyTranscript {
         $Filename = [Path]::Combine($Transcripts, [string]::Format("{0}.txt", [datetime]::Now.ToString("yyyy-MM-dd")))
     }
     process {
-        if ($env:PROFILE_ENABLE_DAILYTRANSCRIPTS -eq 1) {
+        if ($env:PROFILE_ENABLE_DAILY_TRANSCRIPTS -eq 1) {
             Write-Verbose "Started a new transcript, output file is $Filename"
             Start-Transcript -Path $Filename -Append -IncludeInvocationHeader -UseMinimalHeader | Out-Null
         }
