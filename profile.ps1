@@ -1,4 +1,5 @@
 using namespace System
+using namespace System.Collections.Generic
 using namespace System.Diagnostics
 using namespace System.Globalization
 using namespace System.IO
@@ -14,8 +15,8 @@ using namespace Microsoft.PowerShell
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 4
-    Patch = 1
+    Minor = 5
+    Patch = 0
 }
 
 $global:OperatingSystem = if ([OperatingSystem]::IsWindows()) {
@@ -31,6 +32,12 @@ $global:OperatingSystem = if ([OperatingSystem]::IsWindows()) {
 [CultureInfo]::CurrentCulture = "ja-JP"
 $PSDefaultParameterValues["*:Encoding"] = "utf8"
 
+if ($env:PROFILE_LOAD_CUSTOM_SCRIPTS) {
+    Get-ChildItem -Path $env:PROFILE_LOAD_CUSTOM_SCRIPTS -Filter "*.ps1" | ForEach-Object {
+        . $_.FullName
+    }
+}
+
 if ([OperatingSystem]::IsWindows()) {
     $global:PSRC = "$HOME\Documents\PowerShell\profile.ps1"
     $global:VSRC = "$env:APPDATA\Code\User\settings.json"
@@ -43,6 +50,10 @@ if ([OperatingSystem]::IsWindows()) {
     }
 
     $global:IsAdmin = ([Principal.WindowsPrincipal][Principal.WindowsIdentity]::GetCurrent()).IsInRole([Principal.WindowsBuiltInRole]::Administrator)
+}
+
+if ([OperatingSystem]::IsLinux()) {
+    $global:IsAdmin = $(id -u) -eq 0
 }
 
 $global:Desktop = [Environment]::GetFolderPath("Desktop")
@@ -215,7 +226,18 @@ function Update-System {
         }
 
         if ($Applications.IsPresent || $All.IsPresent) {
-            winget upgrade --all --silent
+            switch ($global:OperatingSystem) {
+                ([OS]::Windows) {
+                    winget upgrade --all --silent
+                }
+                ([OS]::Linux) {
+                    apt-get update
+                    apt-get full-upgrade --yes
+                }
+                ([OS]::MacOS) {
+                    brew upgrade
+                }
+            }
         }
 
         if ($Modules.IsPresent || $All.IsPresent) {
@@ -375,13 +397,40 @@ function Get-FileCount {
         [Parameter(Position = 0, Mandatory, ValueFromPipeline)]
         [string[]] $Path,
 
-        [SearchOption] $SearchOption = [SearchOption]::TopDirectoryOnly
+        [SearchOption] $SearchOption = [SearchOption]::AllDirectories
     )
 
     process {
         foreach ($p in $Path) {
             $FileCount = [Directory]::GetFiles([Path]::Combine($PWD, $p), "*", $SearchOption).Length
             Write-Output $FileCount
+        }
+    }
+}
+
+function Remove-Directory {
+    [Alias("rd")]
+    [OutputType([void])]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "High")]
+    param(
+        [Parameter(Position = 0, ValueFromPipeline, Mandatory)]
+        [string[]] $Path
+    )
+
+    process {
+        foreach ($p in $Path) {
+            $Directory = [Path]::Combine($PWD.Path, $p)
+
+            if (![Directory]::Exists($Directory)) {
+                Write-Warning "Not a directory: $Directory"
+                continue
+            }
+
+            if ($PSCmdlet.ShouldProcess($Directory, "Remove $Path")) {
+                $SystemEntries = [Directory]::GetFileSystemEntries($Directory, "*.*", [SearchOption]::AllDirectories)
+                Remove-Item -Recurse -Force -Path $Directory
+                Write-Verbose "Removed $($SystemEntries.Count) file(s) in $Directory"
+            }
         }
     }
 }
@@ -397,6 +446,31 @@ function Copy-FilePath {
     process {
         $FullName = $(Get-Item $Path).FullName
         Set-Clipboard -Value $FullName
+    }
+}
+
+function Get-MaxPathLength {
+    process {
+        switch ($global:OperatingSystem) {
+            ([OS]::Windows) {
+                # On Windows, file names cannot exceed 256 bytes. Starting in Windows 10 (version 1607), the limit max
+                # path limit can be extended via setting this registry key to a value of 1 (property type: DWORD)
+                # https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry
+                $FileSystem = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"
+                $MaxPathLength = $FileSystem.LongPathsEnabled -eq 1 ? 32767 : 260
+                Write-Output $MaxPathLength
+             }
+            ([OS]::Linux) {
+                # On virtually all file systems, file names are restricted to 255 bytes in length (cf. NAME_MAX).
+                # PATH_MAX equals 4096 bytes in Unix environments, though Unix can deal with longer file paths by using
+                # relative paths or symbolic links. To convert bytes to characters, you need to know the encoding ahead
+                # of time. For example, an ASCII or Unicode character in UTF-8 is 8 bits (1 byte), while a Unicode character
+                # in UTF-16 may take between 16 bits (2 bytes) and 32 bits (4 bytes) in memory, whereas UTF-32 encoded
+                # Unicode characters always require 32 bits (4 bytes) of memory
+                $MaxPathLength = getconf PATH_MAX /
+                Write-Output $MaxPathLength
+            }
+        }
     }
 }
 
@@ -603,6 +677,7 @@ function Get-RandomPassword {
 }
 
 function New-DotnetProject {
+    [OutputType([void])]
     param(
         [Parameter(Mandatory)]
         [string] $Name,
@@ -626,19 +701,19 @@ function New-DotnetProject {
         Push-Location $OutputDirectory
     }
     process {
-        dotnet new sln
         dotnet new $Template --name $Name --language $Language --output $RootDirectory
         dotnet new gitignore --output $OutputDirectory
         dotnet new editorconfig --output $OutputDirectory
-        dotnet sln add $Name
-        dotnet restore $OutputDirectory
-        dotnet build $OutputDirectory
+        dotnet restore $RootDirectory
+        dotnet build $RootDirectory
 
         $Readme = New-Item -ItemType File -Name "README.md" -Path $OutputDirectory
         Set-Content $Readme -Value "# $Name"
 
-        $Packages | ForEach-Object {
-            dotnet add $RootDirectory package $_
+        if ($PSBoundParameters.ContainsKey("Packages")) {
+            $Packages | ForEach-Object {
+                dotnet add $RootDirectory package $_
+            }
         }
 
         if ($InitRepository.IsPresent) {
@@ -647,7 +722,7 @@ function New-DotnetProject {
             git commit -m "Init commit"
         }
     }
-    end {
+    clean {
         Pop-Location
     }
 }
@@ -876,12 +951,14 @@ function Set-EnvironmentVariable {
         [string] $Value,
 
         [Parameter(Position = 2)]
-        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
+        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process,
+
+        [switch] $Override
     )
 
-    $Token = $global:OperatingSystem -eq [OS]::Windows ? ";" : ":"
+    $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
 
-    $OldValue = [Environment]::GetEnvironmentVariable($Key, $Scope)
+    $OldValue = $Override.IsPresent ? [string]::Empty : [Environment]::GetEnvironmentVariable($Key, $Scope)
     $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
 
     if ($PSCmdlet.ShouldProcess("Adding $Value to $Key", "Are you sure you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
@@ -897,10 +974,10 @@ function Get-EnvironmentVariable {
         [string] $Key = "PATH",
 
         [Parameter(Position = 1)]
-        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
+        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process
     )
 
-    $Token = $global:OperatingSystem -eq [OS]::Windows ? ";" : ":"
+    $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
 
     $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope) -Split $Token
     Write-Output $EnvironmentVariables
@@ -913,17 +990,25 @@ function Remove-EnvironmentVariable {
         [Parameter(Position = 0, Mandatory)]
         [string] $Key,
 
-        [Parameter()]
+        [Parameter(Position = 1)]
         [string] $Value,
 
-        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
+        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process
     )
 
-    $Token = $global:OperatingSystem -eq [OS]::Windows ? ";" : ":"
+    $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
 
-    $RemoveValue = $Key -eq "PATH" ? $([Environment]::GetEnvironmentVariable("PATH", $Scope) -Split $Token | Where-Object { $_ -ne $Value }) -join $Token : $null
+    $Title = "Remove '$Value' from '$Key'"
+    $Description = "Are you sure that you want to remove '$Value' from the environment variable '$Key'?"
+    $RemoveValue = $([Environment]::GetEnvironmentVariable($Key, $Scope) -Split $Token | Where-Object { $_ -ne $Value }) -join $Token
 
-    if ($PSCmdlet.ShouldProcess("Removing value '$Value' from environment variable '$Key'", "Are you sure you want to remove '$Value' from the environment variable '$Key'?", "Remove '$Value' from '$Key'")) {
+    if (!$PSBoundParameters.ContainsKey("Value")) {
+        $Title = "Remove all values in '$Key'"
+        $Description = "Are you sure that you want to remove the environment variable '$Key'?"
+        $RemoveValue = $null
+    }
+
+    if ($PSCmdlet.ShouldProcess($null, $Description, $Title)) {
         [Environment]::SetEnvironmentVariable($Key, $RemoveValue, $Scope)
     }
 }
@@ -999,7 +1084,7 @@ function Measure-ScriptBlock {
 
     begin {
         $StopWatch = [Stopwatch]::new()
-        $Measurements = New-Object System.Collections.Generic.List[System.TimeSpan]
+        $Measurements = New-Object List[System.TimeSpan]
 
         if (![Stopwatch]::IsHighResolution) {
             Write-Error -Message "Your hardware doesn't support the high resolution counter required to run this test" -Category DeviceError -ErrorAction Stop
@@ -1178,7 +1263,7 @@ function Start-DailyTranscript {
         $Filename = [Path]::Combine($Transcripts, [string]::Format("{0}.txt", [datetime]::Now.ToString("yyyy-MM-dd")))
     }
     process {
-        if ($env:PROFILE_ENABLE_DAILYTRANSCRIPTS -eq 1) {
+        if ($env:PROFILE_ENABLE_DAILY_TRANSCRIPTS -eq 1) {
             Write-Verbose "Started a new transcript, output file is $Filename"
             Start-Transcript -Path $Filename -Append -IncludeInvocationHeader -UseMinimalHeader | Out-Null
         }
@@ -1190,7 +1275,7 @@ function Start-DailyTranscript {
 
 function Get-ExecutionTime {
     $History = Get-History
-    $ExecTime = if ($History) { $History[-1].EndExecutionTime - $History[-1].StartExecutionTime } else { New-TimeSpan }
+    $ExecTime = $History ? ($History[-1].EndExecutionTime - $History[-1].StartExecutionTime) : (New-TimeSpan)
     Write-Output $ExecTime
 }
 
@@ -1201,7 +1286,7 @@ function Get-ExecutionTime {
 $EnvironmentVariableKeyCompleter = {
     param($Command, $Parameter, $WordToComplete, $CommandAst, $FakeBoundParameters)
 
-    $Scope = $FakeBoundParameters.ContainsKey("Scope") ? $FakeBoundParameters.Scope : [EnvironmentVariableTarget]::User
+    $Scope = $FakeBoundParameters.ContainsKey("Scope") ? $FakeBoundParameters.Scope : [EnvironmentVariableTarget]::Process
     [Environment]::GetEnvironmentVariables($Scope).Keys | ForEach-Object { [CompletionResult]::new($_) }
 }
 

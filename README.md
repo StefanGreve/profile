@@ -22,24 +22,85 @@ New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $(Resolve-Path profile
 
 ## Configuration
 
-Enable storing daily transcript:
+Some additional features can be turned on by setting their respective environment
+variables:
 
-```powershell
-Set-EnvironmentVariable -Key PROFILE_ENABLE_DAILYTRANSCRIPTS -Value 1
-```
+- `PROFILE_ENABLE_DAILY_TRANSCRIPTS`: Set this environment variable to `1` to
+  enable automatic transcript storing in `MyDocuments\Transcripts` (off by default.)
+
+- `PROFILE_LOAD_CUSTOM_SCRIPTS`: Declare a single path to dot-source Powershell
+  scripts from on profile launch.
+
+## Features
+
+<details>
+<summary>Content</summary>
+
+### System Maintenance
+
+- `Update-Configuration`
+- `Update-System`
+
+### Utilities
+
+- `Get-Battery`
+- `Get-Calendar`
+- `Set-PowerState`
+- `Set-EnvironmentVariable`
+- `Get-EnvironmentVariable`
+- `Get-WorldClock`
+- `Remove-EnvironmentVariable`
+- `Start-DailyTranscript`
+- `Start-ElevatedConsole`
+- `Start-Timer`
+
+### Development
+
+- `Export-Branch`
+- `Get-NameOf`
+- `Get-ExecutionTime`
+- `Measure-ScriptBlock`
+- `New-DotnetProject`
+- `Stop-Work`
+
+### File Extensions
+
+- `Copy-FilePath`
+- `Export-Icon`
+- `Get-FileCount`
+- `Get-FileSize`
+- `Get-FilePath`
+- `Get-MaxPathLength`
+- `Remove-Directory`
+
+### Cryptography
+
+- `Get-Salt`
+- `Get-StringHash`
+- `Get-RandomPassword`
+
+### Miscellaneous
+
+- `Get-XCKD`
+
+### Enums
+
+- `OS`
+- `Month`
+
+</details>
 
 ## Remarks
 
-Some optional external dependencies may be added over time, although they will never
-interfere with the core features of this profile.
+While this script attempts to be as lightweight as possible, a few externals are
+required to run some of the Cmdlets from this profile.
 
 <details>
 <summary>Additional Features</summary>
 
 ### Winfetch
 
-Creates an alias for [`winfetch`](https://github.com/kiedtl/winfetch) as a faster
-replacement for `neofetch` on Windows.
+Creates an alias for `neofetch` using https://github.com/kiedtl/winfetch on Windows.
 
 ```powershell
 Install-Script -Name pwshfetch-test-1 -Scope CurrentUser
@@ -53,6 +114,7 @@ requires [`inkscape`](https://inkscape.org/) for the actual image conversion.
 ### Get-Calendar
 
 Thin wrapper over Python's built-in `calendar` module to pretty print a calendar.
-Notice that this Cmdlet does *not* emit a PowerShell object.
+Notice that this Cmdlet does *not* emit a PowerShell object. The behavior of this
+Cmdlet is subject to future changes, see alo: [issue #9](https://github.com/StefanGreve/profile/issues/9).
 
 </details>
