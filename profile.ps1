@@ -945,7 +945,7 @@ function Set-EnvironmentVariable {
         [string] $Value,
 
         [Parameter(Position = 2)]
-        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
+        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process
     )
 
     $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
@@ -966,7 +966,7 @@ function Get-EnvironmentVariable {
         [string] $Key = "PATH",
 
         [Parameter(Position = 1)]
-        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
+        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process
     )
 
     $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
@@ -982,17 +982,25 @@ function Remove-EnvironmentVariable {
         [Parameter(Position = 0, Mandatory)]
         [string] $Key,
 
-        [Parameter()]
+        [Parameter(Position = 1)]
         [string] $Value,
 
-        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::User
+        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process
     )
 
     $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
 
-    $RemoveValue = $Key -eq "PATH" ? $([Environment]::GetEnvironmentVariable("PATH", $Scope) -Split $Token | Where-Object { $_ -ne $Value }) -join $Token : $null
+    $Title = "Remove '$Value' from '$Key'"
+    $Description = "Are you sure that you want to remove '$Value' from the environment variable '$Key'?"
+    $RemoveValue = $([Environment]::GetEnvironmentVariable($Key, $Scope) -Split $Token | Where-Object { $_ -ne $Value }) -join $Token
 
-    if ($PSCmdlet.ShouldProcess("Removing value '$Value' from environment variable '$Key'", "Are you sure you want to remove '$Value' from the environment variable '$Key'?", "Remove '$Value' from '$Key'")) {
+    if (!$PSBoundParameters.ContainsKey("Value")) {
+        $Title = "Remove all values in '$Key'"
+        $Description = "Are you sure that you want to remove the environment variable '$Key'?"
+        $RemoveValue = $null
+    }
+
+    if ($PSCmdlet.ShouldProcess($null, $Description, $Title)) {
         [Environment]::SetEnvironmentVariable($Key, $RemoveValue, $Scope)
     }
 }
