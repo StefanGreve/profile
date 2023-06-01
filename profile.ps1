@@ -945,12 +945,14 @@ function Set-EnvironmentVariable {
         [string] $Value,
 
         [Parameter(Position = 2)]
-        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process
+        [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process,
+
+        [switch] $Override
     )
 
     $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
 
-    $OldValue = [Environment]::GetEnvironmentVariable($Key, $Scope)
+    $OldValue = $Override.IsPresent ? [string]::Empty : [Environment]::GetEnvironmentVariable($Key, $Scope)
     $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
 
     if ($PSCmdlet.ShouldProcess("Adding $Value to $Key", "Are you sure you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
