@@ -1280,7 +1280,7 @@ function Get-ExecutionTime {
 $EnvironmentVariableKeyCompleter = {
     param($Command, $Parameter, $WordToComplete, $CommandAst, $FakeBoundParameters)
 
-    $Scope = $FakeBoundParameters.ContainsKey("Scope") ? $FakeBoundParameters.Scope : [EnvironmentVariableTarget]::User
+    $Scope = $FakeBoundParameters.ContainsKey("Scope") ? $FakeBoundParameters.Scope : [EnvironmentVariableTarget]::Process
     [Environment]::GetEnvironmentVariables($Scope).Keys | ForEach-Object { [CompletionResult]::new($_) }
 }
 
