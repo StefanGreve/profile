@@ -419,17 +419,19 @@ function Remove-Directory {
 
     process {
         foreach ($p in $Path) {
-            $Directory = [Path]::Combine($PWD.Path, $p)
+            $Directory = Join-Path -Path $PWD -ChildPath $p -Resolve
 
             if (![Directory]::Exists($Directory)) {
                 Write-Warning "Not a directory: $Directory"
                 continue
             }
 
-            if ($PSCmdlet.ShouldProcess($Directory, "Remove $Path")) {
-                $SystemEntries = [Directory]::GetFileSystemEntries($Directory, "*.*", [SearchOption]::AllDirectories)
+            $SystemEntries = [Directory]::GetFileSystemEntries($Directory, "*.*", [SearchOption]::AllDirectories)
+            $FileCount = $SystemEntries.Count
+
+            if ($PSCmdlet.ShouldProcess($Directory, "Remove $FileCount files(s)?")) {
                 Remove-Item -Recurse -Force -Path $Directory
-                Write-Verbose "Removed $($SystemEntries.Count) file(s) in $Directory"
+                Write-Verbose "Removed $FileCount file(s) in $Directory"
             }
         }
     }
