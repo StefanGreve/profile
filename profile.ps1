@@ -40,10 +40,6 @@ if ($env:PROFILE_LOAD_CUSTOM_SCRIPTS) {
 
 if ([OperatingSystem]::IsWindows()) {
     $global:PSRC = "$HOME\Documents\PowerShell\profile.ps1"
-    $global:VSRC = "$env:APPDATA\Code\User\settings.json"
-    $global:VIRC = "$env:LOCALAPPDATA\nvim\init.vim"
-    $global:WTRC = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
-    $global:WGRC = "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\settings.json"
 
     if (Get-Command "pwshfetch-test-1" -ErrorAction SilentlyContinue) {
         Set-Alias -Name neofetch -Value pwshfetch-test-1
