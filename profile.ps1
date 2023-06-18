@@ -284,7 +284,7 @@ function Export-Icon {
             $Directory = [Directory]::CreateDirectory([Path]::Combine($Destination, $BaseName))
 
             while ($MaxSize -ge $MinSize) {
-                $FullName = Join-Path -Path $Destination -ChildPath "${MaxSize}x$MaxSize-$BaseName.png"
+                $FullName = Join-Path -Path $Destination -ChildPath "${MaxSize}x$MaxSize-$BaseName.png" -Resolve
                 Write-Verbose "Exporting $Fullname . . ."
                 inkscape $Path -w $MaxSize -h $MaxSize -o $FullName
                 $MaxSize /= 2
@@ -696,8 +696,8 @@ function New-DotnetProject {
     )
 
     begin {
-        $OutputDirectory = Join-Path -Path $Path -ChildPath $Name
-        $RootDirectory = New-Item -ItemType Directory -Path $(Join-Path -Path $OutputDirectory -ChildPath $Name)
+        $OutputDirectory = Join-Path -Path $Path -ChildPath $Name -Resolve
+        $RootDirectory = New-Item -ItemType Directory -Path $(Join-Path -Path $OutputDirectory -ChildPath $Name -Resolve)
         Push-Location $OutputDirectory
     }
     process {
@@ -961,7 +961,7 @@ function Set-EnvironmentVariable {
     $OldValue = $Override.IsPresent ? [string]::Empty : [Environment]::GetEnvironmentVariable($Key, $Scope)
     $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
 
-    if ($PSCmdlet.ShouldProcess("Adding $Value to $Key", "Are you sure you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
+    if ($PSCmdlet.ShouldProcess($null, "Are you sure that you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
         [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)
     }
 }
@@ -1189,15 +1189,15 @@ function Export-Branch {
     )
 
     begin {
-        $Author = $(git config user.name)
-        $Remotes = $(git remote)
-        $CurrentBranch = $(git branch --show-current)
+        $Author = git config user.name
+        $Remotes = git remote
+        $CurrentBranch = git branch --show-current
         $NewBranch = "fire/$CurrentBranch/${env:COMPUTERNAME}/${env:USERNAME}"
 
         $IsValidBranch = $(git check-ref-format --branch $NewBranch 2>&1) -eq $NewBranch
 
         git fetch --all --quiet
-        $RemoteBranches = $(git branch --remote --format="%(refname:lstrip=3)")
+        $RemoteBranches = git branch --remote --format="%(refname:lstrip=3)"
 
         if (!$IsValidBranch || $RemoteBranches.Contains($NewBranch)) {
             $Salt = Get-Salt -MaxLength 16
