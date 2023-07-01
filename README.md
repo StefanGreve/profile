@@ -71,6 +71,7 @@ variables:
 - `Get-FileSize`
 - `Get-FilePath`
 - `Get-MaxPathLength`
+- `New-Shorcut`
 - `Remove-Directory`
 
 ### Cryptography

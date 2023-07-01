@@ -5,6 +5,7 @@ using namespace System.Globalization
 using namespace System.IO
 using namespace System.Management.Automation
 using namespace System.Net.Http
+using namespace System.Runtime
 using namespace System.Security
 using namespace System.Text
 using namespace System.Threading
@@ -469,6 +470,45 @@ function Get-MaxPathLength {
                 Write-Output $MaxPathLength
             }
         }
+    }
+}
+
+function New-Shortcut {
+    [CmdletBinding()]
+    [OutputType([FileSystemInfo])]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Name,
+
+        [Parameter(Mandatory)]
+        [string] $Path,
+
+        [Parameter(Mandatory)]
+        [string] $Target,
+
+        [string] $Description
+    )
+
+    begin {
+        $Shell = New-Object -ComObject WScript.Shell
+    }
+    process {
+        $Directory = Resolve-Path $Path
+        $Name = [Path]::ChangeExtension([Path]::Combine($Directory, $Name), ".lnk")
+
+        if ([File]::Exists($Name)) {
+            Write-Error -Message "The file '$Name' already exists" -Category ResourceExists -CategoryTargetName $Name -ErrorAction Stop
+        }
+
+        $Shortcut = $Shell.CreateShortcut($Name)
+        $Shortcut.TargetPath = $Target
+        $Shortcut.Description = $Description
+        $Shortcut.Save()
+        Get-Item -Path $Name
+
+    }
+    end {
+        [InteropServices.Marshal]::ReleaseComObject($Shell) | Out-Null
     }
 }
 
