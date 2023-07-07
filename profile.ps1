@@ -5,6 +5,7 @@ using namespace System.Globalization
 using namespace System.IO
 using namespace System.Management.Automation
 using namespace System.Net.Http
+using namespace System.Runtime
 using namespace System.Security
 using namespace System.Text
 using namespace System.Threading
@@ -16,7 +17,7 @@ using namespace Microsoft.PowerShell
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
     Minor = 5
-    Patch = 0
+    Patch = 1
 }
 
 $global:OperatingSystem = if ([OperatingSystem]::IsWindows()) {
@@ -40,10 +41,6 @@ if ($env:PROFILE_LOAD_CUSTOM_SCRIPTS) {
 
 if ([OperatingSystem]::IsWindows()) {
     $global:PSRC = "$HOME\Documents\PowerShell\profile.ps1"
-    $global:VSRC = "$env:APPDATA\Code\User\settings.json"
-    $global:VIRC = "$env:LOCALAPPDATA\nvim\init.vim"
-    $global:WTRC = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
-    $global:WGRC = "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\settings.json"
 
     if (Get-Command "pwshfetch-test-1" -ErrorAction SilentlyContinue) {
         Set-Alias -Name neofetch -Value pwshfetch-test-1
@@ -221,11 +218,11 @@ function Update-System {
     )
 
     process {
-        if ($Help.IsPresent || $All.IsPresent) {
+        if ($Help.IsPresent -or $All.IsPresent) {
             Update-Help -UICulture "en-US" -ErrorAction SilentlyContinue -ErrorVariable UpdateErrors -Force
         }
 
-        if ($Applications.IsPresent || $All.IsPresent) {
+        if ($Applications.IsPresent -or $All.IsPresent) {
             switch ($global:OperatingSystem) {
                 ([OS]::Windows) {
                     winget upgrade --all --silent
@@ -240,7 +237,7 @@ function Update-System {
             }
         }
 
-        if ($Modules.IsPresent || $All.IsPresent) {
+        if ($Modules.IsPresent -or $All.IsPresent) {
             $InstalledModules = @(
                 "Az.Tools.Predictor"
                 "Az.Accounts"
@@ -284,7 +281,7 @@ function Export-Icon {
             $Directory = [Directory]::CreateDirectory([Path]::Combine($Destination, $BaseName))
 
             while ($MaxSize -ge $MinSize) {
-                $FullName = Join-Path -Path $Destination -ChildPath "${MaxSize}x$MaxSize-$BaseName.png"
+                $FullName = Join-Path -Path $Destination -ChildPath "${MaxSize}x$MaxSize-$BaseName.png" -Resolve
                 Write-Verbose "Exporting $Fullname . . ."
                 inkscape $Path -w $MaxSize -h $MaxSize -o $FullName
                 $MaxSize /= 2
@@ -408,33 +405,6 @@ function Get-FileCount {
     }
 }
 
-function Remove-Directory {
-    [Alias("rd")]
-    [OutputType([void])]
-    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "High")]
-    param(
-        [Parameter(Position = 0, ValueFromPipeline, Mandatory)]
-        [string[]] $Path
-    )
-
-    process {
-        foreach ($p in $Path) {
-            $Directory = [Path]::Combine($PWD.Path, $p)
-
-            if (![Directory]::Exists($Directory)) {
-                Write-Warning "Not a directory: $Directory"
-                continue
-            }
-
-            if ($PSCmdlet.ShouldProcess($Directory, "Remove $Path")) {
-                $SystemEntries = [Directory]::GetFileSystemEntries($Directory, "*.*", [SearchOption]::AllDirectories)
-                Remove-Item -Recurse -Force -Path $Directory
-                Write-Verbose "Removed $($SystemEntries.Count) file(s) in $Directory"
-            }
-        }
-    }
-}
-
 function Copy-FilePath {
     [Alias("copy")]
     [OutputType([void])]
@@ -474,6 +444,45 @@ function Get-MaxPathLength {
     }
 }
 
+function New-Shortcut {
+    [CmdletBinding()]
+    [OutputType([FileSystemInfo])]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Name,
+
+        [Parameter(Mandatory)]
+        [string] $Path,
+
+        [Parameter(Mandatory)]
+        [string] $Target,
+
+        [string] $Description
+    )
+
+    begin {
+        $Shell = New-Object -ComObject WScript.Shell
+    }
+    process {
+        $Directory = Resolve-Path $Path
+        $Name = [Path]::ChangeExtension([Path]::Combine($Directory, $Name), ".lnk")
+
+        if ([File]::Exists($Name)) {
+            Write-Error -Message "The file '$Name' already exists" -Category ResourceExists -CategoryTargetName $Name -ErrorAction Stop
+        }
+
+        $Shortcut = $Shell.CreateShortcut($Name)
+        $Shortcut.TargetPath = $Target
+        $Shortcut.Description = $Description
+        $Shortcut.Save()
+        Get-Item -Path $Name
+
+    }
+    end {
+        [InteropServices.Marshal]::ReleaseComObject($Shell) | Out-Null
+    }
+}
+
 class Battery
 {
     [int] $ChargeRemaining
@@ -494,9 +503,9 @@ class Battery
         $Color = $White = $global:PSStyle.Foreground.White
 
         switch ($this.ChargeRemaining) {
-            { $_ -ge 70 && $_ -le 100 } { $Color = $global:PSStyle.Foreground.Green }
-            { $_ -ge 30 && $_ -le 69 } { $Color = $global:PSStyle.Foreground.Yellow }
-            { $_ -ge 1 && $_ -le 29 } { $Color = $global:PSStyle.Foreground.Red }
+            { $_ -ge 70 -and $_ -le 100 } { $Color = $global:PSStyle.Foreground.Green }
+            { $_ -ge 30 -and $_ -le 69 } { $Color = $global:PSStyle.Foreground.Yellow }
+            { $_ -ge 1 -and $_ -le 29 } { $Color = $global:PSStyle.Foreground.Red }
         }
 
         $MinutesLeft = [string]::Format("Estimated Runtime: {0}", $this.Runtime.ToString())
@@ -526,7 +535,7 @@ function Get-Battery {
             # will only yield an estimate if the utility power is off, is lost and
             # remains off, or if a laptop is disconnected from a power source.
             $Minutes = $Win32Battery.EstimatedRunTime ?? 0
-            $IsCharging = $Minutes -eq 0x04444444 || ($Win32Battery.BatteryStatus -ge 6 && $Win32Battery.BatteryStatus -le 9)
+            $IsCharging = $Minutes -eq 0x04444444 -or ($Win32Battery.BatteryStatus -ge 6 -and $Win32Battery.BatteryStatus -le 9)
             $Runtime = New-TimeSpan -Minutes $($IsCharging ? 0 : $Minutes)
 
             # The first two statuses were renamed to reduce ambiguity.
@@ -627,7 +636,7 @@ function Get-RandomPassword {
         $RandomNumberGenerator = [Cryptography.RNGCryptoServiceProvider]::new()
     }
     process {
-        if ($NumberOfNonAlphanumericCharacters -gt $Length || $NumberOfNonAlphanumericCharacters -lt 0) {
+        if ($NumberOfNonAlphanumericCharacters -gt $Length -or $NumberOfNonAlphanumericCharacters -lt 0) {
             Write-Error -Message "Invalid argument for $(nameof{ $NumberOfNonAlphanumericCharacters }): '$NumberOfNonAlphanumericCharacters'" -Category InvalidArgument -ErrorAction Stop
         }
 
@@ -696,8 +705,8 @@ function New-DotnetProject {
     )
 
     begin {
-        $OutputDirectory = Join-Path -Path $Path -ChildPath $Name
-        $RootDirectory = New-Item -ItemType Directory -Path $(Join-Path -Path $OutputDirectory -ChildPath $Name)
+        $OutputDirectory = Join-Path -Path $Path -ChildPath $Name -Resolve
+        $RootDirectory = New-Item -ItemType Directory -Path $(Join-Path -Path $OutputDirectory -ChildPath $Name -Resolve)
         Push-Location $OutputDirectory
     }
     process {
@@ -768,7 +777,7 @@ class XKCD {
         $Response.EnsureSuccessStatusCode()
         $ReponseStream = $Response.Content.ReadAsStream()
 
-        if ([File]::Exists($this.Path) && $Force) {
+        if ([File]::Exists($this.Path) -and $Force) {
             Write-Warning -Message "$($this.Path) already exists, deleting file"
             [File]::Delete($this.Path)
         }
@@ -873,7 +882,7 @@ function Get-XKCD {
         [void] $Client.DefaultRequestHeaders.UserAgent.TryParseAdd("${env:USERNAME}@profile.ps1")
         [void] $Client.DefaultRequestHeaders.Accept.Add([Headers.MediaTypeWithQualityHeaderValue]::new("application/json"))
 
-        $Info = if (!$MyInvocation.BoundParameters.ContainsKey("Number") || $null -eq $Number) {
+        $Info = if (!$MyInvocation.BoundParameters.ContainsKey("Number") -or $null -eq $Number) {
             ConvertFrom-Json $Client.GetStringAsync("https://xkcd.com/info.0.json").GetAwaiter().GetResult()
         }
     }
@@ -897,7 +906,7 @@ function Get-XKCD {
             $Id = $Ids[$i - 1]
             $XKCD = [XKCD]::new($Id, $Path, $Client)
 
-            if (!$NoDownload.IsPresent && $PSCmdlet.ShouldProcess($XKCD.Img, "Download $($XKCD.Path)")) {
+            if (!$NoDownload.IsPresent -and $PSCmdlet.ShouldProcess($XKCD.Img, "Download $($XKCD.Path)")) {
                 [int] $PercentComplete = [Math]::Round($i / $Ids.Count * 100, 0)
                 Write-Progress -Activity "Download XKCD $Id" -Status "$PercentComplete%" -PercentComplete $PercentComplete
                 $XKCD.Download($Force.IsPresent)
@@ -961,7 +970,7 @@ function Set-EnvironmentVariable {
     $OldValue = $Override.IsPresent ? [string]::Empty : [Environment]::GetEnvironmentVariable($Key, $Scope)
     $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
 
-    if ($PSCmdlet.ShouldProcess("Adding $Value to $Key", "Are you sure you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
+    if ($PSCmdlet.ShouldProcess($null, "Are you sure that you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
         [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)
     }
 }
@@ -1189,17 +1198,17 @@ function Export-Branch {
     )
 
     begin {
-        $Author = $(git config user.name)
-        $Remotes = $(git remote)
-        $CurrentBranch = $(git branch --show-current)
+        $Author = git config user.name
+        $Remotes = git remote
+        $CurrentBranch = git branch --show-current
         $NewBranch = "fire/$CurrentBranch/${env:COMPUTERNAME}/${env:USERNAME}"
 
         $IsValidBranch = $(git check-ref-format --branch $NewBranch 2>&1) -eq $NewBranch
 
         git fetch --all --quiet
-        $RemoteBranches = $(git branch --remote --format="%(refname:lstrip=3)")
+        $RemoteBranches = git branch --remote --format="%(refname:lstrip=3)"
 
-        if (!$IsValidBranch || $RemoteBranches.Contains($NewBranch)) {
+        if (!$IsValidBranch -or $RemoteBranches.Contains($NewBranch)) {
             $Salt = Get-Salt -MaxLength 16
             $RandomString = [BitConverter]::ToString($Salt).Replace("-", [string]::Empty)
             $NewBranch = "fire/$CurrentBranch/$RandomString"
@@ -1239,7 +1248,8 @@ function Export-Branch {
             ([OS]::Linux) {
                 Write-Host $ExitMessage -ForegroundColor Red
                 Write-Host $InfoMessage
-                sleep $ShutdownDelay && systemctl poweroff
+                sleep $ShutdownDelay
+                systemctl poweroff
             }
         }
     }
