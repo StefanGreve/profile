@@ -16,8 +16,8 @@ using namespace Microsoft.PowerShell
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 5
-    Patch = 1
+    Minor = 6
+    Patch = 0
 }
 
 $global:OperatingSystem = if ([OperatingSystem]::IsWindows()) {
