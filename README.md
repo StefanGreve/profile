@@ -61,6 +61,7 @@ variables:
 - `Get-ExecutionTime`
 - `Measure-ScriptBlock`
 - `New-DotnetProject`
+- `Stop-LocalServer`
 - `Stop-Work`
 
 ### File Extensions
