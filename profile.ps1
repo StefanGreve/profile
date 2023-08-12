@@ -247,6 +247,21 @@ function Update-System {
         }
     }
 }
+
+function Set-WindowsTheme {
+    [OutputType([void])]
+    param(
+        [ValidateSet("Light", "Dark")]
+        [string] $Theme
+    )
+
+    process {
+        $Personalize = "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+        $RegistryPath = Get-ItemProperty -Path "Registry::$Personalize"
+        $RegistryPath | Set-ItemProperty -Name "AppsUseLightTheme" -Value ([int]($Theme -eq "Light"))
+    }
+}
+
 function Export-Icon {
     [OutputType([void])]
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low")]

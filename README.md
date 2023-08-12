@@ -50,6 +50,7 @@ variables:
 - `Get-EnvironmentVariable`
 - `Get-WorldClock`
 - `Remove-EnvironmentVariable`
+- `Set-WindowsTheme`
 - `Start-DailyTranscript`
 - `Start-ElevatedConsole`
 - `Start-Timer`
