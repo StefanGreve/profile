@@ -248,6 +248,31 @@ function Update-System {
     }
 }
 
+function Set-WindowsTerminalTheme {
+    [OutputType([void])]
+    param(
+        [ValidateSet("Light", "Dark")]
+        [string] $Theme
+    )
+
+    process {
+        if ($global:OperatingSystem -ne [OS]::Windows) {
+            Write-Error "This Cmdlet only works on the Windows Operating System" -ErrorAction Stop
+        }
+
+        $WindowsTerminal = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
+        $Settings = Get-Content -Raw -Path $WindowsTerminal | ConvertFrom-Json
+
+        $Settings.Theme = $Theme.ToLower()
+        $ColorScheme = $Theme -eq "Dark" ? "PowerShellDark" : "PowerShellLight"
+        $Settings.Profiles.Defaults.ColorScheme = $ColorScheme
+        $Settings.Profiles.Defaults.TabColor = $Settings.Schemes | Where-Object Name -eq $ColorScheme | Select-Object -ExpandProperty Background
+        $Settings | ConvertTo-Json -Depth 10 | Out-File $WindowsTerminal
+
+        # TODO: update pager theme in global gitconfig file as well
+    }
+}
+
 function Set-WindowsTheme {
     [OutputType([void])]
     param(
