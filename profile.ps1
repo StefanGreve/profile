@@ -252,7 +252,9 @@ function Set-WindowsTerminalTheme {
     [OutputType([void])]
     param(
         [ValidateSet("Light", "Dark")]
-        [string] $Theme
+        [string] $Theme,
+
+        [switch] $UpdatePager
     )
 
     process {
@@ -269,7 +271,10 @@ function Set-WindowsTerminalTheme {
         $Settings.Profiles.Defaults.TabColor = $Settings.Schemes | Where-Object Name -eq $ColorScheme | Select-Object -ExpandProperty Background
         $Settings | ConvertTo-Json -Depth 10 | Out-File $WindowsTerminal
 
-        # TODO: update pager theme in global gitconfig file as well
+        if ($UpdatePager.IsPresent) {
+            $DeltaTheme = $Theme.ToLower()
+            git config --global core.pager "delta --syntax-theme='Solarized ($DeltaTheme)' --$DeltaTheme"
+        }
     }
 }
 
