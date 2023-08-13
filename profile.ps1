@@ -254,7 +254,9 @@ function Set-WindowsTerminalTheme {
         [ValidateSet("Light", "Dark")]
         [string] $Theme,
 
-        [switch] $UpdatePager
+        [switch] $UpdatePager,
+
+        [switch] $Reset
     )
 
     process {
@@ -274,6 +276,12 @@ function Set-WindowsTerminalTheme {
         if ($UpdatePager.IsPresent) {
             $DeltaTheme = $Theme.ToLower()
             git config --global core.pager "delta --syntax-theme='Solarized ($DeltaTheme)' --$DeltaTheme"
+        }
+
+        if ($Reset.IsPresent) {
+            $Root = config rev-parse --show-toplevel
+            config restore $WindowsTerminal
+            config restore ([Path]::Combine($Root, ".gitconfig"))
         }
     }
 }
