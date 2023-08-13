@@ -50,8 +50,8 @@ variables:
 - `Get-EnvironmentVariable`
 - `Get-WorldClock`
 - `Remove-EnvironmentVariable`
-- `Set-WindowsTerminalTheme`
-- `Set-WindowsTheme`
+- `Set-WindowsTerminalTheme`*
+- `Set-WindowsTheme`*
 - `Start-DailyTranscript`
 - `Start-ElevatedConsole`
 - `Start-Timer`
@@ -121,3 +121,6 @@ Notice that this Cmdlet does *not* emit a PowerShell object. The behavior of thi
 Cmdlet is subject to future changes, see alo: [issue #9](https://github.com/StefanGreve/profile/issues/9).
 
 </details>
+
+Also note that some Cmdlets are Windows-exclusive and marked with an asterisk in
+the feature list.
