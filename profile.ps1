@@ -281,6 +281,10 @@ function Set-WindowsTheme {
     )
 
     process {
+        if ($global:OperatingSystem -ne [OS]::Windows) {
+            Write-Error "This Cmdlet only works on the Windows Operating System" -ErrorAction Stop
+        }
+
         $Personalize = "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
         $RegistryPath = Get-ItemProperty -Path "Registry::$Personalize"
         $RegistryPath | Set-ItemProperty -Name "AppsUseLightTheme" -Value ([int]($Theme -eq "Light"))
