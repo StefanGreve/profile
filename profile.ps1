@@ -505,6 +505,10 @@ function New-Shortcut {
     )
 
     begin {
+        if ($global:OperatingSystem -ne [OS]::Windows) {
+            Write-Error "This Cmdlet only works on the Windows Operating System" -ErrorAction Stop
+        }
+
         $Shell = New-Object -ComObject WScript.Shell
     }
     process {
