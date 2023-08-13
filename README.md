@@ -75,7 +75,7 @@ variables:
 - `Get-FileSize`
 - `Get-FilePath`
 - `Get-MaxPathLength`
-- `New-Shorcut*`
+- `New-Shorcut`*
 
 ### Cryptography
 
@@ -119,7 +119,7 @@ requires [`inkscape`](https://inkscape.org/) for the actual image conversion.
 
 Thin wrapper over Python's built-in `calendar` module to pretty print a calendar.
 Notice that this Cmdlet does *not* emit a PowerShell object. The behavior of this
-Cmdlet is subject to future changes, see alo: [issue #9](https://github.com/StefanGreve/profile/issues/9).
+Cmdlet is subject to future changes, see also: [Issue #9](https://github.com/StefanGreve/profile/issues/9).
 
 </details>
 
