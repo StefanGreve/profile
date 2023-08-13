@@ -50,6 +50,7 @@ variables:
 - `Get-EnvironmentVariable`
 - `Get-WorldClock`
 - `Remove-EnvironmentVariable`
+- `Restart-GpgAgent`
 - `Set-WindowsTerminalTheme`*
 - `Set-WindowsTheme`*
 - `Start-DailyTranscript`

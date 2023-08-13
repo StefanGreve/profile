@@ -989,6 +989,11 @@ function Get-XKCD {
     }
 }
 
+function Restart-GpgAgent {
+    gpgconf --kill gpg-agent
+    gpgconf --launch gpg-agent
+}
+
 function Set-PowerState {
     [OutputType([void])]
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "High")]
