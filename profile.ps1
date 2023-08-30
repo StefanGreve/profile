@@ -251,11 +251,14 @@ function Update-System {
 function Set-WindowsTerminalTheme {
     [OutputType([void])]
     param(
+        [Parameter(ParameterSetName = "SetTheme")]
         [ValidateSet("Light", "Dark")]
         [string] $Theme,
 
+        [Parameter(ParameterSetName = "SetTheme")]
         [switch] $UpdatePager,
 
+        [Parameter(ParameterSetName = "ResetTheme")]
         [switch] $Reset
     )
 
