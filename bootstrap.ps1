@@ -1,8 +1,8 @@
 $Desktop = [Environment]::GetFolderPath("Desktop")
-$ParentFolder = Join-Path -Path $Desktop -ChildPath "repos"
+$ParentFolder = Join-Path -Path $Desktop -ChildPath "repos" -AdditionalChildPath "profile"
 $Repository = New-Item -Path $ParentFolder -ItemType Directory -Force
 
-Push-Location $Repository.FullName
+Push-Location $Repository.Directory.FullName
 
 if (!(Test-Path $Repository)) {
     git clone "git@github.com:StefanGreve/profile.git"
