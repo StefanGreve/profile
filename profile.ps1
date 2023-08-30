@@ -307,6 +307,34 @@ function Set-WindowsTheme {
     }
 }
 
+function Set-MonitorBrightness {
+    [OutputType([void])]
+    param(
+        [ValidateRange(0, 100)]
+        [int] $Brightness
+    )
+    begin {
+        if ($global:OperatingSystem -ne [OS]::Windows) {
+            Write-Error "This Cmdlet only works on the Windows Operating System" -ErrorAction Stop
+        }
+
+        $Timeout = 1 # in seconds
+        $WmiMonitor = Get-CimInstance -Namespace root/WMI -Class WmiMonitorBrightnessMethods
+    }
+    process {
+        try {
+            $WmiMonitor.WmiSetBrightness($Timeout, $Brightness)
+        }
+        catch {
+            $Message = "This computer doesn't appear to suport brightness adjustments through software. Updating your display adapter drivers may help to resolve this issue."
+            Write-Error $Message -ErrorAction Stop -Category DeviceError
+        }
+    }
+    clean {
+        $WmiMonitor.Dispose()
+    }
+}
+
 function Export-Icon {
     [OutputType([void])]
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low")]

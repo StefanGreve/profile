@@ -53,6 +53,7 @@ variables:
 - `Restart-GpgAgent`
 - `Set-WindowsTerminalTheme`*
 - `Set-WindowsTheme`*
+- `Set-MonitorBrightness`*
 - `Start-DailyTranscript`
 - `Start-ElevatedConsole`
 - `Start-Timer`
