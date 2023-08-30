@@ -1,10 +1,16 @@
 # PowerShell Profile
 
-PowerShell profile. Requires at least version 7.3.2 or higher.
+PowerShell profile. Requires at least version 7.3.4 or higher.
 
 ## Setup
 
-Note that you need administrator rights in order to create symbolic links.
+You can use the `bootstrap.ps1` script to set up this profile for the current
+user and all hosts on Windows, Linux or MacOS. Note that you need administrator
+rights in order to create symbolic links on Windows, unless you have turned on
+`Developer Mode` in the settings app.
+
+<details>
+<summary>Manual Instructions</summary>
 
 ```powershell
 git clone git@github.com:StefanGreve/profile.git
@@ -19,6 +25,8 @@ New-Item "$HOME\Documents\PowerShell" -ItemType Directory -ErrorAction SilentlyC
 $ProfilePath = "$HOME\Documents\PowerShell\profile.ps1"
 New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $(Resolve-Path profile.ps1).Path
 ```
+
+</details>
 
 ## Configuration
 
