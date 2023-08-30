@@ -622,6 +622,7 @@ function Get-Battery {
             }
 
             [Battery]::new($ChargeRemaining, $Runtime, $IsCharging, $Status)
+            $Win32Battery.Dispose()
         }
         ([OS]::Linux) {
             # TODO
