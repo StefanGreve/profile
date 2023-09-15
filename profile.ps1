@@ -570,7 +570,7 @@ function New-Shortcut {
         Get-Item -Path $Name
 
     }
-    end {
+    clean {
         [InteropServices.Marshal]::ReleaseComObject($Shell) | Out-Null
     }
 }
@@ -1143,6 +1143,16 @@ function Remove-EnvironmentVariable {
 
     if ($PSCmdlet.ShouldProcess($null, $Description, $Title)) {
         [Environment]::SetEnvironmentVariable($Key, $RemoveValue, $Scope)
+    }
+}
+
+function Get-Definition {
+    param(
+        [string] $Command
+    )
+
+    process {
+        $(Get-Command $Command).Definition | bat --language powershell
     }
 }
 

@@ -69,8 +69,9 @@ variables:
 ### Development
 
 - `Export-Branch`
-- `Get-NameOf`
+- `Get-Definition`
 - `Get-ExecutionTime`
+- `Get-NameOf`
 - `Measure-ScriptBlock`
 - `New-DotnetProject`
 - `Stop-LocalServer`
@@ -109,9 +110,9 @@ While this script attempts to be as lightweight as possible, a few externals are
 required to run some of the Cmdlets from this profile.
 
 <details>
-<summary>Additional Features</summary>
+<summary>Third-Party Dependencies</summary>
 
-### Winfetch
+### `Winfetch`
 
 Creates an alias for `neofetch` using https://github.com/kiedtl/winfetch on Windows.
 
@@ -119,12 +120,16 @@ Creates an alias for `neofetch` using https://github.com/kiedtl/winfetch on Wind
 Install-Script -Name pwshfetch-test-1 -Scope CurrentUser
 ```
 
-### Export-Icon
+### `Export-Icon`
 
 Utility function to export SVGs as increasingly larger quadratic PNG files,
 requires [`inkscape`](https://inkscape.org/) for the actual image conversion.
 
-### Get-Calendar
+### `Get-Definition`
+
+Requires the `bat` cargo for pretty terminal output.
+
+### `Get-Calendar`
 
 Thin wrapper over Python's built-in `calendar` module to pretty print a calendar.
 Notice that this Cmdlet does *not* emit a PowerShell object. The behavior of this
