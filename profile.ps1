@@ -196,6 +196,29 @@ function Get-NameOf {
     }
 }
 
+function Test-Command {
+    [OutputType([bool])]
+    param(
+        [string] $Name
+    )
+
+    process {
+        $PrevPreference = $ErrorActionPreference
+
+        try {
+            $ErrorActionPreference = "stop"
+            $_ = Get-Command $Name
+            return $true
+        }
+        catch {
+            return $false
+        }
+        finally {
+            $ErrorActionPreference = $PrevPreference
+        }
+    }
+}
+
 function Update-System {
     [Alias("update")]
     [OutputType([void])]

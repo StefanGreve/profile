@@ -78,6 +78,7 @@ variables:
 - `New-DotnetProject`
 - `Stop-LocalServer`
 - `Stop-Work`
+- `Test-Command`
 
 ### File Extensions
 
