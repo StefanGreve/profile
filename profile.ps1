@@ -196,10 +196,6 @@ function Get-NameOf {
     }
 }
 
-function Update-Configuration {
-    git --git-dir="$HOME\Desktop\repos\confiles" --work-tree=$HOME $Args
-}
-
 function Update-System {
     [Alias("update")]
     [OutputType([void])]
@@ -1446,7 +1442,6 @@ $EnvironmentVariableKeyCompleter = {
 Set-Alias -Name ^ -Value Select-Object
 Set-Alias -Name man -Value Get-Help -Option AllScope
 Set-Alias -Name touch -Value New-Item
-Set-Alias -Name config -Value Update-Configuration
 Set-Alias -Name bye -Value Stop-Work
 Set-Alias -Name elevate -Value Start-ElevatedConsole
 Set-Alias -Name activate -Value .\venv\Scripts\Activate.ps1

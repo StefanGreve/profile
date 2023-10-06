@@ -4,13 +4,11 @@ PowerShell profile. Requires at least version 7.3.4 or higher.
 
 ## Setup
 
-You can use the `bootstrap.ps1` script to set up this profile for the current
-user and all hosts on Windows, Linux or MacOS. Note that you need administrator
-rights in order to create symbolic links on Windows, unless you have turned on
-`Developer Mode` in the settings app.
+Note that you need administrator rights in order to create symbolic links on Windows,
+unless you have turned on `Developer Mode` in the settings app:
 
 <details>
-<summary>Manual Instructions</summary>
+<summary>Instructions</summary>
 
 ```powershell
 git clone git@github.com:StefanGreve/profile.git
@@ -27,6 +25,10 @@ New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $(Resolve-Path profile
 ```
 
 </details>
+
+This profile is also part of the
+[`configuration`](https://github.com/stefangreve/configuration)
+repository.
 
 ## Configuration
 
