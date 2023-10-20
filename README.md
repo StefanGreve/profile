@@ -1,10 +1,14 @@
 # PowerShell Profile
 
-PowerShell profile. Requires at least version 7.3.2 or higher.
+PowerShell profile. Requires at least version 7.3.4 or higher.
 
 ## Setup
 
-Note that you need administrator rights in order to create symbolic links.
+Note that you need administrator rights in order to create symbolic links on Windows,
+unless you have turned on `Developer Mode` in the settings app:
+
+<details>
+<summary>Instructions</summary>
 
 ```powershell
 git clone git@github.com:StefanGreve/profile.git
@@ -19,6 +23,12 @@ New-Item "$HOME\Documents\PowerShell" -ItemType Directory -ErrorAction SilentlyC
 $ProfilePath = "$HOME\Documents\PowerShell\profile.ps1"
 New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $(Resolve-Path profile.ps1).Path
 ```
+
+</details>
+
+This profile is also part of the
+[`configuration`](https://github.com/stefangreve/configuration)
+repository.
 
 ## Configuration
 
@@ -50,6 +60,10 @@ variables:
 - `Get-EnvironmentVariable`
 - `Get-WorldClock`
 - `Remove-EnvironmentVariable`
+- `Restart-GpgAgent`
+- `Set-WindowsTerminalTheme`*
+- `Set-WindowsTheme`*
+- `Set-MonitorBrightness`*
 - `Start-DailyTranscript`
 - `Start-ElevatedConsole`
 - `Start-Timer`
@@ -57,11 +71,14 @@ variables:
 ### Development
 
 - `Export-Branch`
-- `Get-NameOf`
+- `Get-Definition`
 - `Get-ExecutionTime`
+- `Get-NameOf`
 - `Measure-ScriptBlock`
 - `New-DotnetProject`
+- `Stop-LocalServer`
 - `Stop-Work`
+- `Test-Command`
 
 ### File Extensions
 
@@ -71,7 +88,7 @@ variables:
 - `Get-FileSize`
 - `Get-FilePath`
 - `Get-MaxPathLength`
-- `New-Shorcut`
+- `New-Shorcut`*
 
 ### Cryptography
 
@@ -96,9 +113,9 @@ While this script attempts to be as lightweight as possible, a few externals are
 required to run some of the Cmdlets from this profile.
 
 <details>
-<summary>Additional Features</summary>
+<summary>Third-Party Dependencies</summary>
 
-### Winfetch
+### `Winfetch`
 
 Creates an alias for `neofetch` using https://github.com/kiedtl/winfetch on Windows.
 
@@ -106,15 +123,22 @@ Creates an alias for `neofetch` using https://github.com/kiedtl/winfetch on Wind
 Install-Script -Name pwshfetch-test-1 -Scope CurrentUser
 ```
 
-### Export-Icon
+### `Export-Icon`
 
 Utility function to export SVGs as increasingly larger quadratic PNG files,
 requires [`inkscape`](https://inkscape.org/) for the actual image conversion.
 
-### Get-Calendar
+### `Get-Definition`
+
+Requires the `bat` cargo for pretty terminal output.
+
+### `Get-Calendar`
 
 Thin wrapper over Python's built-in `calendar` module to pretty print a calendar.
 Notice that this Cmdlet does *not* emit a PowerShell object. The behavior of this
-Cmdlet is subject to future changes, see alo: [issue #9](https://github.com/StefanGreve/profile/issues/9).
+Cmdlet is subject to future changes, see also: [Issue #9](https://github.com/StefanGreve/profile/issues/9).
 
 </details>
+
+Also note that some Cmdlets are Windows-exclusive and marked with an asterisk in
+the feature list.

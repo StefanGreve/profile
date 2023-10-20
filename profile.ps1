@@ -16,8 +16,8 @@ using namespace Microsoft.PowerShell
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 5
-    Patch = 1
+    Minor = 6
+    Patch = 0
 }
 
 $global:OperatingSystem = if ([OperatingSystem]::IsWindows()) {
@@ -59,6 +59,7 @@ $global:Natural = { [Regex]::Replace($_.Name, '\d+', { $Args[0].Value.PadLeft(20
 
 $env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 $env:POWERSHELL_TELEMETRY_OPTOUT = 1
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = 1
 $env:POWERSHELL_UPDATECHECK = "Stable"
 
 $PSStyle.Progress.View = "Classic"
@@ -195,8 +196,27 @@ function Get-NameOf {
     }
 }
 
-function Update-Configuration {
-    git --git-dir="$HOME\Desktop\repos\confiles" --work-tree=$HOME $Args
+function Test-Command {
+    [OutputType([bool])]
+    param(
+        [string] $Name
+    )
+
+    process {
+        $PrevPreference = $ErrorActionPreference
+
+        try {
+            $ErrorActionPreference = "stop"
+            $_ = Get-Command $Name
+            return $true
+        }
+        catch {
+            return $false
+        }
+        finally {
+            $ErrorActionPreference = $PrevPreference
+        }
+    }
 }
 
 function Update-System {
@@ -247,6 +267,94 @@ function Update-System {
         }
     }
 }
+
+function Set-WindowsTerminalTheme {
+    [OutputType([void])]
+    param(
+        [Parameter(ParameterSetName = "SetTheme")]
+        [ValidateSet("Light", "Dark")]
+        [string] $Theme,
+
+        [Parameter(ParameterSetName = "SetTheme")]
+        [switch] $UpdatePager,
+
+        [Parameter(ParameterSetName = "ResetTheme")]
+        [switch] $Reset
+    )
+
+    process {
+        if ($global:OperatingSystem -ne [OS]::Windows) {
+            Write-Error "This Cmdlet only works on the Windows Operating System" -ErrorAction Stop
+        }
+
+        $WindowsTerminal = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
+        $Settings = Get-Content -Raw -Path $WindowsTerminal | ConvertFrom-Json
+
+        $Settings.Theme = $Theme.ToLower()
+        $ColorScheme = $Theme -eq "Dark" ? "PowerShellDark" : "PowerShellLight"
+        $Settings.Profiles.Defaults.ColorScheme = $ColorScheme
+        $Settings.Profiles.Defaults.TabColor = $Settings.Schemes | Where-Object Name -eq $ColorScheme | Select-Object -ExpandProperty Background
+        $Settings | ConvertTo-Json -Depth 10 | Out-File $WindowsTerminal
+
+        if ($UpdatePager.IsPresent) {
+            $DeltaTheme = $Theme.ToLower()
+            git config --global core.pager "delta --syntax-theme='Solarized ($DeltaTheme)' --$DeltaTheme"
+        }
+
+        if ($Reset.IsPresent) {
+            $Root = config rev-parse --show-toplevel
+            config restore $WindowsTerminal
+            config restore ([Path]::Combine($Root, ".gitconfig"))
+        }
+    }
+}
+
+function Set-WindowsTheme {
+    [OutputType([void])]
+    param(
+        [ValidateSet("Light", "Dark")]
+        [string] $Theme
+    )
+
+    process {
+        if ($global:OperatingSystem -ne [OS]::Windows) {
+            Write-Error "This Cmdlet only works on the Windows Operating System" -ErrorAction Stop
+        }
+
+        $Personalize = "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+        $RegistryPath = Get-ItemProperty -Path "Registry::$Personalize"
+        $RegistryPath | Set-ItemProperty -Name "AppsUseLightTheme" -Value ([int]($Theme -eq "Light"))
+    }
+}
+
+function Set-MonitorBrightness {
+    [OutputType([void])]
+    param(
+        [ValidateRange(0, 100)]
+        [int] $Brightness
+    )
+    begin {
+        if ($global:OperatingSystem -ne [OS]::Windows) {
+            Write-Error "This Cmdlet only works on the Windows Operating System" -ErrorAction Stop
+        }
+
+        $Timeout = 1 # in seconds
+        $WmiMonitor = Get-CimInstance -Namespace root/WMI -Class WmiMonitorBrightnessMethods
+    }
+    process {
+        try {
+            $WmiMonitor.WmiSetBrightness($Timeout, $Brightness)
+        }
+        catch {
+            $Message = "This computer doesn't appear to suport brightness adjustments through software. Updating your display adapter drivers may help to resolve this issue."
+            Write-Error $Message -ErrorAction Stop -Category DeviceError
+        }
+    }
+    clean {
+        $WmiMonitor.Dispose()
+    }
+}
+
 function Export-Icon {
     [OutputType([void])]
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Low")]
@@ -461,6 +569,10 @@ function New-Shortcut {
     )
 
     begin {
+        if ($global:OperatingSystem -ne [OS]::Windows) {
+            Write-Error "This Cmdlet only works on the Windows Operating System" -ErrorAction Stop
+        }
+
         $Shell = New-Object -ComObject WScript.Shell
     }
     process {
@@ -478,7 +590,7 @@ function New-Shortcut {
         Get-Item -Path $Name
 
     }
-    end {
+    clean {
         [InteropServices.Marshal]::ReleaseComObject($Shell) | Out-Null
     }
 }
@@ -558,6 +670,7 @@ function Get-Battery {
             }
 
             [Battery]::new($ChargeRemaining, $Runtime, $IsCharging, $Status)
+            $Win32Battery.Dispose()
         }
         ([OS]::Linux) {
             # TODO
@@ -685,6 +798,30 @@ function Get-RandomPassword {
     }
 }
 
+function Stop-LocalServer {
+    [Alias("killui")]
+    [OutputType([void])]
+    [CmdletBinding(ConfirmImpact = 'High', SupportsShouldProcess)]
+    param (
+        [int] $Port
+    )
+
+    process {
+        $TcpConnection = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+
+        if ($null -eq $TcpConnection) {
+            Write-Error "No owning process found listening on Port $Port"
+            return
+        }
+
+        $Process = Get-Process -Id $TcpConnection.OwningProcess
+
+        if ($PSCmdlet.ShouldProcess("Stop Process", "Are you sure that you want to stop this process with force?", "Stopping Process with ID=$($Process.Id) (Process Name: $($Process.ProcessName))")) {
+            Stop-Process $Process -Force
+        }
+    }
+}
+
 function New-DotnetProject {
     [OutputType([void])]
     param(
@@ -739,6 +876,8 @@ function New-DotnetProject {
 function Stop-Work {
     $Apps = @("TEAMS", "OUTLOOK", "LYNC")
     Get-Process | Where-Object { $Apps.Contains($_.Name.ToUpper()) } | Stop-Process -Force
+
+    Get-SmbMapping | Remove-SmbMapping -Force
 }
 
 function Get-WorldClock {
@@ -917,6 +1056,11 @@ function Get-XKCD {
     }
 }
 
+function Restart-GpgAgent {
+    gpgconf --kill gpg-agent
+    gpgconf --launch gpg-agent
+}
+
 function Set-PowerState {
     [OutputType([void])]
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "High")]
@@ -1019,6 +1163,16 @@ function Remove-EnvironmentVariable {
 
     if ($PSCmdlet.ShouldProcess($null, $Description, $Title)) {
         [Environment]::SetEnvironmentVariable($Key, $RemoveValue, $Scope)
+    }
+}
+
+function Get-Definition {
+    param(
+        [string] $Command
+    )
+
+    process {
+        $(Get-Command $Command).Definition | bat --language powershell
     }
 }
 
@@ -1311,7 +1465,6 @@ $EnvironmentVariableKeyCompleter = {
 Set-Alias -Name ^ -Value Select-Object
 Set-Alias -Name man -Value Get-Help -Option AllScope
 Set-Alias -Name touch -Value New-Item
-Set-Alias -Name config -Value Update-Configuration
 Set-Alias -Name bye -Value Stop-Work
 Set-Alias -Name elevate -Value Start-ElevatedConsole
 Set-Alias -Name activate -Value .\venv\Scripts\Activate.ps1
