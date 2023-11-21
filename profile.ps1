@@ -1,4 +1,5 @@
 using namespace System
+using namespace System.Collections
 using namespace System.Collections.Generic
 using namespace System.Diagnostics
 using namespace System.Globalization
@@ -215,96 +216,6 @@ function Test-Command {
         }
         finally {
             $ErrorActionPreference = $PrevPreference
-        }
-    }
-}
-
-function Update-System {
-    [Alias("update")]
-    [OutputType([void])]
-    [CmdletBinding()]
-    param(
-        [Parameter(ParameterSetName = "Option")]
-        [switch] $Help,
-
-        [Parameter(ParameterSetName = "Option")]
-        [switch] $Applications,
-
-        [Parameter(ParameterSetName = "Option")]
-        [switch] $Modules,
-
-        [Parameter(ParameterSetName = "All")]
-        [switch] $All
-    )
-
-    process {
-        if ($Help.IsPresent -or $All.IsPresent) {
-            Update-Help -UICulture "en-US" -ErrorAction SilentlyContinue -ErrorVariable UpdateErrors -Force
-        }
-
-        if ($Applications.IsPresent -or $All.IsPresent) {
-            switch ($global:OperatingSystem) {
-                ([OS]::Windows) {
-                    winget upgrade --all --silent
-                }
-                ([OS]::Linux) {
-                    apt-get update
-                    apt-get full-upgrade --yes
-                }
-                ([OS]::MacOS) {
-                    brew upgrade
-                }
-            }
-        }
-
-        if ($Modules.IsPresent -or $All.IsPresent) {
-            $InstalledModules = @(
-                "Az.Tools.Predictor"
-                "Az.Accounts"
-            )
-
-            $InstalledModules | Update-Module -ErrorAction SilentlyContinue
-        }
-    }
-}
-
-function Set-WindowsTerminalTheme {
-    [OutputType([void])]
-    param(
-        [Parameter(ParameterSetName = "SetTheme")]
-        [ValidateSet("Light", "Dark")]
-        [string] $Theme,
-
-        [Parameter(ParameterSetName = "SetTheme")]
-        [switch] $UpdatePager,
-
-        [Parameter(ParameterSetName = "ResetTheme")]
-        [switch] $Reset
-    )
-
-    process {
-        if ($global:OperatingSystem -ne [OS]::Windows) {
-            Write-Error "This Cmdlet only works on the Windows Operating System" -ErrorAction Stop
-        }
-
-        $WindowsTerminal = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
-        $Settings = Get-Content -Raw -Path $WindowsTerminal | ConvertFrom-Json
-
-        $Settings.Theme = $Theme.ToLower()
-        $ColorScheme = $Theme -eq "Dark" ? "PowerShellDark" : "PowerShellLight"
-        $Settings.Profiles.Defaults.ColorScheme = $ColorScheme
-        $Settings.Profiles.Defaults.TabColor = $Settings.Schemes | Where-Object Name -eq $ColorScheme | Select-Object -ExpandProperty Background
-        $Settings | ConvertTo-Json -Depth 10 | Out-File $WindowsTerminal
-
-        if ($UpdatePager.IsPresent) {
-            $DeltaTheme = $Theme.ToLower()
-            git config --global core.pager "delta --syntax-theme='Solarized ($DeltaTheme)' --$DeltaTheme"
-        }
-
-        if ($Reset.IsPresent) {
-            $Root = config rev-parse --show-toplevel
-            config restore $WindowsTerminal
-            config restore ([Path]::Combine($Root, ".gitconfig"))
         }
     }
 }
@@ -1465,7 +1376,6 @@ $EnvironmentVariableKeyCompleter = {
 Set-Alias -Name ^ -Value Select-Object
 Set-Alias -Name man -Value Get-Help -Option AllScope
 Set-Alias -Name touch -Value New-Item
-Set-Alias -Name bye -Value Stop-Work
 Set-Alias -Name elevate -Value Start-ElevatedConsole
 Set-Alias -Name activate -Value .\venv\Scripts\Activate.ps1
 Set-Alias -Name np -Value notepad.exe
@@ -1507,7 +1417,7 @@ function prompt {
 
     Start-DailyTranscript | Out-Null
 
-    return [System.Collections.ArrayList]@(
+    return [ArrayList]@(
         "[",
         $PSStyle.Foreground.BrightCyan,
         $Computer.UserName,
