@@ -17,7 +17,7 @@ using namespace Microsoft.PowerShell
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 6
+    Minor = 7
     Patch = 0
 }
 
@@ -54,14 +54,7 @@ if ([OperatingSystem]::IsLinux()) {
     $global:IsAdmin = $(id -u) -eq 0
 }
 
-$global:Desktop = [Environment]::GetFolderPath("Desktop")
-$global:Documents = [Environment]::GetFolderPath("MyDocuments")
 $global:Natural = { [Regex]::Replace($_.Name, '\d+', { $Args[0].Value.PadLeft(20) }) }
-
-$env:VIRTUAL_ENV_DISABLE_PROMPT = 1
-$env:POWERSHELL_TELEMETRY_OPTOUT = 1
-$env:DOTNET_CLI_TELEMETRY_OPTOUT = 1
-$env:POWERSHELL_UPDATECHECK = "Stable"
 
 $PSStyle.Progress.View = "Classic"
 $Host.PrivateData.ProgressBackgroundColor = "Cyan"
