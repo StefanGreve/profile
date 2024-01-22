@@ -77,7 +77,6 @@ variables:
 - `Measure-ScriptBlock`
 - `New-DotnetProject`
 - `Stop-LocalServer`
-- `Stop-Work`
 - `Test-Command`
 
 ### File Extensions

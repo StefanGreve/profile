@@ -777,13 +777,6 @@ function New-DotnetProject {
     }
 }
 
-function Stop-Work {
-    $Apps = @("TEAMS", "OUTLOOK", "LYNC")
-    Get-Process | Where-Object { $Apps.Contains($_.Name.ToUpper()) } | Stop-Process -Force
-
-    Get-SmbMapping | Remove-SmbMapping -Force
-}
-
 function Get-WorldClock {
     $TimeZoneIds = @(
         "Mountain Standard Time",
