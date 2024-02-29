@@ -1,4 +1,5 @@
 using namespace System
+using namespace System.Collections
 using namespace System.Collections.Generic
 using namespace System.Diagnostics
 using namespace System.Globalization
@@ -16,7 +17,7 @@ using namespace Microsoft.PowerShell
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 6
+    Minor = 7
     Patch = 0
 }
 
@@ -53,14 +54,7 @@ if ([OperatingSystem]::IsLinux()) {
     $global:IsAdmin = $(id -u) -eq 0
 }
 
-$global:Desktop = [Environment]::GetFolderPath("Desktop")
-$global:Documents = [Environment]::GetFolderPath("MyDocuments")
 $global:Natural = { [Regex]::Replace($_.Name, '\d+', { $Args[0].Value.PadLeft(20) }) }
-
-$env:VIRTUAL_ENV_DISABLE_PROMPT = 1
-$env:POWERSHELL_TELEMETRY_OPTOUT = 1
-$env:DOTNET_CLI_TELEMETRY_OPTOUT = 1
-$env:POWERSHELL_UPDATECHECK = "Stable"
 
 $PSStyle.Progress.View = "Classic"
 $Host.PrivateData.ProgressBackgroundColor = "Cyan"
@@ -215,96 +209,6 @@ function Test-Command {
         }
         finally {
             $ErrorActionPreference = $PrevPreference
-        }
-    }
-}
-
-function Update-System {
-    [Alias("update")]
-    [OutputType([void])]
-    [CmdletBinding()]
-    param(
-        [Parameter(ParameterSetName = "Option")]
-        [switch] $Help,
-
-        [Parameter(ParameterSetName = "Option")]
-        [switch] $Applications,
-
-        [Parameter(ParameterSetName = "Option")]
-        [switch] $Modules,
-
-        [Parameter(ParameterSetName = "All")]
-        [switch] $All
-    )
-
-    process {
-        if ($Help.IsPresent -or $All.IsPresent) {
-            Update-Help -UICulture "en-US" -ErrorAction SilentlyContinue -ErrorVariable UpdateErrors -Force
-        }
-
-        if ($Applications.IsPresent -or $All.IsPresent) {
-            switch ($global:OperatingSystem) {
-                ([OS]::Windows) {
-                    winget upgrade --all --silent
-                }
-                ([OS]::Linux) {
-                    apt-get update
-                    apt-get full-upgrade --yes
-                }
-                ([OS]::MacOS) {
-                    brew upgrade
-                }
-            }
-        }
-
-        if ($Modules.IsPresent -or $All.IsPresent) {
-            $InstalledModules = @(
-                "Az.Tools.Predictor"
-                "Az.Accounts"
-            )
-
-            $InstalledModules | Update-Module -ErrorAction SilentlyContinue
-        }
-    }
-}
-
-function Set-WindowsTerminalTheme {
-    [OutputType([void])]
-    param(
-        [Parameter(ParameterSetName = "SetTheme")]
-        [ValidateSet("Light", "Dark")]
-        [string] $Theme,
-
-        [Parameter(ParameterSetName = "SetTheme")]
-        [switch] $UpdatePager,
-
-        [Parameter(ParameterSetName = "ResetTheme")]
-        [switch] $Reset
-    )
-
-    process {
-        if ($global:OperatingSystem -ne [OS]::Windows) {
-            Write-Error "This Cmdlet only works on the Windows Operating System" -ErrorAction Stop
-        }
-
-        $WindowsTerminal = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
-        $Settings = Get-Content -Raw -Path $WindowsTerminal | ConvertFrom-Json
-
-        $Settings.Theme = $Theme.ToLower()
-        $ColorScheme = $Theme -eq "Dark" ? "PowerShellDark" : "PowerShellLight"
-        $Settings.Profiles.Defaults.ColorScheme = $ColorScheme
-        $Settings.Profiles.Defaults.TabColor = $Settings.Schemes | Where-Object Name -eq $ColorScheme | Select-Object -ExpandProperty Background
-        $Settings | ConvertTo-Json -Depth 10 | Out-File $WindowsTerminal
-
-        if ($UpdatePager.IsPresent) {
-            $DeltaTheme = $Theme.ToLower()
-            git config --global core.pager "delta --syntax-theme='Solarized ($DeltaTheme)' --$DeltaTheme"
-        }
-
-        if ($Reset.IsPresent) {
-            $Root = config rev-parse --show-toplevel
-            config restore $WindowsTerminal
-            config restore ([Path]::Combine($Root, ".gitconfig"))
         }
     }
 }
@@ -871,13 +775,6 @@ function New-DotnetProject {
     clean {
         Pop-Location
     }
-}
-
-function Stop-Work {
-    $Apps = @("TEAMS", "OUTLOOK", "LYNC")
-    Get-Process | Where-Object { $Apps.Contains($_.Name.ToUpper()) } | Stop-Process -Force
-
-    Get-SmbMapping | Remove-SmbMapping -Force
 }
 
 function Get-WorldClock {
@@ -1465,7 +1362,6 @@ $EnvironmentVariableKeyCompleter = {
 Set-Alias -Name ^ -Value Select-Object
 Set-Alias -Name man -Value Get-Help -Option AllScope
 Set-Alias -Name touch -Value New-Item
-Set-Alias -Name bye -Value Stop-Work
 Set-Alias -Name elevate -Value Start-ElevatedConsole
 Set-Alias -Name activate -Value .\venv\Scripts\Activate.ps1
 Set-Alias -Name np -Value notepad.exe
@@ -1477,7 +1373,21 @@ function prompt {
     $ExecTime = Get-ExecutionTime
 
     $Branch = if ($(git rev-parse --is-inside-work-tree 2>&1) -eq $true) {
-          [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Blue, $(git branch --show-current), $PSStyle.Foreground.White)
+          $CurrentBranch = git branch --show-current
+          $DetachedHead = git rev-parse --short HEAD
+          $UserName = git config user.name
+          $DisplayUserName = $env:PROFILE_ENABLE_BRANCH_USERNAME -eq 1
+
+          #                                         U        @     B
+          Write-Output $([string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",
+              $PSStyle.Foreground.Cyan,                                   # 0
+              $DisplayUserName ? $UserName : [string]::Empty,             # 1
+              $PSStyle.Foreground.Blue,                                   # 2
+              $PSStyle.Foreground.BrightBlue,                             # 3
+              $DisplayUserName ? "@" : [string]::Empty,                   # 4
+              $null -eq $CurrentBranch ? $DetachedHead : $CurrentBranch,  # 5
+              $PSStyle.Foreground.White                                   # 6
+          ))
     }
 
     $Venv = if ($env:VIRTUAL_ENV) {
@@ -1507,7 +1417,7 @@ function prompt {
 
     Start-DailyTranscript | Out-Null
 
-    return [System.Collections.ArrayList]@(
+    return [ArrayList]@(
         "[",
         $PSStyle.Foreground.BrightCyan,
         $Computer.UserName,
