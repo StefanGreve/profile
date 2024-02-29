@@ -1373,7 +1373,21 @@ function prompt {
     $ExecTime = Get-ExecutionTime
 
     $Branch = if ($(git rev-parse --is-inside-work-tree 2>&1) -eq $true) {
-          [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Blue, $(git branch --show-current), $PSStyle.Foreground.White)
+          $CurrentBranch = git branch --show-current
+          $DetachedHead = git rev-parse --short HEAD
+          $UserName = git config user.name
+          $DisplayUserName = $env:PROFILE_ENABLE_BRANCH_USERNAME -eq 1
+
+          #                                         U        @     B
+          Write-Output $([string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",
+              $PSStyle.Foreground.Cyan,                                   # 0
+              $DisplayUserName ? $UserName : [string]::Empty,             # 1
+              $PSStyle.Foreground.Blue,                                   # 2
+              $PSStyle.Foreground.BrightBlue,                             # 3
+              $DisplayUserName ? "@" : [string]::Empty,                   # 4
+              $null -eq $CurrentBranch ? $DetachedHead : $CurrentBranch,  # 5
+              $PSStyle.Foreground.White                                   # 6
+          ))
     }
 
     $Venv = if ($env:VIRTUAL_ENV) {

@@ -35,11 +35,13 @@ repository.
 Some additional features can be turned on by setting their respective environment
 variables:
 
-- `PROFILE_ENABLE_DAILY_TRANSCRIPTS`: Set this environment variable to `1` to
-  enable automatic transcript storing in `MyDocuments\Transcripts` (off by default.)
+- `PROFILE_ENABLE_DAILY_TRANSCRIPTS`: Set this value to `1` to enable automatic
+- transcript storing in `MyDocuments\Transcripts` (off by default)
 
 - `PROFILE_LOAD_CUSTOM_SCRIPTS`: Declare a single path to dot-source Powershell
   scripts from on profile launch.
+- `PROFILE_ENABLE_BRANCH_USERNAME`: Set this value to `1` to display the active
+  Git user name next to the branch name in the console prompt (off by default)
 
 ## Features
 
