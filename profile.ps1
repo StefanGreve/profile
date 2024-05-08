@@ -201,7 +201,7 @@ function Test-Command {
 
         try {
             $ErrorActionPreference = "stop"
-            $_ = Get-Command $Name
+            Get-Command $Name | Out-Null
             return $true
         }
         catch {
