@@ -435,9 +435,10 @@ function Get-MaxPathLength {
     process {
         switch ($global:OperatingSystem) {
             ([OS]::Windows) {
-                # On Windows, file names cannot exceed 256 bytes. Starting in Windows 10 (version 1607), the limit max
-                # path limit can be extended via setting this registry key to a value of 1 (property type: DWORD)
-                # https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry
+                # On Windows, file names cannot exceed 256 bytes. Starting with Windows 10 (version 1607), the max path
+                # limit preference can be configured in the registry (which is a opt-in feature):
+                # Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Type DWord -Value 1 -Force
+                # https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
                 $FileSystem = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"
                 $MaxPathLength = $FileSystem.LongPathsEnabled -eq 1 ? 32767 : 260
                 Write-Output $MaxPathLength
