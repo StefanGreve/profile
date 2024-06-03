@@ -161,37 +161,6 @@ enum Month
 
 #region functions
 
-function Get-NameOf {
-    [Alias("nameof")]
-    [OutputType([string])]
-    param(
-        [scriptblock] $ScriptBlock
-    )
-
-    begin {
-        $Name = $null
-        $Element = @($ScriptBlock.Ast.EndBlock.Statements.PipelineElements)[0]
-    }
-    process {
-        if($Element -is [Language.CommandExpressionAst])
-        {
-            switch($Element.Expression)
-            {
-                { $_ -is [Language.TypeExpressionAst] } { $Name = $_.TypeName.Name }
-                { $_ -is [Language.MemberExpressionAst] } { $Name = $_.Member.Value }
-                { $_ -is [Language.VariableExpressionAst] } { $Name = $_.VariablePath.UserPath }
-            }
-        }
-        elseif($Element -is [Language.CommandAst])
-        {
-            $Name = $Element.CommandElements[0].Value
-        }
-    }
-    end {
-        Write-Output $Name
-    }
-}
-
 function Test-Command {
     [OutputType([bool])]
     param(
@@ -657,7 +626,7 @@ function Get-RandomPassword {
     }
     process {
         if ($NumberOfNonAlphanumericCharacters -gt $Length -or $NumberOfNonAlphanumericCharacters -lt 0) {
-            Write-Error -Message "Invalid argument for $(nameof{ $NumberOfNonAlphanumericCharacters }): '$NumberOfNonAlphanumericCharacters'" -Category InvalidArgument -ErrorAction Stop
+            Write-Error -Message "Invalid argument for NumberOfNonAlphanumericCharacters: '$NumberOfNonAlphanumericCharacters'" -Category InvalidArgument -ErrorAction Stop
         }
 
         [int] $Count = 0

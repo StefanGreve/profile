@@ -75,7 +75,6 @@ variables:
 - `Export-Branch`
 - `Get-Definition`
 - `Get-ExecutionTime`
-- `Get-NameOf`
 - `Install-Certificate`
 - `Measure-ScriptBlock`
 - `New-DotnetProject`
@@ -90,7 +89,7 @@ variables:
 - `Get-FileSize`
 - `Get-FilePath`
 - `Get-MaxPathLength`
-- `New-Shorcut`*
+- `New-Shortcut`*
 
 ### Cryptography
 
