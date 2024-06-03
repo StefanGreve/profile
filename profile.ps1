@@ -702,7 +702,7 @@ function Install-Certificate {
     [OutputType([X509Certificate])]
     param(
         [Parameter(Mandatory)]
-        [string] $Path,
+        [string] $FilePath,
 
         [string] $StoreLocation = "Cert:\LocalMachine\My",
 
@@ -740,11 +740,9 @@ function Install-Certificate {
         $Rule = New-Object FileSystemAccessRule($User, [FileSystemRights]::Read, [AccessControlType]::Allow)
         $Acl.AddAccessRule($Rule)
         Set-Acl -Path $AclPath -AclObject $Acl
-
-        Write-Output $Certificate
     }
     end {
-        $Certificate.Dispose()
+        Write-Output $Certificate
     }
 }
 
