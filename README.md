@@ -76,6 +76,7 @@ variables:
 - `Get-Definition`
 - `Get-ExecutionTime`
 - `Get-NameOf`
+- `Install-Certificate`
 - `Measure-ScriptBlock`
 - `New-DotnetProject`
 - `Stop-LocalServer`
