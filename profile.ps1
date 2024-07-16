@@ -630,8 +630,8 @@ function Get-RandomPassword {
         }
 
         [int] $Count = 0
-        $ByteBuffer = New-Object byte[] $Length
-        $CharacterBuffer = New-Object char[] $Length
+        $ByteBuffer = [byte[]]::new($Length)
+        $CharacterBuffer = [char[]]::new($Length)
         $RandomNumberGenerator.GetBytes($ByteBuffer)
 
         for ([int] $i = 0; $i -lt $Length; $i++) {
@@ -737,7 +737,7 @@ function Install-Certificate {
         # be re-installed after a reboot.
         $AclPath = "C:\ProgramData\Microsoft\Crypto\RSA\MachineKeys\$UniqueName"
         $Acl = Get-Acl -Path $AclPath
-        $Rule = New-Object FileSystemAccessRule($User, [FileSystemRights]::Read, [AccessControlType]::Allow)
+        $Rule = [FileSystemAccessRule]::new($User, [FileSystemRights]::Read, [AccessControlType]::Allow)
         $Acl.AddAccessRule($Rule)
         Set-Acl -Path $AclPath -AclObject $Acl
     }
@@ -1164,7 +1164,7 @@ function Measure-ScriptBlock {
 
     begin {
         $StopWatch = [Stopwatch]::new()
-        $Measurements = New-Object List[System.TimeSpan]
+        $Measurements = [List[System.TimeSpan]]::new()
 
         if (![Stopwatch]::IsHighResolution) {
             Write-Error -Message "Your hardware doesn't support the high resolution counter required to run this test" -Category DeviceError -ErrorAction Stop
