@@ -292,28 +292,22 @@ function Get-StringHash {
         [string[]] $String,
 
         [Parameter()]
-        [string] $Salt = [string]::Empty,
-
-        [Parameter()]
-        [Authentication.HashAlgorithmType] $Algorithm = [Authentication.HashAlgorithmType]::Md5
+        [Cryptography.HashAlgorithmName] $Algorithm = [Cryptography.HashAlgorithmName]::SHA256
     )
 
-    begin {
-        Add-Type -AssemblyName System.Security
-    }
     process {
         foreach ($s in $String) {
             $Constructor = switch ($Algorithm) {
-                None { Write-Error "Algorithm must not be unset" -Category InvalidArgument -ErrorAction Stop }
+                MD5 { [Cryptography.MD5]::Create() }
                 SHA1 { [Cryptography.SHA1]::Create() }
                 SHA256 { [Cryptography.SHA256]::Create() }
                 SHA384 { [Cryptography.SHA384]::Create() }
                 SHA512 { [Cryptography.SHA512]::Create() }
-                Default { [Cryptography.MD5]::Create() }
+                Default { Write-Error "Hash Algorithm is not implemented" -Category InvalidArgument -ErrorAction Stop }
             }
 
-            $Bytes = $Constructor.ComputeHash([Encoding]::UTF8.GetBytes($s + $Salt))
-            $Hash = [BitConverter]::ToString($Bytes).Replace("-", [string]::Empty)
+            $Buffer = $Constructor.ComputeHash([Encoding]::UTF8.GetBytes($s))
+            $Hash = [BitConverter]::ToString($Buffer).Replace("-", [string]::Empty).ToLower()
             Write-Output $Hash
         }
     }
