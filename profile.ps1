@@ -606,7 +606,6 @@ function Get-RandomPassword {
 }
 
 function Stop-LocalServer {
-    [Alias("killui")]
     [OutputType([void])]
     [CmdletBinding(ConfirmImpact = 'High', SupportsShouldProcess)]
     param (
