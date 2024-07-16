@@ -583,94 +583,25 @@ function Get-Calendar {
 }
 
 function Get-RandomPassword {
-    <#
-        .SYNOPSIS
-        Generates a random password of the specified length.
-
-        .DESCRIPTION
-        Generates a random password of the specified length. The implementation of this function is based on the
-        Membership.GeneratePassword method from the System.Web.Security namespace from the .NET framework.
-
-        .PARAMETER Length
-        The number of characters in the generated password. The length must be between 1 and 128 characters.
-
-        .PARAMETER NumberOfNonAlphanumericCharacters
-        The minimum number of non-alphanumeric characters (such as @, #, !, %, &, and so on) in the generated password.
-
-        .LINK
-        https://docs.microsoft.com/en-us/dotnet/api/system.web.security.membership.generatepassword?view=netframework-4.8
-
-        .LINK
-        https://referencesource.microsoft.com/#System.Web/Security/Membership.cs,302
-
-        .EXAMPLE
-        PS> Get-RandomPassword -Length 32
-
-        .OUTPUTS
-        A random password of the specified length.
-    #>
     [OutputType([string])]
     param(
         [Parameter(Position = 0)]
-        [ValidateRange(1, 128)]
-        [int] $Length = 64,
-
-        [Parameter(Position = 1)]
-        [int] $NumberOfNonAlphanumericCharacters = 16
+        [ValidateRange(8, 256)]
+        [int] $Length = 64
     )
 
     begin {
-        Add-Type -AssemblyName System.Security
-        [char[]] $Punctuations = "!@#$%^&*()_-+=[{]};:>|./?".ToCharArray()
-        $RandomNumberGenerator = [Cryptography.RNGCryptoServiceProvider]::new()
+        # Base64 encoding encodes every 3 bytes of input data into 4 characters
+        # of output data. The required length of the password can be computed by
+        $Size = [Math]::Floor($Length * 3 / 4)
+        $Buffer = [byte[]]::new($Size)
     }
     process {
-        if ($NumberOfNonAlphanumericCharacters -gt $Length -or $NumberOfNonAlphanumericCharacters -lt 0) {
-            Write-Error -Message "Invalid argument for NumberOfNonAlphanumericCharacters: '$NumberOfNonAlphanumericCharacters'" -Category InvalidArgument -ErrorAction Stop
-        }
-
-        [int] $Count = 0
-        $ByteBuffer = [byte[]]::new($Length)
-        $CharacterBuffer = [char[]]::new($Length)
-        $RandomNumberGenerator.GetBytes($ByteBuffer)
-
-        for ([int] $i = 0; $i -lt $Length; $i++) {
-            [int] $j = [int]($ByteBuffer[$i] % 87)
-
-            if ($j -lt 10) {
-                $CharacterBuffer[$i] = [char]([int]([char]'0') + $j)
-            }
-            elseif ($j -lt 36) {
-                $CharacterBuffer[$i] = [char]([int]([char]'A') + $j - 10)
-            }
-            elseif ($j -lt 62) {
-                $CharacterBuffer[$i] = [char]([int]([char]'a') + $j - 36)
-            }
-            else {
-                $CharacterBuffer[$i] = $Punctuations[$j - 62]
-                $Count++
-            }
-        }
-
-        if ($count -lt $NumberOfNonAlphanumericCharacters) {
-            return $([string]::new($CharacterBuffer))
-        }
-
-        $PRNG = [Random]::new()
-
-        for ([int] $k = 0; $k -lt $NumberOfNonAlphanumericCharacters - $Count; $k++) {
-            do {
-                [int] $r = $PRNG.Next(0, $Length)
-            }
-            while (![char]::IsLetterOrDigit($CharacterBuffer[$r]))
-
-            $CharacterBuffer[$r] = $Punctuations[$PRNG.Next(0, $Punctuations.Count)]
-        }
-
-        return $([string]::new($CharacterBuffer))
+        [Cryptography.RandomNumberGenerator]::Fill($Buffer)
+        $Password = [Convert]::ToBase64String($Buffer)
     }
-    clean {
-        $RandomNumberGenerator.Dispose()
+    end {
+        Write-Output $Password
     }
 }
 
