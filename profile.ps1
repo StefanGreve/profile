@@ -1317,9 +1317,8 @@ function prompt {
     $ExecTime = Get-ExecutionTime
 
     $Branch = if ($(git rev-parse --is-inside-work-tree 2>&1) -eq $true) {
-          $Tag = git tag --points-at HEAD
-          $CurrentBranch = git branch --show-current
-          $GitInfo = $GitInfo = ($null -ne $Tag) ? $Tag : (($null -ne $CurrentBranch) ? (git branch --show-current) : (git rev-parse --short HEAD))
+          #           tag                           branch                         detached head
+          $GitInfo = (git tag --points-at HEAD) ?? (git branch --show-current) ?? (git rev-parse --short HEAD)
           $UserName = git config user.name
           $DisplayUserName = $env:PROFILE_ENABLE_BRANCH_USERNAME -eq 1
 
