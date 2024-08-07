@@ -1316,20 +1316,19 @@ Set-Alias -Name exp -Value explorer.exe
 function prompt {
     $ExecTime = Get-ExecutionTime
 
-    $Branch = if ($(git rev-parse --is-inside-work-tree 2>&1) -eq $true) {
-          #           tag                           branch                         detached head
-          $GitInfo = (git tag --points-at HEAD) ?? (git branch --show-current) ?? (git rev-parse --short HEAD)
-          $UserName = git config user.name
+    $GitStatus = if ($(git rev-parse --is-inside-work-tree 2>&1) -eq $true) {
+          #        tag                           branch                         detached head
+          $Head = (git tag --points-at HEAD) ?? (git branch --show-current) ?? (git rev-parse --short HEAD)
           $DisplayUserName = $env:PROFILE_ENABLE_BRANCH_USERNAME -eq 1
 
-          #                                         U        @     G
+          #                                         U        @     H
           Write-Output $([string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",
               $PSStyle.Foreground.Cyan,                                   # 0
-              $DisplayUserName ? $UserName : [string]::Empty,             # 1
+              $DisplayUserName ? (git config user.name) : [string]::Empty,# 1
               $PSStyle.Foreground.Blue,                                   # 2
               $PSStyle.Foreground.BrightBlue,                             # 3
               $DisplayUserName ? "@" : [string]::Empty,                   # 4
-              $GitInfo,                                                   # 5
+              $Head,                                                      # 5
               $PSStyle.Foreground.White                                   # 6
           ))
     }
@@ -1385,7 +1384,7 @@ function prompt {
         $ExecTime.Milliseconds.ToString("D3"),
         ")",
         $PSStyle.Foreground.White,
-        $Branch,
+        $GitStatus,
         $Venv,
         "`n",
         [string]::new($global:IsAdmin ? "#" : ">", $NestedPromptLevel + 1),
