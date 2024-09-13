@@ -116,14 +116,6 @@ required to run some of the Cmdlets from this profile.
 <details>
 <summary>Third-Party Dependencies</summary>
 
-### `Winfetch`
-
-Creates an alias for `neofetch` using https://github.com/kiedtl/winfetch on Windows.
-
-```powershell
-Install-Script -Name pwshfetch-test-1 -Scope CurrentUser
-```
-
 ### `Export-Icon`
 
 Utility function to export SVGs as increasingly larger quadratic PNG files,
