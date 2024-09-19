@@ -670,57 +670,6 @@ function Install-Certificate {
     }
 }
 
-function New-DotnetProject {
-    [OutputType([void])]
-    param(
-        [Parameter(Mandatory)]
-        [string] $Name,
-
-        [string] $Path = $PWD,
-
-        [ValidateSet("console", "classlib", "wpf", "winforms", "page", "blazorserver", "blazorwasm", "web", "mvc", "razor", "webapi")]
-        [string] $Template = "console",
-
-        [ValidateSet("C#", "F#", "VB")]
-        [string] $Language = "C#",
-
-        [string[]] $Packages,
-
-        [switch] $InitRepository
-    )
-
-    begin {
-        $OutputDirectory = Join-Path -Path $Path -ChildPath $Name -Resolve
-        $RootDirectory = New-Item -ItemType Directory -Path $(Join-Path -Path $OutputDirectory -ChildPath $Name -Resolve)
-        Push-Location $OutputDirectory
-    }
-    process {
-        dotnet new $Template --name $Name --language $Language --output $RootDirectory
-        dotnet new gitignore --output $OutputDirectory
-        dotnet new editorconfig --output $OutputDirectory
-        dotnet restore $RootDirectory
-        dotnet build $RootDirectory
-
-        $Readme = New-Item -ItemType File -Name "README.md" -Path $OutputDirectory
-        Set-Content $Readme -Value "# $Name"
-
-        if ($PSBoundParameters.ContainsKey("Packages")) {
-            $Packages | ForEach-Object {
-                dotnet add $RootDirectory package $_
-            }
-        }
-
-        if ($InitRepository.IsPresent) {
-            git init
-            git add --all
-            git commit -m "Init commit"
-        }
-    }
-    clean {
-        Pop-Location
-    }
-}
-
 function Get-WorldClock {
     $TimeZoneIds = @(
         "Mountain Standard Time",

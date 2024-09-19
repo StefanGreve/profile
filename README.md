@@ -63,7 +63,6 @@ variables:
 - `Get-WorldClock`
 - `Remove-EnvironmentVariable`
 - `Restart-GpgAgent`
-- `Set-WindowsTerminalTheme`*
 - `Set-WindowsTheme`*
 - `Set-MonitorBrightness`*
 - `Start-DailyTranscript`
@@ -76,8 +75,6 @@ variables:
 - `Get-Definition`
 - `Get-ExecutionTime`
 - `Install-Certificate`
-- `Measure-ScriptBlock`
-- `New-DotnetProject`
 - `Stop-LocalServer`
 - `Test-Command`
 
