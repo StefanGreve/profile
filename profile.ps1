@@ -900,27 +900,29 @@ function Set-EnvironmentVariable {
         [switch] $Force
     )
 
-    $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
+    begin {
+        $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
+        $OldValue = $Override.IsPresent ? [string]::Empty : [Environment]::GetEnvironmentVariable($Key, $Scope)
+        $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
+    }
+    process {
+        if ($PSCmdlet.ShouldProcess($null, "Are you sure that you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
+            $IsDuplicatedValue = $($OldValue -Split $Token).Contains($Value)
 
-    $OldValue = $Override.IsPresent ? [string]::Empty : [Environment]::GetEnvironmentVariable($Key, $Scope)
-    $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
+            if ($IsDuplicatedValue) {
+                Write-Warning "The value '$Value' already exists for the key '$Key'."
 
-    if ($PSCmdlet.ShouldProcess($null, "Are you sure that you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
-        $IsDuplicatedValue = $($OldValue -Split $Token).Contains($Value)
+                if (!$Force) {
+                    $Message = "To add a value to an existing key multiple times, use the -Force flag."
+                    Write-Information -MessageData $Message -Tags "Instructions" -InformationAction Continue
+                    return
+                }
 
-        if ($IsDuplicatedValue) {
-            Write-Warning "The value '$Value' already exists for the key '$Key'."
-
-            if (!$Force) {
-                $Message = "To add a value to an existing key multiple times, use the -Force flag."
-                Write-Information -MessageData $Message -Tags "Instructions" -InformationAction Continue
-                return
+                Write-Warning "Forcing addition due to the -Force flag."
             }
 
-            Write-Warning "Forcing addition due to the -Force flag."
+            [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)
         }
-
-        [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)
     }
 }
 
@@ -935,10 +937,20 @@ function Get-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process
     )
 
-    $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
+    begin {
+        $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
+    }
+    process {
+        $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope)
 
-    $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope) -Split $Token
-    Write-Output $EnvironmentVariables
+        if ($EnvironmentVariables.Length -eq 0) {
+            Write-Warning "Environment variable '$Key' is empty or not defined."
+            return
+        }
+
+        $EnvironmentVariableArray = $EnvironmentVariables -Split $Token
+        Write-Output $EnvironmentVariableArray
+    }
 }
 
 function Remove-EnvironmentVariable {
@@ -954,20 +966,23 @@ function Remove-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process
     )
 
-    $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
-
-    $Title = "Remove '$Value' from '$Key'"
-    $Description = "Are you sure that you want to remove '$Value' from the environment variable '$Key'?"
-    $RemoveValue = $([Environment]::GetEnvironmentVariable($Key, $Scope) -Split $Token | Where-Object { $_ -ne $Value }) -join $Token
-
-    if (!$PSBoundParameters.ContainsKey("Value")) {
-        $Title = "Remove all values in '$Key'"
-        $Description = "Are you sure that you want to remove the environment variable '$Key'?"
-        $RemoveValue = $null
+    begin {
+        $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
     }
+    process {
+        $Title = "Remove '$Value' from '$Key'"
+        $Description = "Are you sure that you want to remove '$Value' from the environment variable '$Key'?"
+        $RemoveValue = $([Environment]::GetEnvironmentVariable($Key, $Scope) -Split $Token | Where-Object { $_ -ne $Value }) -Join $Token
 
-    if ($PSCmdlet.ShouldProcess($null, $Description, $Title)) {
-        [Environment]::SetEnvironmentVariable($Key, $RemoveValue, $Scope)
+        if (!$PSBoundParameters.ContainsKey("Value")) {
+            $Title = "Remove all values in '$Key'"
+            $Description = "Are you sure that you want to remove the environment variable '$Key'?"
+            $RemoveValue = $null
+        }
+
+        if ($PSCmdlet.ShouldProcess($null, $Description, $Title)) {
+            [Environment]::SetEnvironmentVariable($Key, $RemoveValue, $Scope)
+        }
     }
 }
 
