@@ -35,11 +35,13 @@ repository.
 Some additional features can be turned on by setting their respective environment
 variables:
 
-- `PROFILE_ENABLE_DAILY_TRANSCRIPTS`: Set this environment variable to `1` to
-  enable automatic transcript storing in `MyDocuments\Transcripts` (off by default.)
+- `PROFILE_ENABLE_DAILY_TRANSCRIPTS`: Set this value to `1` to enable automatic
+- transcript storing in `MyDocuments\Transcripts` (off by default)
 
 - `PROFILE_LOAD_CUSTOM_SCRIPTS`: Declare a single path to dot-source Powershell
   scripts from on profile launch.
+- `PROFILE_ENABLE_BRANCH_USERNAME`: Set this value to `1` to display the active
+  Git user name next to the branch name in the console prompt (off by default)
 
 ## Features
 
@@ -61,7 +63,6 @@ variables:
 - `Get-WorldClock`
 - `Remove-EnvironmentVariable`
 - `Restart-GpgAgent`
-- `Set-WindowsTerminalTheme`*
 - `Set-WindowsTheme`*
 - `Set-MonitorBrightness`*
 - `Start-DailyTranscript`
@@ -73,11 +74,8 @@ variables:
 - `Export-Branch`
 - `Get-Definition`
 - `Get-ExecutionTime`
-- `Get-NameOf`
-- `Measure-ScriptBlock`
-- `New-DotnetProject`
+- `Install-Certificate`
 - `Stop-LocalServer`
-- `Stop-Work`
 - `Test-Command`
 
 ### File Extensions
@@ -88,7 +86,7 @@ variables:
 - `Get-FileSize`
 - `Get-FilePath`
 - `Get-MaxPathLength`
-- `New-Shorcut`*
+- `New-Shortcut`*
 
 ### Cryptography
 
@@ -114,14 +112,6 @@ required to run some of the Cmdlets from this profile.
 
 <details>
 <summary>Third-Party Dependencies</summary>
-
-### `Winfetch`
-
-Creates an alias for `neofetch` using https://github.com/kiedtl/winfetch on Windows.
-
-```powershell
-Install-Script -Name pwshfetch-test-1 -Scope CurrentUser
-```
 
 ### `Export-Icon`
 

@@ -1,4 +1,5 @@
 using namespace System
+using namespace System.Collections
 using namespace System.Collections.Generic
 using namespace System.Diagnostics
 using namespace System.Globalization
@@ -7,6 +8,8 @@ using namespace System.Management.Automation
 using namespace System.Net.Http
 using namespace System.Runtime
 using namespace System.Security
+using namespace System.Security.AccessControl
+using namespace System.Security.Cryptography.X509Certificates
 using namespace System.Text
 using namespace System.Threading
 
@@ -16,7 +19,7 @@ using namespace Microsoft.PowerShell
 
 $global:ProfileVersion = [PSCustomObject]@{
     Major = 1
-    Minor = 6
+    Minor = 7
     Patch = 0
 }
 
@@ -53,14 +56,7 @@ if ([OperatingSystem]::IsLinux()) {
     $global:IsAdmin = $(id -u) -eq 0
 }
 
-$global:Desktop = [Environment]::GetFolderPath("Desktop")
-$global:Documents = [Environment]::GetFolderPath("MyDocuments")
 $global:Natural = { [Regex]::Replace($_.Name, '\d+', { $Args[0].Value.PadLeft(20) }) }
-
-$env:VIRTUAL_ENV_DISABLE_PROMPT = 1
-$env:POWERSHELL_TELEMETRY_OPTOUT = 1
-$env:DOTNET_CLI_TELEMETRY_OPTOUT = 1
-$env:POWERSHELL_UPDATECHECK = "Stable"
 
 $PSStyle.Progress.View = "Classic"
 $Host.PrivateData.ProgressBackgroundColor = "Cyan"
@@ -165,37 +161,6 @@ enum Month
 
 #region functions
 
-function Get-NameOf {
-    [Alias("nameof")]
-    [OutputType([string])]
-    param(
-        [scriptblock] $ScriptBlock
-    )
-
-    begin {
-        $Name = $null
-        $Element = @($ScriptBlock.Ast.EndBlock.Statements.PipelineElements)[0]
-    }
-    process {
-        if($Element -is [Language.CommandExpressionAst])
-        {
-            switch($Element.Expression)
-            {
-                { $_ -is [Language.TypeExpressionAst] } { $Name = $_.TypeName.Name }
-                { $_ -is [Language.MemberExpressionAst] } { $Name = $_.Member.Value }
-                { $_ -is [Language.VariableExpressionAst] } { $Name = $_.VariablePath.UserPath }
-            }
-        }
-        elseif($Element -is [Language.CommandAst])
-        {
-            $Name = $Element.CommandElements[0].Value
-        }
-    }
-    end {
-        Write-Output $Name
-    }
-}
-
 function Test-Command {
     [OutputType([bool])]
     param(
@@ -207,7 +172,7 @@ function Test-Command {
 
         try {
             $ErrorActionPreference = "stop"
-            $_ = Get-Command $Name
+            Get-Command $Name | Out-Null
             return $true
         }
         catch {
@@ -215,96 +180,6 @@ function Test-Command {
         }
         finally {
             $ErrorActionPreference = $PrevPreference
-        }
-    }
-}
-
-function Update-System {
-    [Alias("update")]
-    [OutputType([void])]
-    [CmdletBinding()]
-    param(
-        [Parameter(ParameterSetName = "Option")]
-        [switch] $Help,
-
-        [Parameter(ParameterSetName = "Option")]
-        [switch] $Applications,
-
-        [Parameter(ParameterSetName = "Option")]
-        [switch] $Modules,
-
-        [Parameter(ParameterSetName = "All")]
-        [switch] $All
-    )
-
-    process {
-        if ($Help.IsPresent -or $All.IsPresent) {
-            Update-Help -UICulture "en-US" -ErrorAction SilentlyContinue -ErrorVariable UpdateErrors -Force
-        }
-
-        if ($Applications.IsPresent -or $All.IsPresent) {
-            switch ($global:OperatingSystem) {
-                ([OS]::Windows) {
-                    winget upgrade --all --silent
-                }
-                ([OS]::Linux) {
-                    apt-get update
-                    apt-get full-upgrade --yes
-                }
-                ([OS]::MacOS) {
-                    brew upgrade
-                }
-            }
-        }
-
-        if ($Modules.IsPresent -or $All.IsPresent) {
-            $InstalledModules = @(
-                "Az.Tools.Predictor"
-                "Az.Accounts"
-            )
-
-            $InstalledModules | Update-Module -ErrorAction SilentlyContinue
-        }
-    }
-}
-
-function Set-WindowsTerminalTheme {
-    [OutputType([void])]
-    param(
-        [Parameter(ParameterSetName = "SetTheme")]
-        [ValidateSet("Light", "Dark")]
-        [string] $Theme,
-
-        [Parameter(ParameterSetName = "SetTheme")]
-        [switch] $UpdatePager,
-
-        [Parameter(ParameterSetName = "ResetTheme")]
-        [switch] $Reset
-    )
-
-    process {
-        if ($global:OperatingSystem -ne [OS]::Windows) {
-            Write-Error "This Cmdlet only works on the Windows Operating System" -ErrorAction Stop
-        }
-
-        $WindowsTerminal = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
-        $Settings = Get-Content -Raw -Path $WindowsTerminal | ConvertFrom-Json
-
-        $Settings.Theme = $Theme.ToLower()
-        $ColorScheme = $Theme -eq "Dark" ? "PowerShellDark" : "PowerShellLight"
-        $Settings.Profiles.Defaults.ColorScheme = $ColorScheme
-        $Settings.Profiles.Defaults.TabColor = $Settings.Schemes | Where-Object Name -eq $ColorScheme | Select-Object -ExpandProperty Background
-        $Settings | ConvertTo-Json -Depth 10 | Out-File $WindowsTerminal
-
-        if ($UpdatePager.IsPresent) {
-            $DeltaTheme = $Theme.ToLower()
-            git config --global core.pager "delta --syntax-theme='Solarized ($DeltaTheme)' --$DeltaTheme"
-        }
-
-        if ($Reset.IsPresent) {
-            $Root = config rev-parse --show-toplevel
-            config restore $WindowsTerminal
-            config restore ([Path]::Combine($Root, ".gitconfig"))
         }
     }
 }
@@ -417,28 +292,22 @@ function Get-StringHash {
         [string[]] $String,
 
         [Parameter()]
-        [string] $Salt = [string]::Empty,
-
-        [Parameter()]
-        [Authentication.HashAlgorithmType] $Algorithm = [Authentication.HashAlgorithmType]::Md5
+        [Cryptography.HashAlgorithmName] $Algorithm = [Cryptography.HashAlgorithmName]::SHA256
     )
 
-    begin {
-        Add-Type -AssemblyName System.Security
-    }
     process {
         foreach ($s in $String) {
             $Constructor = switch ($Algorithm) {
-                None { Write-Error "Algorithm must not be unset" -Category InvalidArgument -ErrorAction Stop }
+                MD5 { [Cryptography.MD5]::Create() }
                 SHA1 { [Cryptography.SHA1]::Create() }
                 SHA256 { [Cryptography.SHA256]::Create() }
                 SHA384 { [Cryptography.SHA384]::Create() }
                 SHA512 { [Cryptography.SHA512]::Create() }
-                Default { [Cryptography.MD5]::Create() }
+                Default { Write-Error "Hash Algorithm is not implemented" -Category InvalidArgument -ErrorAction Stop }
             }
 
-            $Bytes = $Constructor.ComputeHash([Encoding]::UTF8.GetBytes($s + $Salt))
-            $Hash = [BitConverter]::ToString($Bytes).Replace("-", [string]::Empty)
+            $Buffer = $Constructor.ComputeHash([Encoding]::UTF8.GetBytes($s))
+            $Hash = [BitConverter]::ToString($Buffer).Replace("-", [string]::Empty).ToLower()
             Write-Output $Hash
         }
     }
@@ -450,19 +319,18 @@ function Get-StringHash {
 function Get-Salt {
     [OutputType([Byte[]])]
     param(
-        [int] $MaxLength = 32
+        [int] $Size = 32
     )
 
     begin {
-        $Random = [Cryptography.RNGCryptoServiceProvider]::new()
+        $Salt = [byte[]]::new($Size)
     }
     process {
-        $Salt = [Byte[]]::CreateInstance([Byte], $MaxLength)
-        $Random.GetNonZeroBytes($Salt)
+        [Cryptography.RandomNumberGenerator]::Fill($Salt)
         Write-Output $Salt
     }
     clean {
-        $Random.Dispose()
+        $Salt.Clear()
     }
 }
 
@@ -531,9 +399,10 @@ function Get-MaxPathLength {
     process {
         switch ($global:OperatingSystem) {
             ([OS]::Windows) {
-                # On Windows, file names cannot exceed 256 bytes. Starting in Windows 10 (version 1607), the limit max
-                # path limit can be extended via setting this registry key to a value of 1 (property type: DWORD)
-                # https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry
+                # On Windows, file names cannot exceed 256 bytes. Starting with Windows 10 (version 1607), the max path
+                # limit preference can be configured in the registry (which is a opt-in feature):
+                # Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Type DWord -Value 1 -Force
+                # https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
                 $FileSystem = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"
                 $MaxPathLength = $FileSystem.LongPathsEnabled -eq 1 ? 32767 : 260
                 Write-Output $MaxPathLength
@@ -707,99 +576,29 @@ function Get-Calendar {
 }
 
 function Get-RandomPassword {
-    <#
-        .SYNOPSIS
-        Generates a random password of the specified length.
-
-        .DESCRIPTION
-        Generates a random password of the specified length. The implementation of this function is based on the
-        Membership.GeneratePassword method from the System.Web.Security namespace from the .NET framework.
-
-        .PARAMETER Length
-        The number of characters in the generated password. The length must be between 1 and 128 characters.
-
-        .PARAMETER NumberOfNonAlphanumericCharacters
-        The minimum number of non-alphanumeric characters (such as @, #, !, %, &, and so on) in the generated password.
-
-        .LINK
-        https://docs.microsoft.com/en-us/dotnet/api/system.web.security.membership.generatepassword?view=netframework-4.8
-
-        .LINK
-        https://referencesource.microsoft.com/#System.Web/Security/Membership.cs,302
-
-        .EXAMPLE
-        PS> Get-RandomPassword -Length 32
-
-        .OUTPUTS
-        A random password of the specified length.
-    #>
     [OutputType([string])]
     param(
         [Parameter(Position = 0)]
-        [ValidateRange(1, 128)]
-        [int] $Length = 64,
-
-        [Parameter(Position = 1)]
-        [int] $NumberOfNonAlphanumericCharacters = 16
+        [ValidateRange(8, 256)]
+        [int] $Length = 64
     )
 
     begin {
-        Add-Type -AssemblyName System.Security
-        [char[]] $Punctuations = "!@#$%^&*()_-+=[{]};:>|./?".ToCharArray()
-        $RandomNumberGenerator = [Cryptography.RNGCryptoServiceProvider]::new()
+        # Base64 encoding encodes every 3 bytes of input data into 4 characters
+        # of output data. The required length of the password can be computed by
+        $Size = [Math]::Floor($Length * 3 / 4)
+        $Buffer = [byte[]]::new($Size)
     }
     process {
-        if ($NumberOfNonAlphanumericCharacters -gt $Length -or $NumberOfNonAlphanumericCharacters -lt 0) {
-            Write-Error -Message "Invalid argument for $(nameof{ $NumberOfNonAlphanumericCharacters }): '$NumberOfNonAlphanumericCharacters'" -Category InvalidArgument -ErrorAction Stop
-        }
-
-        [int] $Count = 0
-        $ByteBuffer = New-Object byte[] $Length
-        $CharacterBuffer = New-Object char[] $Length
-        $RandomNumberGenerator.GetBytes($ByteBuffer)
-
-        for ([int] $i = 0; $i -lt $Length; $i++) {
-            [int] $j = [int]($ByteBuffer[$i] % 87)
-
-            if ($j -lt 10) {
-                $CharacterBuffer[$i] = [char]([int]([char]'0') + $j)
-            }
-            elseif ($j -lt 36) {
-                $CharacterBuffer[$i] = [char]([int]([char]'A') + $j - 10)
-            }
-            elseif ($j -lt 62) {
-                $CharacterBuffer[$i] = [char]([int]([char]'a') + $j - 36)
-            }
-            else {
-                $CharacterBuffer[$i] = $Punctuations[$j - 62]
-                $Count++
-            }
-        }
-
-        if ($count -lt $NumberOfNonAlphanumericCharacters) {
-            return $([string]::new($CharacterBuffer))
-        }
-
-        $PRNG = [Random]::new()
-
-        for ([int] $k = 0; $k -lt $NumberOfNonAlphanumericCharacters - $Count; $k++) {
-            do {
-                [int] $r = $PRNG.Next(0, $Length)
-            }
-            while (![char]::IsLetterOrDigit($CharacterBuffer[$r]))
-
-            $CharacterBuffer[$r] = $Punctuations[$PRNG.Next(0, $Punctuations.Count)]
-        }
-
-        return $([string]::new($CharacterBuffer))
+        [Cryptography.RandomNumberGenerator]::Fill($Buffer)
+        $Password = [Convert]::ToBase64String($Buffer)
     }
-    clean {
-        $RandomNumberGenerator.Dispose()
+    end {
+        Write-Output $Password
     }
 }
 
 function Stop-LocalServer {
-    [Alias("killui")]
     [OutputType([void])]
     [CmdletBinding(ConfirmImpact = 'High', SupportsShouldProcess)]
     param (
@@ -822,62 +621,52 @@ function Stop-LocalServer {
     }
 }
 
-function New-DotnetProject {
-    [OutputType([void])]
+function Install-Certificate {
+    [OutputType([X509Certificate])]
     param(
         [Parameter(Mandatory)]
-        [string] $Name,
+        [string] $FilePath,
 
-        [string] $Path = $PWD,
+        [string] $StoreLocation = "Cert:\LocalMachine\My",
 
-        [ValidateSet("console", "classlib", "wpf", "winforms", "page", "blazorserver", "blazorwasm", "web", "mvc", "razor", "webapi")]
-        [string] $Template = "console",
+        [securestring] $Password,
 
-        [ValidateSet("C#", "F#", "VB")]
-        [string] $Language = "C#",
-
-        [string[]] $Packages,
-
-        [switch] $InitRepository
+        [string] $User = "$env:USERDOMAIN\$env:USERNAME"
     )
 
     begin {
-        $OutputDirectory = Join-Path -Path $Path -ChildPath $Name -Resolve
-        $RootDirectory = New-Item -ItemType Directory -Path $(Join-Path -Path $OutputDirectory -ChildPath $Name -Resolve)
-        Push-Location $OutputDirectory
+        if ($global:OperatingSystem -ne [OS]::Windows) {
+            Write-Error "This Cmdlet only works on the Windows Operating System" -ErrorAction Stop
+        }
     }
     process {
-        dotnet new $Template --name $Name --language $Language --output $RootDirectory
-        dotnet new gitignore --output $OutputDirectory
-        dotnet new editorconfig --output $OutputDirectory
-        dotnet restore $RootDirectory
-        dotnet build $RootDirectory
+        $Certificate = Import-PfxCertificate -FilePath $FilePath -CertStoreLocation $StoreLocation -Password $Password
 
-        $Readme = New-Item -ItemType File -Name "README.md" -Path $OutputDirectory
-        Set-Content $Readme -Value "# $Name"
 
-        if ($PSBoundParameters.ContainsKey("Packages")) {
-            $Packages | ForEach-Object {
-                dotnet add $RootDirectory package $_
-            }
+        # Beware that the PrivateKey (PK) property returns a different type between .NET Framework and .NET Core.
+        $UniqueName = if ($PSVersionTable.PSVersion.Major -eq 5) {
+            # PK returns a RSACryptoServiceProvider instance provided by the Cryptographic Service Provider (CSP).
+            # This cryptography subsystem was superseded by CNG with the advent of .NET Core.
+            $Certificate.PrivateKey.CspKeyContainerInfo.UniqueKeyContainerName
+        } else {
+            # PK returns a RSACng instance provided by the Cryptography Next Generation (CNG), which isn't available for
+            # operating systems other than Windows. On Linux and MacOS, the PK would be of type RSAOpenSsl. The PrivateKey
+            # property was obsoleted for these reasons, and it is now recommended to use the GetRSAPrivateKey extension method
+            # which returns an implementation-agnostic abstract base class.
+            [RSACertificateExtensions]::GetRSAPrivateKey($Certificate).Key.UniqueName
         }
 
-        if ($InitRepository.IsPresent) {
-            git init
-            git add --all
-            git commit -m "Init commit"
-        }
+        # Grant persistent read permissions to the domain user, so that the certificate doesn't need to
+        # be re-installed after a reboot.
+        $AclPath = "C:\ProgramData\Microsoft\Crypto\RSA\MachineKeys\$UniqueName"
+        $Acl = Get-Acl -Path $AclPath
+        $Rule = [FileSystemAccessRule]::new($User, [FileSystemRights]::Read, [AccessControlType]::Allow)
+        $Acl.AddAccessRule($Rule)
+        Set-Acl -Path $AclPath -AclObject $Acl
     }
-    clean {
-        Pop-Location
+    end {
+        Write-Output $Certificate
     }
-}
-
-function Stop-Work {
-    $Apps = @("TEAMS", "OUTLOOK", "LYNC")
-    Get-Process | Where-Object { $Apps.Contains($_.Name.ToUpper()) } | Stop-Process -Force
-
-    Get-SmbMapping | Remove-SmbMapping -Force
 }
 
 function Get-WorldClock {
@@ -1106,16 +895,34 @@ function Set-EnvironmentVariable {
         [Parameter(Position = 2)]
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process,
 
-        [switch] $Override
+        [switch] $Override,
+
+        [switch] $Force
     )
 
-    $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
+    begin {
+        $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
+        $OldValue = $Override.IsPresent ? [string]::Empty : [Environment]::GetEnvironmentVariable($Key, $Scope)
+        $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
+    }
+    process {
+        if ($PSCmdlet.ShouldProcess($null, "Are you sure that you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
+            $IsDuplicatedValue = $($OldValue -Split $Token).Contains($Value)
 
-    $OldValue = $Override.IsPresent ? [string]::Empty : [Environment]::GetEnvironmentVariable($Key, $Scope)
-    $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
+            if ($IsDuplicatedValue) {
+                Write-Warning "The value '$Value' already exists for the key '$Key'."
 
-    if ($PSCmdlet.ShouldProcess($null, "Are you sure that you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
-        [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)
+                if (!$Force) {
+                    $Message = "To add a value to an existing key multiple times, use the -Force flag."
+                    Write-Information -MessageData $Message -Tags "Instructions" -InformationAction Continue
+                    return
+                }
+
+                Write-Warning "Forcing addition due to the -Force flag."
+            }
+
+            [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)
+        }
     }
 }
 
@@ -1130,10 +937,20 @@ function Get-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process
     )
 
-    $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
+    begin {
+        $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
+    }
+    process {
+        $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope)
 
-    $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope) -Split $Token
-    Write-Output $EnvironmentVariables
+        if ($EnvironmentVariables.Length -eq 0) {
+            Write-Warning "Environment variable '$Key' is empty or not defined."
+            return
+        }
+
+        $EnvironmentVariableArray = $EnvironmentVariables -Split $Token
+        Write-Output $EnvironmentVariableArray
+    }
 }
 
 function Remove-EnvironmentVariable {
@@ -1149,20 +966,23 @@ function Remove-EnvironmentVariable {
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process
     )
 
-    $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
-
-    $Title = "Remove '$Value' from '$Key'"
-    $Description = "Are you sure that you want to remove '$Value' from the environment variable '$Key'?"
-    $RemoveValue = $([Environment]::GetEnvironmentVariable($Key, $Scope) -Split $Token | Where-Object { $_ -ne $Value }) -join $Token
-
-    if (!$PSBoundParameters.ContainsKey("Value")) {
-        $Title = "Remove all values in '$Key'"
-        $Description = "Are you sure that you want to remove the environment variable '$Key'?"
-        $RemoveValue = $null
+    begin {
+        $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
     }
+    process {
+        $Title = "Remove '$Value' from '$Key'"
+        $Description = "Are you sure that you want to remove '$Value' from the environment variable '$Key'?"
+        $RemoveValue = $([Environment]::GetEnvironmentVariable($Key, $Scope) -Split $Token | Where-Object { $_ -ne $Value }) -Join $Token
 
-    if ($PSCmdlet.ShouldProcess($null, $Description, $Title)) {
-        [Environment]::SetEnvironmentVariable($Key, $RemoveValue, $Scope)
+        if (!$PSBoundParameters.ContainsKey("Value")) {
+            $Title = "Remove all values in '$Key'"
+            $Description = "Are you sure that you want to remove the environment variable '$Key'?"
+            $RemoveValue = $null
+        }
+
+        if ($PSCmdlet.ShouldProcess($null, $Description, $Title)) {
+            [Environment]::SetEnvironmentVariable($Key, $RemoveValue, $Scope)
+        }
     }
 }
 
@@ -1173,125 +993,6 @@ function Get-Definition {
 
     process {
         $(Get-Command $Command).Definition | bat --language powershell
-    }
-}
-
-function Measure-ScriptBlock {
-    <#
-        .SYNOPSIS
-        Measures the time it takes to run script blocks and cmdlets.
-
-        .DESCRIPTION
-        The `Measure-ScriptBlock` cmdlet runs a script block or cmdlet internally -Round times, measures the execution of
-        the operation, and returns the execution time.
-
-        .PARAMETER ScriptBlock
-        PowerShell script block to test.
-
-        .PARAMETER Path
-        Path to PowerShell script to create a script block from.
-
-        .PARAMETER Rounds
-        Defines the number of times the script block code is executed.
-
-        .PARAMETER NoGC
-        Don't invoke the garbage collector.
-
-        .PARAMETER NoWarmUp
-        Skip the warm-up routine (and omit the first 5 command invocations). The warm-up routine is used to stabilize the
-        performance measurements and are not part of the actual test run.
-
-        .NOTES
-        A single tick represents one hundred nanoseconds or one ten-millionth of a second. There are 10,000 ticks in a
-        millisecond (see `[System.TimeSpan]`) and 10 million ticks in a second.
-
-        Use the built-in `Measure-Command` cmdlet from Microsoft if you only want to run the script block once.
-
-        .EXAMPLE
-        PS > $Result = timeit -ScriptBlock { prompt | Out-Null } -Rounds 100 -Verbose
-
-        Always pipe the script block section to `Out-Null` so that the result of the command being run doesn't get mixed
-        up with the measurements returned by `Measure-ScriptBlock`.
-
-        .EXAMPLE
-        PS > $Result = Measure-ScriptBlock -Path .\script.ps1 -Rounds 10000 -Verbose
-
-        You can also test scripts directly. Here you don't have to pipe anything to `Out-Null`.
-
-        .EXAMPLE
-        PS > $ScriptBlock = { Get-Random -Minimum 1 -Maximum 1000 | Out-Null }
-        PS > $Result = Measure-ScriptBlock -ScriptBlock $ScriptBlock -Rounds 10000 -Verbose
-        PS > $Result.Average / [System.TimeSpan]::TicksPerSecond
-
-        You can convert elapsed ticks to seconds (or minutes, etc.) by using the fields exposed by `[System.TimeSpan]`.
-    #>
-    [Alias("timeit")]
-    [OutputType([Microsoft.PowerShell.Commands.GenericMeasureInfo])]
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory, ParameterSetName = "ScriptBlock")]
-        [scriptblock] $ScriptBlock,
-
-        [Parameter(Mandatory, ParameterSetName = "Path")]
-        [string] $Path,
-
-        [Parameter(Mandatory)]
-        [int] $Rounds,
-
-        [Parameter()]
-        [switch] $NoGC,
-
-        [Parameter()]
-        [switch] $NoWarmUp
-    )
-
-    begin {
-        $StopWatch = [Stopwatch]::new()
-        $Measurements = New-Object List[System.TimeSpan]
-
-        if (![Stopwatch]::IsHighResolution) {
-            Write-Error -Message "Your hardware doesn't support the high resolution counter required to run this test" -Category DeviceError -ErrorAction Stop
-        }
-
-        $Command = switch ($PSCmdlet.ParameterSetName) {
-            "ScriptBlock" { $ScriptBlock }
-            "Path" { Get-Command $Path | Select-Object -ExpandProperty ScriptBlock }
-        }
-
-        $CurrentProcess = [Process]::GetCurrentProcess()
-        $CurrentProcess.ProcessorAffinity = [IntPtr]::new(2)
-        $CurrentProcess.PriorityClass = [ProcessPriorityClass]::High
-        [Thread]::CurrentThread.Priority = [ThreadPriority]::Highest
-
-        if (!$NoGC.IsPresent) {
-            Write-Verbose "Calling garbage collector and waiting for pending finalizers . . ."
-            [GC]::Collect()
-            [GC]::WaitForPendingFinalizers()
-            [GC]::Collect()
-        }
-
-        if (!$NoWarmUp.IsPresent) {
-            [int] $Reps = 5
-            Write-Verbose "Running warmup routine . . ."
-
-            while ($Repos -ge 0) {
-                Invoke-Command -ScriptBlock $Command
-                $Reps--
-            }
-        }
-    }
-    process {
-        Write-Verbose "Running performance test . . ."
-
-        for ($r = 0; $r -lt $Rounds; $r++) {
-            $StopWatch.Restart()
-            Invoke-Command -ScriptBlock $Command
-            $StopWatch.Stop()
-            $Measurements.Add($StopWatch.Elapsed)
-        }
-    }
-    end {
-        Write-Output $($Measurements | Measure-Object -Property Ticks -AllStats)
     }
 }
 
@@ -1465,7 +1166,6 @@ $EnvironmentVariableKeyCompleter = {
 Set-Alias -Name ^ -Value Select-Object
 Set-Alias -Name man -Value Get-Help -Option AllScope
 Set-Alias -Name touch -Value New-Item
-Set-Alias -Name bye -Value Stop-Work
 Set-Alias -Name elevate -Value Start-ElevatedConsole
 Set-Alias -Name activate -Value .\venv\Scripts\Activate.ps1
 Set-Alias -Name np -Value notepad.exe
@@ -1476,8 +1176,21 @@ Set-Alias -Name exp -Value explorer.exe
 function prompt {
     $ExecTime = Get-ExecutionTime
 
-    $Branch = if ($(git rev-parse --is-inside-work-tree 2>&1) -eq $true) {
-          [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Blue, $(git branch --show-current), $PSStyle.Foreground.White)
+    $GitStatus = if ($(git rev-parse --is-inside-work-tree 2>&1) -eq $true) {
+          #        tag                           branch                         detached head
+          $Head = (git tag --points-at HEAD) ?? (git branch --show-current) ?? (git rev-parse --short HEAD)
+          $DisplayUserName = $env:PROFILE_ENABLE_BRANCH_USERNAME -eq 1
+
+          #                                         U        @     H
+          Write-Output $([string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",
+              $PSStyle.Foreground.Cyan,                                   # 0
+              $DisplayUserName ? (git config user.name) : [string]::Empty,# 1
+              $PSStyle.Foreground.Blue,                                   # 2
+              $PSStyle.Foreground.BrightBlue,                             # 3
+              $DisplayUserName ? "@" : [string]::Empty,                   # 4
+              $Head,                                                      # 5
+              $PSStyle.Foreground.White                                   # 6
+          ))
     }
 
     $Venv = if ($env:VIRTUAL_ENV) {
@@ -1507,7 +1220,7 @@ function prompt {
 
     Start-DailyTranscript | Out-Null
 
-    return [System.Collections.ArrayList]@(
+    return [ArrayList]@(
         "[",
         $PSStyle.Foreground.BrightCyan,
         $Computer.UserName,
@@ -1531,7 +1244,7 @@ function prompt {
         $ExecTime.Milliseconds.ToString("D3"),
         ")",
         $PSStyle.Foreground.White,
-        $Branch,
+        $GitStatus,
         $Venv,
         "`n",
         [string]::new($global:IsAdmin ? "#" : ">", $NestedPromptLevel + 1),
