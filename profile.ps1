@@ -906,6 +906,20 @@ function Set-EnvironmentVariable {
     $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
 
     if ($PSCmdlet.ShouldProcess($null, "Are you sure that you want to add '$Value' to the environment variable '$Key'?", "Add '$Value' to '$Key'")) {
+        $IsDuplicatedValue = $($OldValue -Split $Token).Contains($Value)
+
+        if ($IsDuplicatedValue) {
+            Write-Warning "The value '$Value' already exists for the key '$Key'."
+
+            if (!$Force) {
+                $Message = "To add a value to an existing key multiple times, use the -Force flag."
+                Write-Information -MessageData $Message -Tags "Instructions" -InformationAction Continue
+                return
+            }
+
+            Write-Warning "Forcing addition due to the -Force flag."
+        }
+
         [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)
     }
 }
