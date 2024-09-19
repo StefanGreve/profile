@@ -319,19 +319,18 @@ function Get-StringHash {
 function Get-Salt {
     [OutputType([Byte[]])]
     param(
-        [int] $MaxLength = 32
+        [int] $Size = 32
     )
 
     begin {
-        $Random = [Cryptography.RNGCryptoServiceProvider]::new()
+        $Salt = [byte[]]::new($Size)
     }
     process {
-        $Salt = [Byte[]]::CreateInstance([Byte], $MaxLength)
-        $Random.GetNonZeroBytes($Salt)
+        [Cryptography.RandomNumberGenerator]::Fill($Salt)
         Write-Output $Salt
     }
     clean {
-        $Random.Dispose()
+        $Salt.Clear()
     }
 }
 
