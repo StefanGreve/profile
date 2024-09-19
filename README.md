@@ -48,11 +48,6 @@ variables:
 <details>
 <summary>Content</summary>
 
-### System Maintenance
-
-- `Update-Configuration`
-- `Update-System`
-
 ### Utilities
 
 - `Get-Battery`
