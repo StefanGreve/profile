@@ -44,11 +44,6 @@ if ($env:PROFILE_LOAD_CUSTOM_SCRIPTS) {
 
 if ([OperatingSystem]::IsWindows()) {
     $global:PSRC = "$HOME\Documents\PowerShell\profile.ps1"
-
-    if (Get-Command "pwshfetch-test-1" -ErrorAction SilentlyContinue) {
-        Set-Alias -Name neofetch -Value pwshfetch-test-1
-    }
-
     $global:IsAdmin = ([Principal.WindowsPrincipal][Principal.WindowsIdentity]::GetCurrent()).IsInRole([Principal.WindowsBuiltInRole]::Administrator)
 }
 
