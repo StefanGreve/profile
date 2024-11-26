@@ -1,6 +1,6 @@
 function Get-Battery {
     [Alias("battery")]
-    [OutputType([Battery])]
+    [OutputType("Battery")]
     param()
 
     process {
