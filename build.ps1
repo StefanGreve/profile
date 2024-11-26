@@ -31,7 +31,7 @@ process {
         | Select-Object -ExpandProperty FullName
         | Resolve-Path -Relative
 
-    $Classes = Get-ChildItem -Path "Classes" -Filter "*.ps1"
+    $Formats = Get-ChildItem -Path "./Formats" -Filter "*.ps1xml"
         | Select-Object -ExpandProperty FullName
         | Resolve-Path -Relative
 
@@ -39,7 +39,7 @@ process {
         Path = $ManifestPath
         FunctionsToExport = @($FunctionsToExport)
         FileList = @($FileList)
-        ScriptsToProcess = @($Classes)
+        FormatsToProcess = @($Formats)
     }
 
     Update-ModuleManifest @ManifestParameter

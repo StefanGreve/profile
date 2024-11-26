@@ -1,3 +1,4 @@
+[NoRunspaceAffinity()]
 class Battery {
     [int] $ChargeRemaining
     [timespan] $Runtime
