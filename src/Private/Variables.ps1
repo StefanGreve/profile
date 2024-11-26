@@ -3,4 +3,11 @@ using namespace System.Diagnostics.CodeAnalysis
 [SuppressMessage("PSUseDeclaredVarsMoreThanAssignments", "")]
 param()
 
-$OperatingSystemNotSupportedError = "This Cmdlet is not supported on your current operating system."
+#region Error Messages
+
+$Disclaimer = "To report an issue, use the following link: https://github.com/stefangreve/profile"
+
+$OperatingSystemNotSupportedError = "This Cmdlet is not supported on your current operating system. ${Disclaimer}"
+$ParameterOverloadNotImplementedError = "This method invocation is not implemented yet. ${Disclaimer}"
+
+#endregion

@@ -30,7 +30,7 @@ function Get-StringHash {
                     [Cryptography.SHA512]::Create()
                 }
                 Default {
-                    Write-Error "Hash Algorithm is not implemented" -Category InvalidArgument -ErrorAction Stop
+                    Write-Error $ParameterOverloadNotImplementedError -Category NotImplemented -ErrorAction Stop
                 }
             }
 
