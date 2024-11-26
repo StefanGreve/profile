@@ -13,7 +13,7 @@ process {
 
     Write-Host "[1/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Test Module Manifest"
-    Test-ModuleManifest -Path $ManifestPath
+    Test-ModuleManifest -Path $ManifestPath -ErrorAction Stop
     Write-Host
 
     #endregion
@@ -42,7 +42,9 @@ process {
         FormatsToProcess = @($Formats)
     }
 
-    Update-ModuleManifest @ManifestParameter
+    Update-ModuleManifest @ManifestParameter -ErrorAction Stop
+    $Module = Import-PowerShellDataFile -Path $ManifestPath
+    $Module | Write-Output | Format-Table
 
     #endregion
 
@@ -50,7 +52,9 @@ process {
 
     Write-Host "[3/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Import Module"
-    Import-Module -Name "./${ManifestPath}" -Force -Verbose
+    Write-Host
+
+    Import-Module -Name "./${ManifestPath}" -Force -ErrorAction Stop
 
     #endregion
 }
