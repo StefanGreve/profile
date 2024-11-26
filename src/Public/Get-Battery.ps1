@@ -35,7 +35,6 @@ function Get-Battery {
                 Default { "Unknown" }
             }
 
-            $Win32Battery.Dispose()
             return [Battery]::new($ChargeRemaining, $Runtime, $IsCharging, $Status)
         } elseif ($IsMacOS -or $IsLinux) {
             Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
