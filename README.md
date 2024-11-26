@@ -42,3 +42,11 @@ variables:
   scripts from on profile launch.
 - `PROFILE_ENABLE_BRANCH_USERNAME`: Set this value to `1` to display the active
   Git user name next to the branch name in the console prompt (off by default)
+
+## Developer Notes
+
+Configure development environment:
+
+```powershell
+dotnet tool restore
+```

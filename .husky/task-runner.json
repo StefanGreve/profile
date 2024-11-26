@@ -1,0 +1,25 @@
+{
+   "$schema": "https://alirezanet.github.io/Husky.Net/schema.json",
+   "tasks": [
+      {
+         "name": "unstage-manifest",
+         "group": "pre-commit",
+         "command": "git",
+         "args": [
+            "reset",
+            "HEAD",
+            "--",
+            "*.psd1"
+         ]
+      },
+      {
+         "name": "restore-manifest",
+         "group": "pre-commit",
+         "command": "git",
+         "args": [
+            "restore",
+            "*.psd1"
+         ]
+      }
+   ]
+}
