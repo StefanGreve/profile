@@ -31,10 +31,15 @@ process {
         | Select-Object -ExpandProperty FullName
         | Resolve-Path -Relative
 
+    $Classes = Get-ChildItem -Path "Classes" -Filter "*.ps1"
+        | Select-Object -ExpandProperty FullName
+        | Resolve-Path -Relative
+
     $ManifestParameter = @{
         Path = $ManifestPath
         FunctionsToExport = @($FunctionsToExport)
         FileList = @($FileList)
+        ScriptsToProcess = @($Classes)
     }
 
     Update-ModuleManifest @ManifestParameter
