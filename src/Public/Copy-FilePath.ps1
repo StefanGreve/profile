@@ -6,7 +6,7 @@ function Copy-FilePath {
     )
 
     process {
-        $FullName = $(Get-Item $Path).FullName
-        Set-Clipboard -Value $FullName
+        $Item = Get-Item $Path
+        Set-Clipboard -Value $Item.FullName
     }
 }
