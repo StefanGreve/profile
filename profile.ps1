@@ -121,7 +121,7 @@ Set-PSReadLineKeyHandler -Key ")", "]", "}" -BriefDescription SmartClosingBraces
 
 #region Hook Scripts
 
-if ($env:PROFILE_LOAD_CUSTOM_SCRIPTS) {
+if (Test-Path $env:PROFILE_LOAD_CUSTOM_SCRIPTS) {
     Get-ChildItem -Path $env:PROFILE_LOAD_CUSTOM_SCRIPTS -Filter "*.ps1" | ForEach-Object {
         . $_.FullName
     }
@@ -259,7 +259,7 @@ function prompt {
     $PsPrompt.Append([string]::new($global:IsAdmin ? "#" : ">", $NestedPromptLevel + 1))
     $PsPrompt.Append(" ")
 
-    Write-Output $PsPrompt.ToString()
+    return $PsPrompt.ToString()
 }
 
 #endregion
