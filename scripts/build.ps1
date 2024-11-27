@@ -1,9 +1,13 @@
+using namespace System.IO
+
 param(
     [string] $ModuleName = "Toolbox"
 )
 
 begin {
-    Push-Location "src"
+    $ScriptPath = Split-Path -Parent -Path $MyInvocation.MyCommand.Path
+    $ProjectRoot = $(Get-Item $([Path]::Combine($ScriptPath, ".."))).FullName
+    Push-Location $([Path]::Combine($ProjectRoot, "src"))
 
     $Steps = 3
     $ManifestPath = "${ModuleName}.psd1"
