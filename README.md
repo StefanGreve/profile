@@ -1,22 +1,23 @@
 # PowerShell Profile
 
-PowerShell profile. Requires at least version 7.4 or higher.
+The project contains the source code of my PowerShell profile as well as the
+`Toolbox` module. You need at least version 7.4 or higher to use this project.
 
 ## Setup
 
-Note that you need administrator rights in order to create symbolic links on Windows,
-unless you have turned on `Developer Mode` in the settings app:
+Note that you need administrator rights in order to create symbolic links on
+Windows, unless you have turned on `Developer Mode` in the settings app:
 
 <details>
 <summary>Instructions</summary>
 
 ```powershell
-git clone git@github.com:StefanGreve/profile.git
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/StefanGreve/profile/refs/heads/master/profile.ps1 -Out profile.ps1
 
 # Recommended profile path: CurrentUserAllHosts
 $PROFILE | Get-Member -Type NoteProperty | Format-List
 
-# Create a PowerShell directory if it doesn't exists already
+# Create a PowerShell directory if necessary
 New-Item "$HOME\Documents\PowerShell" -ItemType Directory -ErrorAction SilentlyContinue
 
 # Create a new symbolic link and dot-source profile.ps1
@@ -45,7 +46,7 @@ variables:
 
 ## Developer Notes
 
-Configure development environment:
+Setup the development environment:
 
 ```powershell
 dotnet tool restore
