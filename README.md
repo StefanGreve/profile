@@ -51,3 +51,9 @@ Setup the development environment:
 ```powershell
 dotnet tool restore
 ```
+
+Then use the `build.ps1` script for creating a new version of the `Toolbox` module.
+
+See also
+[`Types.ps1xml` and `Format.ps1xml` files](https://code.visualstudio.com/docs/languages/powershell#_typesps1xml-and-formatps1xml-files)
+for editing `ps1xml` files.
