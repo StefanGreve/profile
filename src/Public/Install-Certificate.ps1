@@ -11,7 +11,7 @@ function Install-Certificate {
         [Parameter(Mandatory)]
         [StoreLocation] $StoreLocation,
 
-        [securestring] $Password,
+        [SecureString] $Password,
 
         [string] $User = "$env:USERDOMAIN\$env:USERNAME"
     )
@@ -31,15 +31,16 @@ function Install-Certificate {
             # This cryptography subsystem was superseded by CNG with the advent of .NET Core.
             $Certificate.PrivateKey.CspKeyContainerInfo.UniqueKeyContainerName
         } else {
-            # PK returns a RSACng instance provided by the Cryptography Next Generation (CNG), which isn't available for
-            # operating systems other than Windows. On Linux and MacOS, the PK would be of type RSAOpenSsl. The PrivateKey
-            # property was obsoleted for these reasons, and it is now recommended to use the GetRSAPrivateKey extension method
-            # which returns an implementation-agnostic abstract base class.
+            # PK returns a RSACng instance provided by the Cryptography Next Generation (CNG), which is not
+            # available for operating systems other than Windows. On Linux and MacOS, the PK would be of type
+            # RSAOpenSsl. The PrivateKey property was obsoleted for these reasons, and it is now recommended
+            # to use the GetRSAPrivateKey extension method which returns an implementation-agnostic abstract
+            # base class.
             [RSACertificateExtensions]::GetRSAPrivateKey($Certificate).Key.UniqueName
         }
 
-        # Grant persistent read permissions to the domain user, so that the certificate doesn't need to
-        # be re-installed after a reboot.
+        # Grant persistent read permissions to the domain user, so that the certificate
+        # does not need to be re-installed after a reboot.
         $AclPath = "C:\ProgramData\Microsoft\Crypto\RSA\MachineKeys\$UniqueName"
         $Acl = Get-Acl -Path $AclPath
         $Rule = [FileSystemAccessRule]::new($User, [FileSystemRights]::Read, [AccessControlType]::Allow)

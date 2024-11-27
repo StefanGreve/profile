@@ -3,6 +3,7 @@ using namespace System
 function Export-Branch {
     [OutputType([void])]
     [Alias("git-fire")]
+    [SuppressMessage("PSAvoidUsingCmdletAliases", "")]
     param(
         [string] $Message,
 

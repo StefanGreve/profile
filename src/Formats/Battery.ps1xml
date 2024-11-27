@@ -39,7 +39,7 @@ IN CONNECTION WITH THE USE OF THIS CODE AND INFORMATION REMAINS WITH THE USER.
                                             $PSStyle.Foreground.Red
                                         }
                                         default {
-                                            $PSStyle.Foreground.Reset
+                                            $PSStyle.Foreground.White
                                         }
                                     }
 
@@ -47,7 +47,7 @@ IN CONNECTION WITH THE USE OF THIS CODE AND INFORMATION REMAINS WITH THE USER.
                                         "{1}{0}%{2}",
                                         $_.ChargeRemaining,
                                         $ChargeColor,
-                                        $PSStyle.Foreground.Reset
+                                        $PSStyle.Foreground.White
                                     )
                                 </ScriptBlock>
                             </ListItem>
