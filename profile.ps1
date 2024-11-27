@@ -75,13 +75,13 @@ Set-PSReadLineKeyHandler -Key Ctrl+s -BriefDescription SaveInHistory -LongDescri
     [PSConsoleReadLine]::RevertLine()
 }
 
-Set-PSReadLineKeyHandler -Key '(', '[', '{' -BriefDescription InsertPairedBraces -LongDescription "Insert matching braces" -ScriptBlock {
+Set-PSReadLineKeyHandler -Key "(", "[", "{" -BriefDescription InsertPairedBraces -LongDescription "Insert matching braces" -ScriptBlock {
     param($Key, $Arg)
 
     $CloseChar = switch ($Key.KeyChar) {
-        <#case#> '(' { [char]')'; break }
-        <#case#> '[' { [char]']'; break }
-        <#case#> '{' { [char]'}'; break }
+        <#case#> "(" { [char]")"; break }
+        <#case#> "[" { [char]"]"; break }
+        <#case#> "{" { [char]"}"; break }
     }
 
     $SelectionStart = $null
@@ -102,7 +102,7 @@ Set-PSReadLineKeyHandler -Key '(', '[', '{' -BriefDescription InsertPairedBraces
     }
 }
 
-Set-PSReadLineKeyHandler -Key ')', ']', '}' -BriefDescription SmartClosingBraces -LongDescription "Insert closing brace or skip" -ScriptBlock {
+Set-PSReadLineKeyHandler -Key ")", "]", "}" -BriefDescription SmartClosingBraces -LongDescription "Insert closing brace or skip" -ScriptBlock {
     param($Key, $Arg)
 
     $Line = $null
