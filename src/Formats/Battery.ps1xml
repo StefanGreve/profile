@@ -59,5 +59,67 @@ IN CONNECTION WITH THE USE OF THIS CODE AND INFORMATION REMAINS WITH THE USER.
                 </ListEntries>
             </ListControl>
         </View>
+        <View>
+            <Name>BatteryTable</Name>
+            <ViewSelectedBy>
+                <TypeName>Battery</TypeName>
+            </ViewSelectedBy>
+            <TableControl>
+                <TableHeaders>
+                    <TableColumnHeader>
+                        <Label>Status</Label>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>IsCharging</Label>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>ChargeRemaining</Label>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Runtime</Label>
+                    </TableColumnHeader>
+                </TableHeaders>
+                <TableRowEntries>
+                    <TableRowEntry>
+                        <TableColumnItems>
+                            <TableColumnItem>
+                                <PropertyName>Status</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>IsCharging</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <ScriptBlock>
+                                    $ChargeColor = switch ($_.ChargeRemaining) {
+                                        { $_ -ge 70 -and $_ -lt 100 } {
+                                            $PSStyle.Foreground.Green
+                                        }
+                                        { $_ -ge 30 -and $_ -le 69 } {
+                                            $PSStyle.Foreground.Yellow
+                                        }
+                                        { $_ -ge 0 -and $_ -le 29 } {
+                                            $PSStyle.Foreground.Red
+                                        }
+                                        default {
+                                            $PSStyle.Foreground.White
+                                        }
+                                    }
+
+                                    [string]::Format(
+                                        "{1}{0}%{2}",
+                                        $_.ChargeRemaining,
+                                        $ChargeColor,
+                                        $PSStyle.Foreground.White
+                                    )
+                                </ScriptBlock>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>Runtime</PropertyName>
+                            </TableColumnItem>
+                        </TableColumnItems>
+                    </TableRowEntry>
+                </TableRowEntries>
+            </TableControl>
+        </View>
     </ViewDefinitions>
 </Configuration>
