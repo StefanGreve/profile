@@ -35,11 +35,16 @@ process {
         | Select-Object -ExpandProperty FullName
         | Resolve-Path -Relative
 
+    $Scripts = Get-ChildItem -Path "./Scripts" -Filter "*.ps1"
+        | Select-Object -ExpandProperty FullName
+        | Resolve-Path -Relative
+
     $ManifestParameter = @{
         Path = $ManifestPath
         FunctionsToExport = @($FunctionsToExport)
         FileList = @($FileList)
         FormatsToProcess = @($Formats)
+        ScriptsToProcess = @($Scripts)
     }
 
     Update-ModuleManifest @ManifestParameter -ErrorAction Stop
