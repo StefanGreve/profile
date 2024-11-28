@@ -31,6 +31,12 @@
             "ByPass",
             "-File",
             "./scripts/build.ps1"
+         ],
+         "include": [
+            "*.ps1",
+            "*.psm1",
+            "*.psd1",
+            "*.ps1xml"
          ]
       },
       {
@@ -43,6 +49,12 @@
             "ByPass",
             "-File",
             "./scripts/test.ps1"
+         ],
+         "include": [
+            "*.ps1",
+            "*.psm1",
+            "*.psd1",
+            "*.ps1xml"
          ]
       }
    ]
