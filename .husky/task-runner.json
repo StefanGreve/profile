@@ -20,6 +20,30 @@
             "restore",
             "*.psd1"
          ]
+      },
+      {
+         "name": "build-module",
+         "group": "pre-push",
+         "command": "pwsh",
+         "args": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "ByPass",
+            "-File",
+            "./scripts/build.ps1"
+         ]
+      },
+      {
+         "name": "test-module",
+         "group": "pre-push",
+         "command": "pwsh",
+         "args": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "ByPass",
+            "-File",
+            "./scripts/test.ps1"
+         ]
       }
    ]
 }
