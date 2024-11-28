@@ -1,13 +1,18 @@
 using namespace System.IO
 
 param(
-    [string] $ModuleName = "Toolbox"
+    [string] $ModuleName = "Toolbox",
+
+    [switch] $Build
 )
 
 $ScriptPath = Split-Path -Parent -Path $MyInvocation.MyCommand.Path
 $ProjectRoot = $(Get-Item $([Path]::Combine($ScriptPath, ".."))).FullName
 
-& $([Path]::Combine($ProjectRoot, "Scripts", "build.ps1"))
+if ($Build.IsPresent) {
+    & $([Path]::Combine($ProjectRoot, "Scripts", "build.ps1"))
+}
+
 Import-Module -Name $([Path]::Combine($ProjectRoot, "src", "${ModuleName}.psd1")) `
     -ErrorAction Stop `
     -PassThru
