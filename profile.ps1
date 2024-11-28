@@ -191,73 +191,51 @@ function prompt {
     }
 
     $PythonVirtualEnvironment = if ($env:VIRTUAL_ENV) {
-        [string]::Format(" {0}({1}){2}", $PSStyle.Foreground.Magenta, [Path]::GetFileName($env:VIRTUAL_ENV), $PSStyle.Foreground.White)
-    }
-
-    $Computer = if ($IsWindows) {
-        [PSCustomObject]@{
-            UserName = $env:USERNAME
-            HostName = $env:COMPUTERNAME
-        }
-    } elseif ($IsLinux) {
-        [PSCustomObject]@{
-            UserName = $env:USER
-            HostName = hostname
-        }
-    } elseif ($IsMacOS) {
-        [PSCustomObject]@{
-            UserName = id -un
-            HostName = scutil --get ComputerName
-        }
-    } else {
-        [PSCustomObject]@{
-            UserName = "n/a"
-            HostName = "n/a"
-        }
+        [string]::Format(" {0}({1}){2}",
+            $PSStyle.Foreground.Magenta,
+            [Path]::GetFileName($env:VIRTUAL_ENV),
+            $PSStyle.Foreground.White
+        )
     }
 
     Start-DailyTranscript | Out-Null
 
     $PsPrompt = [StringBuilder]::new()
-
-    # [username@hostname pwd]
-    $PsPrompt.Append("[")
-    $PsPrompt.Append($PSStyle.Foreground.BrightCyan)
-    $PsPrompt.Append($Computer.UserName)
-    $PsPrompt.Append($PSStyle.Foreground.White)
-    $PsPrompt.Append("@")
-    $PsPrompt.Append($Computer.HostName)
-    $PsPrompt.Append(" ")
-    $PsPrompt.Append($PSStyle.Foreground.Green)
-    $PsPrompt.Append([DirectoryInfo]::new($ExecutionContext.SessionState.Path.CurrentLocation).BaseName)
-    $PsPrompt.Append($PSStyle.Foreground.White)
-    $PsPrompt.Append("]")
-
-    $PsPrompt.Append(" ")
-
-    # (HH:mm:ss:ms)
-    $PsPrompt.Append($PSStyle.Foreground.Yellow)
-    $PsPrompt.Append("(")
-    $PsPrompt.Append($ExecTime.Hours.ToString("D2"))
-    $PsPrompt.Append(":")
-    $PsPrompt.Append($ExecTime.Minutes.ToString("D2"))
-    $PsPrompt.Append(":")
-    $PsPrompt.Append($ExecTime.Seconds.ToString("D2"))
-    $PsPrompt.Append(":")
-    $PsPrompt.Append($ExecTime.Milliseconds.ToString("D2"))
-    $PsPrompt.Append(")")
-    $PsPrompt.Append($PSStyle.Foreground.White)
-
-    # (user@branch)
-    $PsPrompt.Append($GitStatus)
-
-    # (active)
-    $PsPrompt.Append($PythonVirtualEnvironment)
-
-    # #/>
-    $PsPrompt.Append("`n")
-    $PsPrompt.Append([string]::new($global:IsAdmin ? "#" : ">", $NestedPromptLevel + 1))
-    $PsPrompt.Append(" ")
+    $null = & {
+        # [username@hostname pwd]
+        $PsPrompt.Append("[")
+        $PsPrompt.Append($PSStyle.Foreground.BrightCyan)
+        $PsPrompt.Append([Environment]::UserName)
+        $PsPrompt.Append([Environment]::MachineName)
+        $PsPrompt.Append("@")
+        $PsPrompt.Append($Computer.HostName)
+        $PsPrompt.Append(" ")
+        $PsPrompt.Append($PSStyle.Foreground.Green)
+        $PsPrompt.Append([DirectoryInfo]::new($ExecutionContext.SessionState.Path.CurrentLocation).BaseName)
+        $PsPrompt.Append($PSStyle.Foreground.White)
+        $PsPrompt.Append("]")
+        $PsPrompt.Append(" ")
+        # (HH:mm:ss:ms)
+        $PsPrompt.Append($PSStyle.Foreground.Yellow)
+        $PsPrompt.Append("(")
+        $PsPrompt.Append($ExecTime.Hours.ToString("D2"))
+        $PsPrompt.Append(":")
+        $PsPrompt.Append($ExecTime.Minutes.ToString("D2"))
+        $PsPrompt.Append(":")
+        $PsPrompt.Append($ExecTime.Seconds.ToString("D2"))
+        $PsPrompt.Append(":")
+        $PsPrompt.Append($ExecTime.Milliseconds.ToString("D2"))
+        $PsPrompt.Append(")")
+        $PsPrompt.Append($PSStyle.Foreground.White)
+        # (user@branch)
+        $PsPrompt.Append($GitStatus)
+        # (active)
+        $PsPrompt.Append($PythonVirtualEnvironment)
+        # #/>
+        $PsPrompt.Append([Environment]::NewLine)
+        $PsPrompt.Append([string]::new($global:IsAdmin ? "#" : ">", $NestedPromptLevel + 1))
+        $PsPrompt.Append(" ")
+    }
 
     return $PsPrompt.ToString()
 }
