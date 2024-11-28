@@ -15,8 +15,7 @@
     Copyright = "(c) 2024 Advanced Systems. All rights reserved."
     Description = "General purpose Cmdlets for all platforms."
     PowerShellVersion = "7.4"
-    PowerShellHostName = "ConsoleHost"
-    FunctionsToExport = "*"
+    FunctionsToExport = @()
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
