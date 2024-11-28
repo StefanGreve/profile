@@ -12,7 +12,8 @@ foreach ($Import in @($Classes + $Private + $Public)) {
         Write-Host "Importing ${File}"
     }
     catch {
-        Write-Error -Message "Failed to import file \"${File}\": $_"
+        Write-Host "[ ER ] " -ForegroundColor Red -NoNewline
+        Write-Host "Failed to import file \"${File}\": $_"
     }
 }
 
