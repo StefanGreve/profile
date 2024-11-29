@@ -9,7 +9,7 @@ begin {
     $ProjectRoot = $(Get-Item $([Path]::Combine($ScriptPath, ".."))).FullName
     Push-Location $([Path]::Combine($ProjectRoot, "src"))
 
-    $Steps = 3
+    $Steps = 4
     $ManifestPath = "${ModuleName}.psd1"
 }
 process {
@@ -64,6 +64,24 @@ process {
     Write-Host
 
     Import-Module -Name "./${ManifestPath}" -Force -ErrorAction Stop
+
+    #endregion
+
+    #region Step 4 - Run Analyzer
+
+    Write-Host "[4/${Steps}] " -ForegroundColor DarkGray -NoNewline
+    Write-Host "Run Analyzer"
+    Write-Host
+
+    if (!$(Get-Module PSScriptAnalyzer -ListAvailable)) {
+        Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+    }
+
+    Import-Module PSScriptAnalyzer
+    Invoke-ScriptAnalyzer -Path "./${ManifestPath}" `
+        -Severity Warning `
+        -Recurse `
+        -ReportSummary
 
     #endregion
 }
