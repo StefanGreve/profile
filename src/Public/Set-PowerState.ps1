@@ -14,16 +14,16 @@ function Set-PowerState {
     )
 
     dynamicparam {
-        $ParameterDictionary = New-Object RuntimeDefinedParameterDictionary
+        $ParameterDictionary = [RuntimeDefinedParameterDictionary]::new()
 
         if ($IsWindows) {
-            $DisableWakeAttribute = New-Object ParameterAttribute
+            $DisableWakeAttribute = [ParameterAttribute]::new()
             $DisableWakeAttribute.HelpMessage = "Disables all wake events."
 
-            $AttributeCollection = New-Object Collection[Attribute]
+            $AttributeCollection = [Collection[Attribute]]::new()
             $AttributeCollection.Add($DisableWakeAttribute)
 
-            $DisableWakeParameter = New-Object RuntimeDefinedParameter("DisableWake", [switch], $AttributeCollection)
+            $DisableWakeParameter = [RuntimeDefinedParameter]::new("DisableWake", [switch], $AttributeCollection)
 
             $ParameterDictionary.Add("DisableWake", $DisableWakeParameter)
         }
