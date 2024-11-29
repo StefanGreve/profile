@@ -9,6 +9,10 @@ begin {
     $ProjectRoot = $(Get-Item $([Path]::Combine($ScriptPath, ".."))).FullName
 }
 process {
+    if (!$(Get-Module Pester -ListAvailable)) {
+        Install-Module Pester -Scope CurrentUser -Force
+    }
+
     $Container = New-PesterContainer `
         -Path $([Path]::Combine($ProjectRoot, "tests", "module.tests.ps1")) `
         -Data @{
