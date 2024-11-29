@@ -12,16 +12,23 @@ Windows, unless you have turned on `Developer Mode` in the settings app:
 <summary>Instructions</summary>
 
 ```powershell
+# Save the PowerShell profile in the current working directory
 Invoke-WebRequest -Uri https://raw.githubusercontent.com/StefanGreve/profile/refs/heads/master/profile.ps1 -Out profile.ps1
 
-# Recommended profile path: CurrentUserAllHosts
+# Select a profile path (Recommended: CurrentUserAllHosts)
 $PROFILE | Get-Member -Type NoteProperty | Format-List
 
+$Definition = $PROFILE
+  | Get-Member -Type NoteProperty
+  | Where-Object Name -eq CurrentUserAllHosts
+  | Select-Object -ExpandProperty Definition
+
+$ProfilePath = $Definition.Split("=")[1]
+
 # Create a PowerShell directory if necessary
-New-Item "$HOME\Documents\PowerShell" -ItemType Directory -ErrorAction SilentlyContinue
+New-Item $(Split-Path -Parent $ProfilePath) -ItemType Directory -ErrorAction SilentlyContinue
 
 # Create a new symbolic link and dot-source profile.ps1
-$ProfilePath = "$HOME\Documents\PowerShell\profile.ps1"
 New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $(Resolve-Path profile.ps1).Path
 ```
 
@@ -52,7 +59,23 @@ Setup the development environment:
 dotnet tool restore
 ```
 
-Then use the `build.ps1` script for creating a new version of the `Toolbox` module.
+Set your `ExecutionPolicy` to `Unrestricted` in order to run any of these
+scripts. Note that this configuration step only applies to Windows users.
+on non-Windows computers, `Unrestricted` is already the default `ExecutionPolicy`
+and cannot be changed (see also:
+[About Execution Policy](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.4#long-description))
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted
+```
+
+Use the `build.ps1` script for creating a new version of the `Toolbox` module:
+
+```powershell
+./build.ps1 # [-Version <string>]
+```
+
+During development, the `Version` number of this module is configured as `0.0.0`.
 
 See also
 [`Types.ps1xml` and `Format.ps1xml` files](https://code.visualstudio.com/docs/languages/powershell#_typesps1xml-and-formatps1xml-files)
