@@ -1,7 +1,10 @@
 using namespace System.IO
 
 param(
-    [string] $ModuleName = "Toolbox"
+    [string] $ModuleName = "Toolbox",
+
+    [Parameter(Mandatory)]
+    [string] $Version
 )
 
 begin {
@@ -13,18 +16,9 @@ begin {
     $ManifestPath = "${ModuleName}.psd1"
 }
 process {
-    #region Step 1 - Test Module Manifest
+    #region Step 1 - Update Manifest
 
     Write-Host "[1/${Steps}] " -ForegroundColor DarkGray -NoNewline
-    Write-Host "Test Module Manifest"
-    Test-ModuleManifest -Path $ManifestPath -ErrorAction Stop
-    Write-Host
-
-    #endregion
-
-    #region Step 2 - Update Manifest
-
-    Write-Host "[2/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Update Manifest"
 
     $FunctionsToExport = Get-ChildItem -Path "./Public" -Filter "*.ps1"
@@ -45,6 +39,7 @@ process {
 
     $ManifestParameter = @{
         Path = $ManifestPath
+        ModuleVersion = $Version
         FunctionsToExport = @($FunctionsToExport)
         FileList = @($FileList)
         FormatsToProcess = @($Formats)
@@ -54,6 +49,15 @@ process {
     Update-ModuleManifest @ManifestParameter -ErrorAction Stop
     $Module = Import-PowerShellDataFile -Path $ManifestPath
     $Module | Write-Output | Format-Table
+
+    #endregion
+
+    #region Step 2 - Test Module Manifest
+
+    Write-Host "[2/${Steps}] " -ForegroundColor DarkGray -NoNewline
+    Write-Host "Test Module Manifest"
+    Test-ModuleManifest -Path $ManifestPath -ErrorAction Stop
+    Write-Host
 
     #endregion
 
