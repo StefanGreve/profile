@@ -1,6 +1,8 @@
 using namespace System.IO
 
 param(
+    [string] $Version = "0.0.0",
+
     [switch] $Build
 )
 
@@ -16,6 +18,7 @@ process {
     $Container = New-PesterContainer `
         -Path $([Path]::Combine($ProjectRoot, "tests", "module.tests.ps1")) `
         -Data @{
+            Version = $Version
             Build = $Build.IsPresent
         }
 

@@ -20,10 +20,10 @@ begin {
 }
 process {
     # 1 - Build
-    & "./scripts/build.ps1"
+    & "./scripts/build.ps1" -Version $Version
 
     # 2 - Test
-    & "./scripts/test.ps1"
+    & "./scripts/test.ps1" -Version $Version
 
     # 3 - Deploy
     if ($PSCmdlet.ShouldProcess($ManifestPath, "Publish `"${ModuleName}`" (Version ${Version}) to PSGallery")) {
