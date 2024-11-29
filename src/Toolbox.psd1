@@ -27,6 +27,7 @@
     PrivateData = @{
         PSData = @{
             Tags = @("PSEdition_Core", "Windows", "MacOS", "Linux")
+            IconUri = "https://raw.githubusercontent.com/Advanced-Systems/assets/refs/heads/master/logos/png/adv-logo_85x85.png"
             LicenseUri = "https://github.com/StefanGreve/profile/blob/master/LICENSE.md"
             ProjectUri = "https://github.com/StefanGreve/profile"
             ReleaseNotes = "https://github.com/StefanGreve/profile/blob/master/CHANGELOG.md"
