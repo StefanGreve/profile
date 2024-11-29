@@ -31,7 +31,6 @@
             LicenseUri = "https://github.com/StefanGreve/profile/blob/master/LICENSE.md"
             ProjectUri = "https://github.com/StefanGreve/profile"
             ReleaseNotes = "https://github.com/StefanGreve/profile/blob/master/CHANGELOG.md"
-            RequireLicenseAcceptance = $true
         }
     }
 }
