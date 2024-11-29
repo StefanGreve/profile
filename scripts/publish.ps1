@@ -19,6 +19,10 @@ begin {
     Push-Location $ProjectRoot
 }
 process {
+    if ($Version -eq "0.0.0") {
+        Write-Error "Version is not configured correctly." -Category InvalidArgument -ErrorAction Stop
+    }
+
     # 1 - Build
     & "./scripts/build.ps1" -Version $Version
 
