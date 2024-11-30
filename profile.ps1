@@ -170,6 +170,12 @@ function Get-ExecutionTime {
     }
 }
 
+#region Automatically Executing Scripts
+
+Start-DailyTranscript | Out-Null
+
+#endregion
+
 function prompt {
     $ExecTime = Get-ExecutionTime
 
@@ -178,16 +184,16 @@ function prompt {
           $Head = (git tag --points-at HEAD) ?? (git branch --show-current) ?? (git rev-parse --short HEAD)
           $DisplayUserName = $env:PROFILE_ENABLE_BRANCH_USERNAME -eq 1
 
-          #                                         U        @     H
-          Write-Output $([string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",
-              $PSStyle.Foreground.Cyan,                                   # 0
-              $DisplayUserName ? (git config user.name) : [string]::Empty,# 1
-              $PSStyle.Foreground.Blue,                                   # 2
-              $PSStyle.Foreground.BrightBlue,                             # 3
-              $DisplayUserName ? "@" : [string]::Empty,                   # 4
-              $Head,                                                      # 5
-              $PSStyle.Foreground.White                                   # 6
-          ))
+          #                          U        @     H
+          [string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",
+              $PSStyle.Foreground.Cyan,                                      # 0
+              $DisplayUserName ? (git config user.name) : [string]::Empty,   # 1
+              $PSStyle.Foreground.Blue,                                      # 2
+              $PSStyle.Foreground.BrightBlue,                                # 3
+              $DisplayUserName ? "@" : [string]::Empty,                      # 4
+              $Head,                                                         # 5
+              $PSStyle.Foreground.White                                      # 6
+          )
     }
 
     $PythonVirtualEnvironment = if ($env:VIRTUAL_ENV) {
@@ -197,8 +203,6 @@ function prompt {
             $PSStyle.Foreground.White
         )
     }
-
-    Start-DailyTranscript | Out-Null
 
     $PsPrompt = [StringBuilder]::new()
     $null = & {
