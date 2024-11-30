@@ -1,6 +1,8 @@
 using namespace System
 using namespace System.Management.Automation
 
+$IsDebugMode = $MyInvocation.MyCommand.Path -like "*src*"
+
 #region Export Functions and Classes
 
 $Classes = @(Get-ChildItem -Path "${PSScriptRoot}\Classes\*.ps1" -ErrorAction SilentlyContinue)
@@ -11,6 +13,9 @@ foreach ($Import in @($Classes + $Private + $Public)) {
     try {
         $File = $Import.FullName
         . $File
+
+        if (!$IsDebugMode) { continue }
+
         Write-Host "[ OK ] " -ForegroundColor Green -NoNewline
         Write-Host "Importing ${File}"
     }
