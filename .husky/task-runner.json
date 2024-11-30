@@ -1,0 +1,63 @@
+{
+   "$schema": "https://alirezanet.github.io/Husky.Net/schema.json",
+   "tasks": [
+      {
+         "name": "unstage-manifest",
+         "group": "pre-commit",
+         "command": "git",
+         "args": [
+            "reset",
+            "HEAD",
+            "--",
+            "*.psd1"
+         ]
+      },
+      {
+         "name": "restore-manifest",
+         "group": "pre-commit",
+         "command": "git",
+         "args": [
+            "restore",
+            "*.psd1"
+         ]
+      },
+      {
+         "name": "build-module",
+         "group": "pre-push",
+         "command": "pwsh",
+         "args": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "ByPass",
+            "-File",
+            "./scripts/build.ps1",
+            "-Version",
+            "0.0.0"
+         ],
+         "include": [
+            "*.ps1",
+            "*.psm1",
+            "*.psd1",
+            "*.ps1xml"
+         ]
+      },
+      {
+         "name": "test-module",
+         "group": "pre-push",
+         "command": "pwsh",
+         "args": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "ByPass",
+            "-File",
+            "./scripts/test.ps1"
+         ],
+         "include": [
+            "*.ps1",
+            "*.psm1",
+            "*.psd1",
+            "*.ps1xml"
+         ]
+      }
+   ]
+}

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- ***************************************************************************
+Copyright (c) Advanced Systems. All rights reserved.
+
+THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
+WHETHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
+IF THIS CODE AND INFORMATION IS MODIFIED, THE ENTIRE RISK OF USE OR RESULTS
+IN CONNECTION WITH THE USE OF THIS CODE AND INFORMATION REMAINS WITH THE USER.
+**************************************************************************** -->
+<Configuration>
+    <ViewDefinitions>
+        <View>
+            <Name>BatteryList</Name>
+            <ViewSelectedBy>
+                <TypeName>Battery</TypeName>
+            </ViewSelectedBy>
+            <ListControl>
+                <ListEntries>
+                    <ListEntry>
+                        <ListItems>
+                            <ListItem>
+                                <PropertyName>Status</PropertyName>
+                            </ListItem>
+                            <ListItem>
+                                <PropertyName>IsCharging</PropertyName>
+                            </ListItem>
+                            <ListItem>
+                                <Label>ChargeRemaining</Label>
+                                <ScriptBlock>
+                                    $ChargeColor = switch ($_.ChargeRemaining) {
+                                        { $_ -ge 70 -and $_ -lt 100 } {
+                                            $PSStyle.Foreground.Green
+                                        }
+                                        { $_ -ge 30 -and $_ -le 69 } {
+                                            $PSStyle.Foreground.Yellow
+                                        }
+                                        { $_ -ge 0 -and $_ -le 29 } {
+                                            $PSStyle.Foreground.Red
+                                        }
+                                        default {
+                                            $PSStyle.Foreground.White
+                                        }
+                                    }
+
+                                    [string]::Format(
+                                        "{1}{0}%{2}",
+                                        $_.ChargeRemaining,
+                                        $ChargeColor,
+                                        $PSStyle.Foreground.White
+                                    )
+                                </ScriptBlock>
+                            </ListItem>
+                            <ListItem>
+                                <PropertyName>Runtime</PropertyName>
+                            </ListItem>
+                        </ListItems>
+                    </ListEntry>
+                </ListEntries>
+            </ListControl>
+        </View>
+        <View>
+            <Name>BatteryTable</Name>
+            <ViewSelectedBy>
+                <TypeName>Battery</TypeName>
+            </ViewSelectedBy>
+            <TableControl>
+                <TableHeaders>
+                    <TableColumnHeader>
+                        <Label>Status</Label>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>IsCharging</Label>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>ChargeRemaining</Label>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Runtime</Label>
+                    </TableColumnHeader>
+                </TableHeaders>
+                <TableRowEntries>
+                    <TableRowEntry>
+                        <TableColumnItems>
+                            <TableColumnItem>
+                                <PropertyName>Status</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>IsCharging</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <ScriptBlock>
+                                    $ChargeColor = switch ($_.ChargeRemaining) {
+                                        { $_ -ge 70 -and $_ -lt 100 } {
+                                            $PSStyle.Foreground.Green
+                                        }
+                                        { $_ -ge 30 -and $_ -le 69 } {
+                                            $PSStyle.Foreground.Yellow
+                                        }
+                                        { $_ -ge 0 -and $_ -le 29 } {
+                                            $PSStyle.Foreground.Red
+                                        }
+                                        default {
+                                            $PSStyle.Foreground.White
+                                        }
+                                    }
+
+                                    [string]::Format(
+                                        "{1}{0}%{2}",
+                                        $_.ChargeRemaining,
+                                        $ChargeColor,
+                                        $PSStyle.Foreground.White
+                                    )
+                                </ScriptBlock>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>Runtime</PropertyName>
+                            </TableColumnItem>
+                        </TableColumnItems>
+                    </TableRowEntry>
+                </TableRowEntries>
+            </TableControl>
+        </View>
+    </ViewDefinitions>
+</Configuration>

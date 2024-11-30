@@ -1,0 +1,33 @@
+name: Publish Module
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version Number"
+        required: true
+
+env:
+  API_KEY: ${{ secrets.PSGALLERY_API_TOKEN }}
+  RELEASE_VERSION: ${{ github.event.inputs.version }}
+
+jobs:
+  deploy:
+    name: Deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Build Dependencies
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer
+
+      - name: Publish Module
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -ExecutionPolicy ByPass -File "./scripts/publish.ps1" `
+            -Version ${{ env.RELEASE_VERSION }} `
+            -ApiKey ${{ env.API_KEY }}
