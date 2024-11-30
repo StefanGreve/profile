@@ -1,10 +1,11 @@
+[NoRunspaceAffinity()]
 class Battery {
     [int] $ChargeRemaining
-    [timespan] $Runtime
+    [TimeSpan] $Runtime
     [bool] $IsCharging
     [string] $Status
 
-    Battery([int] $ChargeRemaining, [timespan] $Runtime, [bool] $IsCharging, [string] $Status) {
+    Battery([int] $ChargeRemaining, [TimeSpan] $Runtime, [bool] $IsCharging, [string] $Status) {
         $this.ChargeRemaining = $ChargeRemaining
         $this.Runtime = $Runtime
         $this.IsCharging = $IsCharging
