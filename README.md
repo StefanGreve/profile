@@ -78,10 +78,10 @@ and cannot be changed (see also:
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted
 ```
 
-Use the `build.ps1` script for creating a new version of the `PowerTools` module:
+Use the `build.ps1` script for creating a new version of the `PowerTools` module.
+Remember to unload the module if you have installed it from the PowerShell Gallery.
 
 ```powershell
-# Unload the module if you use the profile and have it installed from the PSGallery
 Remove-Module PowerTools
 
 # Local builds should use this version number
