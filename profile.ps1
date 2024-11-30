@@ -13,12 +13,6 @@ $Host.PrivateData.ProgressBackgroundColor = "Cyan"
 $Host.PrivateData.ProgressForegroundColor = "Yellow"
 $ErrorView = "ConciseView"
 
-$global:ProfileVersion = [PSCustomObject]@{
-    Major = 2
-    Minor = 0
-    Patch = 0
-}
-
 $global:IsAdmin = if ($IsWindows) {
     $CurrentUser = [Principal.WindowsPrincipal][Principal.WindowsIdentity]::GetCurrent()
     $Administrator = [Principal.WindowsBuiltInRole]::Administrator
@@ -173,6 +167,10 @@ function Get-ExecutionTime {
 #region Automatically Executing Scripts
 
 Start-DailyTranscript | Out-Null
+
+if (Get-Module PowerTools) {
+    Import-Module PowerTools
+}
 
 #endregion
 
