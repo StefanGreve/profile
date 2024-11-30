@@ -28,6 +28,7 @@ Export-ModuleMember -Function $Public.BaseName -Cmdlet * -Alias *
 
 $ExportableTypes =@(
     [Battery]
+    [XKCD]
 )
 
 $TypeAcceleratorsClass = [PSObject].Assembly.GetType(
@@ -56,13 +57,13 @@ foreach ($Type in $ExportableTypes) {
 
 # Add type accelerators for every exportable type.
 foreach ($Type in $ExportableTypes) {
-    $TypeAcceleratorsClass::Add($Type.FullName, $Type)
+    $null = $TypeAcceleratorsClass::Add($Type.FullName, $Type)
 }
 
 # Remove type accelerators when the module is removed.
 $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
     foreach ($Type in $ExportableTypes) {
-        $TypeAcceleratorsClass::Remove($Type.FullName)
+        $null = $TypeAcceleratorsClass::Remove($Type.FullName)
     }
 }.GetNewClosure()
 
