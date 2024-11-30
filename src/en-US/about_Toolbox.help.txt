@@ -2,10 +2,12 @@ TOPIC
     about_PowerTools
 
 SHORT DESCRIPTION
-    TODO
+    General purpose Cmdlets for all platforms.
 
 LONG DESCRIPTION
-    TODO
+    The PowerTools module aims to provide a collection of advanced utility functions
+    for performing various tasks in the terminal. Some of the features may not be
+    supported across all platforms yet.
 
 EXAMPLES
     TODO
