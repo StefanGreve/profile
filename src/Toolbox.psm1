@@ -13,7 +13,7 @@ foreach ($Import in @($Classes + $Private + $Public)) {
     }
     catch {
         Write-Host "[ ER ] " -ForegroundColor Red -NoNewline
-        Write-Host "Failed to import file \"${File}\": $_"
+        Write-Host "Failed to import file ${File}: $_"
     }
 }
 
