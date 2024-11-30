@@ -1,7 +1,13 @@
 # PowerShell Profile
 
+[![Unit Test](https://github.com/StefanGreve/profile/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/StefanGreve/profile/actions/workflows/unit-tests.yml)
+[![Publish Module](https://github.com/StefanGreve/profile/actions/workflows/publish-module.yml/badge.svg)](https://github.com/StefanGreve/profile/actions/workflows/publish-module.yml)
+![PowerShell Gallery Version](https://img.shields.io/powershellgallery/v/powertools?label=PSGallery%20Version)
+![](https://img.shields.io/badge/PowerShell_Version-7.4-blue)
+![GitHub License](https://img.shields.io/github/license/stefangreve/profile)
+
 The project contains the source code of my PowerShell profile as well as the
-`PowerTools` module. You need at least version 7.4 or higher to use this project.
+`PowerTools` module. You need *at least* version 7.4 or higher to use this project.
 
 ## Setup
 
@@ -30,6 +36,9 @@ New-Item $(Split-Path -Parent $ProfilePath) -ItemType Directory -ErrorAction Sil
 
 # Create a new symbolic link and dot-source profile.ps1
 New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $(Resolve-Path profile.ps1).Path
+
+# Add some additional features to the profile on startup (optional)
+Install-Module -Name PowerTools -Force
 ```
 
 </details>
@@ -72,7 +81,11 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted
 Use the `build.ps1` script for creating a new version of the `PowerTools` module:
 
 ```powershell
-./build.ps1 # [-Version <string>]
+# Unload the module if you use the profile and have it installed from the PSGallery
+Remove-Module PowerTools
+
+# Local builds should use this version number
+./build.ps1 -Version 0.0.0
 ```
 
 During development, the `Version` number of this module is configured as `0.0.0`.
