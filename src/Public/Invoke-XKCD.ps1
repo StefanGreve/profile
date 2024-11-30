@@ -114,7 +114,7 @@ function Invoke-XKCD {
                     $Response.link
                 ))
             } catch {
-                Write-Error "A comic with ID = $ID does not exist." -Category InvalidArgument -ErrorAction Stop
+                Write-Error "A comic with ID=${Id} does not exist." -Category InvalidArgument -ErrorAction Stop
             }
         }
     }
