@@ -1,7 +1,7 @@
 using namespace System.IO
 
 param(
-    [string] $ModuleName = "Toolbox",
+    [string] $ModuleName = "PowerTools",
 
     [Parameter(Mandatory)]
     [string] $Version

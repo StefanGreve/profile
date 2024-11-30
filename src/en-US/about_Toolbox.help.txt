@@ -1,5 +1,5 @@
 TOPIC
-    about_Toolbox
+    about_PowerTools
 
 SHORT DESCRIPTION
     TODO
@@ -11,4 +11,4 @@ EXAMPLES
     TODO
 
 SEE ALSO
-    - https://github.com/stefangreve/toolbox
+    - https://github.com/stefangreve/profile

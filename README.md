@@ -1,7 +1,7 @@
 # PowerShell Profile
 
 The project contains the source code of my PowerShell profile as well as the
-`Toolbox` module. You need at least version 7.4 or higher to use this project.
+`PowerTools` module. You need at least version 7.4 or higher to use this project.
 
 ## Setup
 
@@ -69,7 +69,7 @@ and cannot be changed (see also:
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted
 ```
 
-Use the `build.ps1` script for creating a new version of the `Toolbox` module:
+Use the `build.ps1` script for creating a new version of the `PowerTools` module:
 
 ```powershell
 ./build.ps1 # [-Version <string>]

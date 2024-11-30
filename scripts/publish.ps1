@@ -2,7 +2,7 @@ using namespace System.IO
 
 [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "High")]
 param(
-    [string] $ModuleName = "Toolbox",
+    [string] $ModuleName = "PowerTools",
 
     [Parameter(Mandatory)]
     [string] $ApiKey,
