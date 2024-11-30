@@ -30,4 +30,5 @@ jobs:
         run: |
           pwsh -NoProfile -ExecutionPolicy ByPass -File "./scripts/publish.ps1" `
             -Version ${{ env.RELEASE_VERSION }} `
-            -ApiKey ${{ env.API_KEY }}
+            -ApiKey ${{ env.API_KEY }} `
+            -Confirm:$false
