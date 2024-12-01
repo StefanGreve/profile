@@ -8,8 +8,7 @@ param(
 )
 
 begin {
-    $ScriptPath = Split-Path -Parent -Path $MyInvocation.MyCommand.Path
-    $ProjectRoot = $(Get-Item $([Path]::Combine($ScriptPath, ".."))).FullName
+    $ProjectRoot = Split-Path -Path $PSScriptRoot -Parent
     Push-Location $([Path]::Combine($ProjectRoot, "src"))
 
     $Steps = 4

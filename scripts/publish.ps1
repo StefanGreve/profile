@@ -13,9 +13,7 @@ param(
 
 begin {
     $ManifestPath = "${ModuleName}.psd1"
-
-    $ScriptPath = Split-Path -Parent -Path $MyInvocation.MyCommand.Path
-    $ProjectRoot = $(Get-Item $([Path]::Combine($ScriptPath, ".."))).FullName
+    $ProjectRoot = Split-Path -Path $PSScriptRoot -Parent
     Push-Location $ProjectRoot
 }
 process {

@@ -7,8 +7,8 @@ param(
 )
 
 begin {
-    $ScriptPath = Split-Path -Parent -Path $MyInvocation.MyCommand.Path
-    $ProjectRoot = $(Get-Item $([Path]::Combine($ScriptPath, ".."))).FullName
+    $ProjectRoot = Split-Path -Path $PSScriptRoot -Parent
+    Push-Location $ProjectRoot
 }
 process {
     if (!$(Get-Module Pester -ListAvailable)) {
@@ -25,4 +25,5 @@ process {
     Invoke-Pester -Container $Container -Output Detailed
 }
 clean {
+    Pop-Location
 }
