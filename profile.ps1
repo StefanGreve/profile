@@ -166,11 +166,14 @@ function Get-ExecutionTime {
 
 #region Automatically Executing Scripts
 
-Start-DailyTranscript | Out-Null
-
 if (Get-Module PowerTools) {
     Import-Module PowerTools
 }
+
+# Required by Python for custom virtual environment status indicator in prompt function
+$env:VIRTUAL_ENV_DISABLE_PROMPT = 1
+
+Start-DailyTranscript | Out-Null
 
 #endregion
 
