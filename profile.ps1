@@ -25,15 +25,20 @@ $global:IsAdmin = if ($IsWindows) {
     $null
 }
 
-if ($isWindows) {
+if ($IsWindows) {
     $global:Natural = { [Regex]::Replace($_.Name, "\d+", { $Args[0].Value.PadLeft(20) }) }
+}
+
+if ($IsMacOS) {
+    $env:PATH = "/opt/homebrew/bin:$env:PATH"
+    $env:GPG_TTY = $(tty)
 }
 
 #region Aliases
 
 Set-Alias -Name ^ -Value Select-Object
 
-if ($isWindows) {
+if ($IsWindows) {
     Set-Alias -Name man -Value Get-Help -Option AllScope
     Set-Alias -Name touch -Value New-Item
     Set-Alias -Name activate -Value ".\venv\Scripts\Activate.ps1"
@@ -115,7 +120,7 @@ Set-PSReadLineKeyHandler -Key ")", "]", "}" -BriefDescription SmartClosingBraces
 
 #region Hook Scripts
 
-if (Test-Path $env:PROFILE_LOAD_CUSTOM_SCRIPTS) {
+if ($env:PROFILE_LOAD_CUSTOM_SCRIPTS -and $(Test-Path $env:PROFILE_LOAD_CUSTOM_SCRIPTS)) {
     Get-ChildItem -Path $env:PROFILE_LOAD_CUSTOM_SCRIPTS -Filter "*.ps1" | ForEach-Object {
         . $_.FullName
     }
