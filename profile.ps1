@@ -30,8 +30,12 @@ if ($IsWindows) {
 }
 
 if ($IsMacOS) {
-    $env:PATH = "/opt/homebrew/bin:$env:PATH"
     $env:GPG_TTY = $(tty)
+    $env:DOTNET_ROOT = "$HOME/.dotnet"
+
+    $env:PATH  = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    $env:PATH += ":/opt/homebrew/bin"
+    $env:PATH += ":${env:DOTNET_ROOT}:${env:DOTNET_ROOT}/tools"
 }
 
 #region Aliases
