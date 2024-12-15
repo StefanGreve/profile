@@ -21,6 +21,13 @@ Windows, unless you have turned on `Developer Mode` in the settings app:
 # Save the PowerShell profile in the current working directory
 Invoke-WebRequest -Uri https://raw.githubusercontent.com/StefanGreve/profile/refs/heads/master/profile.ps1 -Out profile.ps1
 
+# Add some additional features to the profile on startup (optional)
+Install-Module -Name PowerTools -Force
+```
+
+### Windows
+
+```powershell
 # Select a profile path (Recommended: CurrentUserAllHosts)
 $PROFILE | Get-Member -Type NoteProperty | Format-List
 
@@ -34,11 +41,15 @@ $ProfilePath = $Definition.Split("=")[1]
 # Create a PowerShell directory if necessary
 New-Item $(Split-Path -Parent $ProfilePath) -ItemType Directory -ErrorAction SilentlyContinue
 
-# Create a new symbolic link and dot-source profile.ps1
+# Create a new symbolic link
 New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $(Resolve-Path profile.ps1).Path
+```
 
-# Add some additional features to the profile on startup (optional)
-Install-Module -Name PowerTools -Force
+### MacOS
+
+```powershell
+# Create a new symbolic link
+New-Item -Path $PROFILE -ItemType SymbolicLink -Value $(Resolve-Path ./profile.ps1).Value -Force
 ```
 
 </details>
