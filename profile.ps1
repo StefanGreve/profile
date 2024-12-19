@@ -29,15 +29,6 @@ if ($IsWindows) {
     $global:Natural = { [Regex]::Replace($_.Name, "\d+", { $Args[0].Value.PadLeft(20) }) }
 }
 
-if ($IsMacOS) {
-    $env:GPG_TTY = $(tty)
-    $env:DOTNET_ROOT = "$HOME/.dotnet"
-
-    $env:PATH  = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-    $env:PATH += ":/opt/homebrew/bin"
-    $env:PATH += ":${env:DOTNET_ROOT}:${env:DOTNET_ROOT}/tools"
-}
-
 #region Aliases
 
 Set-Alias -Name ^ -Value Select-Object
