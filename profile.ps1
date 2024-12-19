@@ -125,34 +125,6 @@ if ($env:PROFILE_LOAD_CUSTOM_SCRIPTS -and $(Test-Path $env:PROFILE_LOAD_CUSTOM_S
 
 #region Command Prompt
 
-function Start-DailyTranscript {
-    [Alias("transcript")]
-    [OutputType([string])]
-    [CmdletBinding()]
-    param(
-        [string] $OutputDirectory = [Environment]::GetFolderPath("MyDocuments")
-    )
-
-    begin {
-        $Transcripts = [Path]::Combine($OutputDirectory, "Transcripts")
-
-        if (!(Test-Path $Transcripts)) {
-            New-Item -Path $Transcripts -ItemType Directory | Out-Null
-        }
-
-        $Filename = [Path]::Combine($Transcripts, [string]::Format("{0}.txt", [datetime]::Now.ToString("yyyy-MM-dd")))
-    }
-    process {
-        if ($env:PROFILE_ENABLE_DAILY_TRANSCRIPTS -eq 1) {
-            Write-Verbose "Started a new transcript, output file is $Filename"
-            Start-Transcript -Path $Filename -Append -IncludeInvocationHeader -UseMinimalHeader | Out-Null
-        }
-    }
-    end {
-        Write-Output $Filename
-    }
-}
-
 function Get-ExecutionTime {
     [OutputType([TimeSpan])]
     param()
@@ -172,8 +144,6 @@ if (Get-Module PowerTools) {
 
 # Required by Python for custom virtual environment status indicator in prompt function
 $env:VIRTUAL_ENV_DISABLE_PROMPT = 1
-
-Start-DailyTranscript | Out-Null
 
 #endregion
 
