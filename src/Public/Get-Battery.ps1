@@ -36,8 +36,29 @@ function Get-Battery {
             }
 
             return [Battery]::new($ChargeRemaining, $Runtime, $IsCharging, $Status)
-        } elseif ($IsMacOS -or $IsLinux) {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
+        } elseif ($IsMacOS) {
+            $BatteryInformation = system_profiler SPPowerDataType
+
+            # The second 'Charging:' line comes from the AC Charger Information, and not the Battery Information section
+            $IsCharging = $($BatteryInformation | grep "Charging:" | head -n 1 | awk -F ": " '{print ($2 == "Yes" ? 1 : 0)}') -eq 1
+            $ChargeRemaining = system_profiler SPPowerDataType | grep "State of Charge (%)" | awk -F": " '{print $2}'
+
+            # The battery status will be displayed in order of (perceived) importance, and is a subset of the possible values
+            # that could be returned on Windows
+            $IsFullyCharged = $($BatteryInformation | grep "Fully Charged:" | awk -F ": " '{print ($2 == "Yes" ? 1 : 0)}') -eq 1
+            $IsConnected = $($BatteryInformation | grep "Connected:" | awk -F ": " '{print ($2 == "Yes" ? 1 : 0)}') -eq 1
+            $Condition = $BatteryInformation | grep "Condition:" | awk -F ": " '{print $2}'
+
+            # TODO
+            $Runtime = New-TimeSpan -Minutes 0
+
+            $Status = $IsFullyCharged `
+                ? "Fully Charged" `
+                : $IsConnected `
+                ? "Connected to AC" `
+                : $Condition
+
+            return [Battery]::new($ChargeRemaining, $Runtime, $IsCharging, $Status)
         } else {
             Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
         }
