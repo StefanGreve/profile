@@ -93,7 +93,7 @@ Remember to unload the module if you have installed it from the PowerShell Galle
 Remove-Module PowerTools
 
 # Local builds should use this version number
-./build.ps1 -Version 0.0.0
+./scripts/build.ps1 -Version 0.0.0
 ```
 
 During development, the `Version` number of this module is configured as `0.0.0`.
