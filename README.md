@@ -74,6 +74,7 @@ Setup the development environment:
 
 ```powershell
 dotnet tool restore
+dotnet husky install
 ```
 
 Set your `ExecutionPolicy` to `Unrestricted` in order to run any of these
