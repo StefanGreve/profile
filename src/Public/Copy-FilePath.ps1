@@ -19,7 +19,7 @@ function Copy-FilePath {
         Copies the full path of the README.md file to clipboard.
 
         .OUTPUTS
-        None. This function does not produce any output
+        None. This function does not produce any output.
     #>
     [OutputType([void])]
     param (

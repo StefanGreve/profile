@@ -17,6 +17,8 @@ function Get-Definition {
         .EXAMPLE
         PS> Get-Definition Get-Battery
 
+        Returns the implementation of the Get-Battery Cmdlet.
+
         .OUTPUTS
         The definition of the specified command is returned as a string.
 
