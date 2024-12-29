@@ -1,6 +1,29 @@
 using namespace System
 
 function Get-Battery {
+    <#
+        .SYNOPSIS
+        Gets the battery status of the current mobile device.
+
+        .DESCRIPTION
+        Gets the battery status of the current mobile device.
+
+        .INPUTS
+        None. You can't pipe objects to Get-Battery.
+
+        .EXAMPLE
+        PS> Get-Battery
+
+        Returns the battery status information of this device.
+
+        .EXAMPLE
+        PS> battery
+
+        Alias for Get-Battery.
+
+        .OUTPUTS
+        Battery. The function returns a Battery object with properties describing the current battery status.
+    #>
     [Alias("battery")]
     [OutputType([Battery])]
     param()
