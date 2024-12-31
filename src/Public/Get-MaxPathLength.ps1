@@ -1,4 +1,30 @@
 function Get-MaxPathLength {
+    <#
+        .SYNOPSIS
+        Returns the maximum path length supported by the current operating system.
+
+        .DESCRIPTION
+        This function determines the maximum configured path length for file systems
+        on the current operating system. For Windows, the path length is limited by
+        the NTFS (New Technology File System), and can be extended if the long path
+        feature is enabled in the registry. On Linux and MacOS, it reads the value
+        from the PATH_MAX system configuration.
+
+        .INPUTS
+        None. You can't pipe objects to Get-MaxPathLength.
+
+        .EXAMPLE
+        PS> Get-MaxPathLength
+
+        Returns the maximum path length supported by the current operating system.
+
+        .OUTPUTS
+        System.Int32. The maximum path length supported by the file system on the host
+        operating system.
+    #>
+    [OutputType([int])]
+    param()
+
     process {
         $MaxPathLength = if ($IsWindows) {
             # On Windows, file names cannot exceed 256 bytes. Starting with Windows 10 (version 1607), the max path
