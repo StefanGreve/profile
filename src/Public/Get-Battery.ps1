@@ -79,7 +79,7 @@ function Get-Battery {
             $Status = if ($IsFullyCharged) {
                 "Fully Charged"
             } elseif ($IsConnected) {
-                "Connected"
+                "Connected to AC"
             } else {
                 $Condition
             }
