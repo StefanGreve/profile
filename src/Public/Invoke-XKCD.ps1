@@ -91,7 +91,6 @@ function Invoke-XKCD {
                 $Response = Invoke-RestMethod -Uri "https://xkcd.com/$Id/info.0.json"
                 $FileExtension = $Response.Img.Split("/")[-1].Split(".")[1]
                 $FilePath = [Path]::Combine($Path, "${Id}.${FileExtension}")
-                Write-Host "test $id"
 
                 if ($Download.IsPresent -and $PSCmdlet.ShouldProcess($Response.img, "Download $($FilePath)")) {
                     [int] $PercentComplete = [Math]::Round($i / $Ids.Count * 100, 0)
