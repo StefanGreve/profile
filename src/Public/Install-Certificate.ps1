@@ -3,6 +3,43 @@ using namespace System.Security.Cryptography
 using namespace System.Security.Cryptography.X509Certificates
 
 function Install-Certificate {
+    <#
+        .SYNOPSIS
+        Installs an X.509 certificate to a specified certificate store location.
+
+        .DESCRIPTION
+        Installs an X.509 certificate from a specified file into a specified
+        certificate store location.
+
+        .PARAMETER FilePath
+        Specifies the path to the certificate file to be installed. This file can
+        be in formats such as "*.pfx" or "*.cer".
+
+        .PARAMETER StoreLocation
+        Specifies the certificate store location where the certificate will be installed.
+        Accepted values are CurrentUser or LocalMachine.
+
+        .PARAMETER Password
+        Specifies the password for the certificate file if it is password-protected.
+
+        .PARAMETER User
+        Specifies the user context under which the certificate will be installed.
+        The default value is the current domain user.
+
+        .INPUTS
+        None. You can't pipe objects to Install-Certificate.
+
+        .EXAMPLE
+        PS>$Certificate = "./path/to/certificate.pfx"
+        PS>$Password = Read-Host -Prompt "Password" -AsSecureString
+        PS>Install-Certificate -FilePath $Certificate -StoreLocation LocalMachine -Password $Password
+
+        Installs the certificate.pfx certificate into the LocalMachine certificate
+        store using the specified password.
+
+        .OUTPUTS
+        X509Certificate. Returns an object representing the installed X.509 certificate.
+    #>
     [OutputType([X509Certificate])]
     param(
         [Parameter(Mandatory)]
