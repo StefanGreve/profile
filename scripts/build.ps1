@@ -23,6 +23,12 @@ process {
     $FunctionsToExport = Get-ChildItem -Path "./Public" -Filter "*.ps1"
         | Select-Object -ExpandProperty BaseName
 
+    $Aliases = $(Get-ChildItem -Path "./Public" -Filter "*.ps1"
+        | Get-Content
+        | Select-String -Pattern '\[Alias\("([^"]+)"\)\]').Matches.Groups
+        | Where-Object Name -EQ 1
+        | Select-Object -ExpandProperty Value
+
     $FileList = Get-ChildItem -Recurse -Path "."
         | Where-Object { ! $_.PSIsContainer }
         | Select-Object -ExpandProperty FullName
@@ -40,6 +46,7 @@ process {
         Path = $ManifestPath
         ModuleVersion = $Version
         FunctionsToExport = @($FunctionsToExport)
+        AliasesToExport = @($Aliases)
         FileList = @($FileList)
         FormatsToProcess = @($Formats)
         ScriptsToProcess = @($Scripts)

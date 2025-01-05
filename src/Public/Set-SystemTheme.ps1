@@ -1,4 +1,25 @@
 function Set-SystemTheme {
+    <#
+        .SYNOPSIS
+        Sets the theme of the operating system.
+
+        .DESCRIPTION
+        This function changes the appearance theme of the operating system to either
+        Light or Dark.
+
+        .PARAMETER Theme
+        Specifies the desired system theme.
+        Accepted values are "Light" and "Dark".
+
+        .INPUTS
+        None. You can't pipe objects to Set-SystemTheme.
+
+        .EXAMPLE
+        PS> Set-SystemTheme Dark
+
+        .OUTPUTS
+        None. This function does not produce any output.
+    #>
     [OutputType([void])]
     param(
         [ValidateSet("Light", "Dark")]

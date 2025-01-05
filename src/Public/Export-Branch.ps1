@@ -1,6 +1,46 @@
 using namespace System
 
 function Export-Branch {
+    <#
+        .SYNOPSIS
+        Pushes all local changes to the remote repository, and subsequently
+        initiates a system shutdown.
+
+        .DESCRIPTION
+        Pushes all local changes to the remote repository, and subsequently
+        initiates a system shutdown. This code can be used to save your code
+        in case of an emergency.
+
+        .PARAMETER Message
+        Specifies the commit message for the Git commit. If no message is provided,
+        a pre-configured default message will be used in its place.
+
+        .PARAMETER ShutdownDelay
+        Specifies the delay in seconds before shutting down the system.
+        The default delay is 15 seconds.
+
+        .INPUTS
+        None. You can't pipe objects to Export-Branch.
+
+        .EXAMPLE
+        PS> git-fire
+
+        Stages all changes in a new Git branch, commits them with the default
+        message and schedules a system shutdown after 15 seconds.
+
+        .EXAMPLE
+        PS> Export-Branch -Message "Evacuate the building immediately" -ShutdownDelay 30
+
+        Stages all changes in a new Git branch, commits them with the specified
+        message and schedules a system shutdown after 30 seconds.
+
+        .OUTPUTS
+        None. This function does not produce any output.
+
+        .LINK
+        https://git-scm.com/docs/git
+        https://github.com/qw3rtman/git-fire
+    #>
     [OutputType([void])]
     [Alias("git-fire")]
     [SuppressMessage("PSAvoidUsingCmdletAliases", "")]
@@ -27,6 +67,7 @@ function Export-Branch {
             $NewBranch = "fire/$CurrentBranch/$RandomString"
          }
 
+        # TODO: test that the current working directory contains a git repository
         Push-Location $(git rev-parse --show-toplevel)
     }
     process {
@@ -63,6 +104,7 @@ function Export-Branch {
             systemctl poweroff
         } elseif ($IsMacOS) {
             Write-Host $ExitMessage -ForegroundColor Red
+            # TODO: Ensure we have permissions to perform system shutdown
             osascript -e $InfoMessage
             sudo shutdown -h now
         } else {
