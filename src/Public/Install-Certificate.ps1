@@ -17,7 +17,13 @@ function Install-Certificate {
 
         .PARAMETER StoreLocation
         Specifies the certificate store location where the certificate will be installed.
-        Accepted values are CurrentUser or LocalMachine.
+        Accepted values are defined here:
+        https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.x509certificates.storelocation
+
+        .PARAMETER StoreName
+        Specifies the name of the X.509 certificate store to open.
+        Accepted values are defined here:
+        https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.x509certificates.storename
 
         .PARAMETER Password
         Specifies the password for the certificate file if it is password-protected.
@@ -48,6 +54,9 @@ function Install-Certificate {
         [Parameter(Mandatory)]
         [StoreLocation] $StoreLocation,
 
+        [Parameter(Mandatory)]
+        [StoreName] $StoreName,
+
         [SecureString] $Password,
 
         [string] $User = "$env:USERDOMAIN\$env:USERNAME"
@@ -59,8 +68,16 @@ function Install-Certificate {
         }
     }
     process {
-        $Certificate = Import-PfxCertificate -FilePath $FilePath -CertStoreLocation $StoreLocation -Password $Password
+        $Arguments = @{
+            CertStoreLocation = "Cert:\$StoreLocation\$StoreName"
+            FilePath = $FilePath
+        }
 
+        if ($null -ne $Password) {
+            $Arguments.Add("Password", $Password)
+        }
+
+        $Certificate = Import-PfxCertificate @Arguments
 
         # Beware that the PrivateKey (PK) property returns a different type between .NET Framework and .NET Core.
         $UniqueName = if ($PSVersionTable.PSVersion.Major -eq 5) {
@@ -84,7 +101,7 @@ function Install-Certificate {
         $Acl.AddAccessRule($Rule)
         Set-Acl -Path $AclPath -AclObject $Acl
     }
-    clean {
+    end {
         Write-Output $Certificate
     }
 }
