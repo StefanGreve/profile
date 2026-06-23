@@ -22,6 +22,9 @@ function Restart-GpgAgent {
 
     process {
         gpgconf --kill gpg-agent
+        gpgconf --kill keyboxd
+
+        gpgconf --launch keyboxd
         gpgconf --launch gpg-agent
     }
 }

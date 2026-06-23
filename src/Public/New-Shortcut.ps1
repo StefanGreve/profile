@@ -40,7 +40,7 @@ function New-Shortcut {
         pointing to https://example.com with a description.
 
         .OUTPUTS
-         [FileSystemInfo]. Returns the created shortcut file.
+        [FileSystemInfo]. Returns the created shortcut file.
     #>
     [CmdletBinding()]
     [OutputType([FileSystemInfo])]

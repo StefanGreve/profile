@@ -59,9 +59,9 @@ function Set-PowerState {
             $AttributeCollection = [Collection[Attribute]]::new()
             $AttributeCollection.Add($DisableWakeAttribute)
 
-            $DisableWakeParameter = [RuntimeDefinedParameter]::new("DisableWake", [switch], $AttributeCollection)
-
-            $ParameterDictionary.Add("DisableWake", $DisableWakeParameter)
+            $ParameterName = "DisableWake"
+            $DisableWakeParameter = [RuntimeDefinedParameter]::new($ParameterName, [switch], $AttributeCollection)
+            $ParameterDictionary.Add($ParameterName, $DisableWakeParameter)
         }
 
         return $ParameterDictionary
