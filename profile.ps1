@@ -151,8 +151,12 @@ function prompt {
     $ExecTime = Get-ExecutionTime
 
     $GitStatus = if ($(git rev-parse --is-inside-work-tree 2>&1) -eq $true) {
-          #        tag                           branch                         detached head
-          $Head = (git tag --points-at HEAD) ?? (git branch --show-current) ?? (git rev-parse --short HEAD)
+          $CurrentBranch = git branch --show-current
+          $DefaultBranch = (git rev-parse --abbrev-ref origin/HEAD 2>$null) -replace '^origin/', ''
+
+          # Name of branch takes precendence over any Git tag if not positioned on the default branch
+          $Tag = if ($CurrentBranch -and $CurrentBranch -eq $DefaultBranch) { git tag --points-at HEAD }
+          $Head = $Tag ?? $CurrentBranch ?? (git rev-parse --short HEAD)
           $DisplayUserName = $env:PROFILE_ENABLE_BRANCH_USERNAME -eq 1
 
           #                          U        @     H
