@@ -202,6 +202,15 @@ function prompt {
         $PsPrompt.Append($ExecTime.Milliseconds.ToString("D2"))
         $PsPrompt.Append(")")
         $PsPrompt.Append($PSStyle.Foreground.White)
+        # (HH:mm:ss)
+        if ($env:PROFILE_ENABLE_TIMESTAMP -eq "1") {
+            $PsPrompt.Append(" ")
+            $PsPrompt.Append($PSStyle.Foreground.Yellow)
+            $PsPrompt.Append("(")
+            $PsPrompt.Append([DateTime]::Now.ToString("HH:mm:ss"))
+            $PsPrompt.Append(")")
+            $PsPrompt.Append($PSStyle.Foreground.White)
+        }
         # (user@branch)
         $PsPrompt.Append($GitStatus)
         # (active)
