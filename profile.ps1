@@ -152,24 +152,31 @@ function prompt {
     git rev-parse --is-inside-work-tree *> $null
 
     $GitStatus = if ($LASTEXITCODE -eq 0) {
-          $CurrentBranch = git branch --show-current
-          $DefaultBranch = (git rev-parse --abbrev-ref origin/HEAD 2>$null) -replace '^origin/', ''
+        $CurrentBranch = git branch --show-current
+        $DefaultBranch = (git rev-parse --abbrev-ref origin/HEAD 2>$null) -replace "^origin/", [string]::Empty
 
-          # Name of branch takes precendence over any Git tag if not positioned on the default branch
-          $Tag = if ($CurrentBranch -and $CurrentBranch -eq $DefaultBranch) { git tag --points-at HEAD }
-          $Head = $Tag ?? $CurrentBranch ?? (git rev-parse --short HEAD)
-          $DisplayUserName = $env:PROFILE_ENABLE_BRANCH_USERNAME -eq 1
+        # origin/HEAD is not populated in every clone; fall back to the conventional default branch
+        if (-not $DefaultBranch) {
+            $DefaultBranch = @("main","master") | Where-Object {
+                git show-ref --quiet --verify "refs/heads/$_"; $LASTEXITCODE -eq 0
+            } | Select-Object -First 1
+        }
 
-          #                          U        @     H
-          [string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",
-              $PSStyle.Foreground.Cyan,                                      # 0
-              $DisplayUserName ? (git config user.name) : [string]::Empty,   # 1
-              $PSStyle.Foreground.Blue,                                      # 2
-              $PSStyle.Foreground.BrightBlue,                                # 3
-              $DisplayUserName ? "@" : [string]::Empty,                      # 4
-              $Head,                                                         # 5
-              $PSStyle.Foreground.White                                      # 6
-          )
+        # Name of branch takes precedence over any Git tag if not positioned on the default branch
+        $Tag = if ($CurrentBranch -and $CurrentBranch -eq $DefaultBranch) { git tag --points-at HEAD }
+        $Head = $Tag ?? $CurrentBranch ?? (git rev-parse --short HEAD)
+        $DisplayUserName = $env:PROFILE_ENABLE_BRANCH_USERNAME -eq 1
+
+        #                          U        @     H
+        [string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",
+            $PSStyle.Foreground.Cyan,                                      # 0
+            $DisplayUserName ? (git config user.name) : [string]::Empty,   # 1
+            $PSStyle.Foreground.Blue,                                      # 2
+            $PSStyle.Foreground.BrightBlue,                                # 3
+            $DisplayUserName ? "@" : [string]::Empty,                      # 4
+            $Head,                                                         # 5
+            $PSStyle.Foreground.White                                      # 6
+        )
     }
 
     $PythonVirtualEnvironment = if ($env:VIRTUAL_ENV) {
