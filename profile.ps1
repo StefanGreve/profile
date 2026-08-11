@@ -149,8 +149,9 @@ $env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 function prompt {
     $ExecTime = Get-ExecutionTime
+    git rev-parse --is-inside-work-tree *> $null
 
-    $GitStatus = if ($(git rev-parse --is-inside-work-tree 2>&1) -eq $true) {
+    $GitStatus = if ($LASTEXITCODE -eq 0) {
           $CurrentBranch = git branch --show-current
           $DefaultBranch = (git rev-parse --abbrev-ref origin/HEAD 2>$null) -replace '^origin/', ''
 
