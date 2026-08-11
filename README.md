@@ -67,6 +67,8 @@ variables:
   scripts from on profile launch.
 - `PROFILE_ENABLE_BRANCH_USERNAME`: Set this value to `1` to display the active
   Git user name next to the branch name in the console prompt (off by default)
+- `PROFILE_ENABLE_TIMESTAMP`: Set this value to `1` to display the current
+  wall-clock time (`HH:mm:ss`) next to the elapsed execution time (off by default)
 
 ## Developer Notes
 

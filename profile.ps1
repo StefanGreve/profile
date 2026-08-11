@@ -149,22 +149,34 @@ $env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 function prompt {
     $ExecTime = Get-ExecutionTime
+    git rev-parse --is-inside-work-tree *> $null
 
-    $GitStatus = if ($(git rev-parse --is-inside-work-tree 2>&1) -eq $true) {
-          #        tag                           branch                         detached head
-          $Head = (git tag --points-at HEAD) ?? (git branch --show-current) ?? (git rev-parse --short HEAD)
-          $DisplayUserName = $env:PROFILE_ENABLE_BRANCH_USERNAME -eq 1
+    $GitStatus = if ($LASTEXITCODE -eq 0) {
+        $CurrentBranch = git branch --show-current
+        $DefaultBranch = (git rev-parse --abbrev-ref origin/HEAD 2>$null) -replace "^origin/", [string]::Empty
 
-          #                          U        @     H
-          [string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",
-              $PSStyle.Foreground.Cyan,                                      # 0
-              $DisplayUserName ? (git config user.name) : [string]::Empty,   # 1
-              $PSStyle.Foreground.Blue,                                      # 2
-              $PSStyle.Foreground.BrightBlue,                                # 3
-              $DisplayUserName ? "@" : [string]::Empty,                      # 4
-              $Head,                                                         # 5
-              $PSStyle.Foreground.White                                      # 6
-          )
+        # origin/HEAD is not populated in every clone; fall back to the conventional default branch
+        if (-not $DefaultBranch) {
+            $DefaultBranch = @("main","master") | Where-Object {
+                git show-ref --quiet --verify "refs/heads/$_"; $LASTEXITCODE -eq 0
+            } | Select-Object -First 1
+        }
+
+        # Name of branch takes precedence over any Git tag if not positioned on the default branch
+        $Tag = if ($CurrentBranch -and $CurrentBranch -eq $DefaultBranch) { git tag --points-at HEAD }
+        $Head = $Tag ?? $CurrentBranch ?? (git rev-parse --short HEAD)
+        $DisplayUserName = $env:PROFILE_ENABLE_BRANCH_USERNAME -eq 1
+
+        #                          U        @     H
+        [string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",
+            $PSStyle.Foreground.Cyan,                                      # 0
+            $DisplayUserName ? (git config user.name) : [string]::Empty,   # 1
+            $PSStyle.Foreground.Blue,                                      # 2
+            $PSStyle.Foreground.BrightBlue,                                # 3
+            $DisplayUserName ? "@" : [string]::Empty,                      # 4
+            $Head,                                                         # 5
+            $PSStyle.Foreground.White                                      # 6
+        )
     }
 
     $PythonVirtualEnvironment = if ($env:VIRTUAL_ENV) {
@@ -199,9 +211,18 @@ function prompt {
         $PsPrompt.Append(":")
         $PsPrompt.Append($ExecTime.Seconds.ToString("D2"))
         $PsPrompt.Append(":")
-        $PsPrompt.Append($ExecTime.Milliseconds.ToString("D2"))
+        $PsPrompt.Append($ExecTime.Milliseconds.ToString("D3"))
         $PsPrompt.Append(")")
         $PsPrompt.Append($PSStyle.Foreground.White)
+        # (HH:mm:ss)
+        if ($env:PROFILE_ENABLE_TIMESTAMP -eq "1") {
+            $PsPrompt.Append(" ")
+            $PsPrompt.Append($PSStyle.Foreground.BrightBlack)
+            $PsPrompt.Append("(")
+            $PsPrompt.Append([DateTime]::Now.ToString("HH:mm:ss"))
+            $PsPrompt.Append(")")
+            $PsPrompt.Append($PSStyle.Foreground.White)
+        }
         # (user@branch)
         $PsPrompt.Append($GitStatus)
         # (active)

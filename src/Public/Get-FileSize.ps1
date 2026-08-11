@@ -11,6 +11,9 @@ function Get-FileSize {
 
         This parameter is mandatory and supports pipeline input.
 
+        Each path must refer to a file. Paths that refer to a directory are
+        skipped and produce a non-terminating error.
+
         .PARAMETER Unit
         The unit of measurement for the file size in base 2.
         The default unit is bytes (B).
@@ -43,7 +46,14 @@ function Get-FileSize {
 
     process {
         foreach ($p in $Path) {
-            $Bytes = [Math]::Abs($(Get-Item $p).Length)
+            $Item = Get-Item -Path $p
+
+            if ($Item.PSIsContainer) {
+                Write-Error "The path '$p' refers to a directory, not a file."
+                continue
+            }
+
+            $Bytes = $Item.Length
 
             $Size = switch ($Unit) {
                 "PiB" { $Bytes / 1PB }
