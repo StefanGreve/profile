@@ -52,6 +52,14 @@ function Export-Branch {
     )
 
     begin {
+        git rev-parse --is-inside-work-tree *> $null
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "The current directory is not inside a Git repository." `
+                -Category ObjectNotFound `
+                -ErrorAction Stop
+        }
+
         $Author = git config user.name
         $Remotes = git remote
         $CurrentBranch = git branch --show-current
@@ -62,13 +70,12 @@ function Export-Branch {
         git fetch --all --quiet
         $RemoteBranches = git branch --remote --format="%(refname:lstrip=3)"
 
-        if (!$IsValidBranch -or $RemoteBranches.Contains($NewBranch)) {
-            $Salt = Get-Salt -MaxLength 16
+        if (!$IsValidBranch -or @($RemoteBranches) -contains $NewBranch) {
+            $Salt = Get-Salt -Length 16
             $RandomString = [BitConverter]::ToString($Salt).Replace("-", [string]::Empty)
             $NewBranch = "fire/$CurrentBranch/$RandomString"
-         }
+        }
 
-        # TODO: test that the current working directory contains a git repository
         Push-Location $(git rev-parse --show-toplevel)
     }
     process {
@@ -105,8 +112,8 @@ function Export-Branch {
             systemctl poweroff
         } elseif ($IsMacOS) {
             Write-Host $ExitMessage -ForegroundColor Red
-            # TODO: Ensure we have permissions to perform system shutdown
             osascript -e $InfoMessage
+            # Assumes we have permission to shut down the system; otherwise this step will fail
             sudo shutdown -h now
         } else {
             Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
