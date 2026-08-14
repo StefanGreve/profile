@@ -50,7 +50,11 @@ function Get-FileSize {
             $Item = Get-Item -Path $p
 
             if ($Item.PSIsContainer) {
-                Write-Error "The path '$p' refers to a directory, not a file."
+                Write-Error "The path '$p' refers to a directory, not a file." `
+                    -Category InvalidArgument `
+                    -ErrorAction Continue
+
+                # also continue with the loop flow, not just the error stream
                 continue
             }
 

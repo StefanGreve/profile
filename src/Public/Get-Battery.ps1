@@ -88,7 +88,9 @@ function Get-Battery {
 
             [Battery]::new($ChargeRemaining, $Runtime, $IsCharging, $Status)
         } else {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
+            Write-Error $OperatingSystemNotSupportedError `
+                -Category NotImplemented `
+                -ErrorAction Stop
         }
 
         Write-Output $Battery

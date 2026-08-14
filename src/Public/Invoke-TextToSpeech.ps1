@@ -90,7 +90,9 @@ function Invoke-TextToSpeech {
 
     begin {
         if (!$IsWindows) {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
+            Write-Error $OperatingSystemNotSupportedError `
+                -Category NotImplemented `
+                -ErrorAction Stop
         }
 
         Add-Type -AssemblyName System.Speech

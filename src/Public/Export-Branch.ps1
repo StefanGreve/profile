@@ -116,7 +116,9 @@ function Export-Branch {
             # Assumes we have permission to shut down the system; otherwise this step will fail
             sudo shutdown -h now
         } else {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
+            Write-Error $OperatingSystemNotSupportedError `
+                -Category NotImplemented `
+                -ErrorAction Stop
         }
     }
 }

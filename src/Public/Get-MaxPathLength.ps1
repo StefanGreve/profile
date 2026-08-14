@@ -43,7 +43,9 @@ function Get-MaxPathLength {
             # Unicode characters always require 32 bits (4 bytes) of memory
             getconf PATH_MAX /
         } else {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
+            Write-Error $OperatingSystemNotSupportedError `
+                -Category NotImplemented `
+                -ErrorAction Stop
         }
 
         Write-Output $MaxPathLength

@@ -41,12 +41,16 @@ function Set-MonitorBrightness {
                 $WmiMonitor.WmiSetBrightness($Timeout, $Brightness)
             }
             catch {
-                Write-Error "This computer may not support software-based brightness adjustments. Try updating your display adapter drivers to resolve the issue." -Category DeviceError -ErrorAction Stop
+                Write-Error "This computer may not support software-based brightness adjustments. Try updating your display adapter drivers to resolve the issue." `
+                    -Category DeviceError `
+                    -ErrorAction Stop
             } finally {
                 $WmiMonitor.Dispose()
             }
         } else {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
+            Write-Error $OperatingSystemNotSupportedError `
+                -Category NotImplemented `
+                -ErrorAction Stop
         }
     }
 }

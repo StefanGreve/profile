@@ -99,7 +99,9 @@ function Invoke-XKCD {
 
         [ValidateScript({
             if ($_ -le $From) {
-                Write-Error "The value of -To must be greater than -From" -Category InvalidArgument -ErrorAction Stop
+                Write-Error "The value of -To must be greater than -From" `
+                    -Category InvalidArgument `
+                    -ErrorAction Stop
             }
 
             return $true
