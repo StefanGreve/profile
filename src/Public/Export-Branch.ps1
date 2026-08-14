@@ -22,6 +22,9 @@ function Export-Branch {
         .INPUTS
         None. You can't pipe objects to Export-Branch.
 
+        .OUTPUTS
+        None. This function does not produce any output.
+
         .EXAMPLE
         PS> git-fire
 
@@ -33,9 +36,6 @@ function Export-Branch {
 
         Stages all changes in a new Git branch, commits them with the specified
         message and schedules a system shutdown after 30 seconds.
-
-        .OUTPUTS
-        None. This function does not produce any output.
 
         .LINK
         https://git-scm.com/docs/git

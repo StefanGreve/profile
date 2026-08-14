@@ -48,6 +48,9 @@ function Invoke-XKCD {
         .INPUTS
         None. You can't pipe objects to Invoke-XKCD.
 
+        .OUTPUTS
+        XKCD. The function returns a XKCD object with properties describing the comic.
+
         .EXAMPLE
         PS> Invoke-XKCD -Number 42
 
@@ -72,9 +75,6 @@ function Invoke-XKCD {
         PS> Invoke-XKCD -All -Download
 
         Downloads all XKCD comics to the current working directory.
-
-        .OUTPUTS
-        XKCD. The function returns a XKCD object with properties describing the comic.
 
         .LINK
         https://xkcd.com/

@@ -30,6 +30,9 @@ function Invoke-TextToSpeech {
         .INPUTS
         System.String. You can pipe the message to be spoken to Invoke-TextToSpeech.
 
+        .OUTPUTS
+        None. This function does not produce any output.
+
         .EXAMPLE
         PS> Invoke-TextToSpeech -Message "Hello, world."
 
@@ -39,9 +42,6 @@ function Invoke-TextToSpeech {
         PS> "Build complete." | Invoke-TextToSpeech -Rate 2 -Volume 80
 
         Speaks a piped message slightly faster than normal at 80% volume.
-
-        .OUTPUTS
-        None. This function does not produce any output.
 
         .LINK
         https://learn.microsoft.com/en-us/dotnet/api/system.speech.synthesis.speechsynthesizer

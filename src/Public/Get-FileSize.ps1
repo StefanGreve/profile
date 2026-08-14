@@ -21,6 +21,9 @@ function Get-FileSize {
         .INPUTS
         System.String[]. Accepts an array of strings representing file paths.
 
+        .OUTPUTS
+        System.Double. The function outputs the size of each file as a double-precision floating-point number.
+
         .EXAMPLE
         PS> Get-FileSize $PROFILE
 
@@ -30,9 +33,6 @@ function Get-FileSize {
         PS> "picture1.png", "picture2.png", "picture3.png" | Get-FileSize -Unit MiB | Measure-Object -Sum | Select-Object -ExpandProperty Sum
 
         Calculates the total file size of all three images in MiB.
-
-        .OUTPUTS
-        System.Double. The function outputs the size of each file as a double-precision floating-point number.
     #>
     [OutputType([double])]
     [CmdletBinding()]

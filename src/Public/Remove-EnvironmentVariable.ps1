@@ -25,6 +25,9 @@ function Remove-EnvironmentVariable {
         .INPUTS
         None. You can't pipe objects to Remove-EnvironmentVariable.
 
+        .OUTPUTS
+        None. This function does not produce any output.
+
         .EXAMPLE
         PS> Remove-EnvironmentVariable -Key PROFILE_ENABLE_BRANCH_USERNAME
 
@@ -35,9 +38,6 @@ function Remove-EnvironmentVariable {
         PS> Remove-EnvironmentVariable -Key PATH -Value "C:\Program Files\bin" -Scope User
 
         Removes "C:\Program Files\bin" from PATH.
-
-        .OUTPUTS
-        None. This function does not produce any output.
 
         .LINK
         https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables

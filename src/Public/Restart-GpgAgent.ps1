@@ -9,13 +9,13 @@ function Restart-GpgAgent {
         .INPUTS
         None. You can't pipe objects to Restart-GpgAgent.
 
+        .OUTPUTS
+        None. This function does not produce any output.
+
         .EXAMPLE
         PS> Restart-GpgAgent
 
         Restarts the GPG agent.
-
-        .OUTPUTS
-        None. This function does not produce any output.
     #>
     [OutputType([void])]
     [CmdletBinding()]

@@ -14,13 +14,13 @@ function Test-Command {
         .INPUTS
         None. You can't pipe objects to Test-Command.
 
+        .OUTPUTS
+        [bool] Returns $true if the command exists, otherwise $false.
+
         .EXAMPLE
         PS> Test-Command -Name wget
 
         Tests if the wget command exists in the current session.
-
-        .OUTPUTS
-        [bool] Returns $true if the command exists, otherwise $false.
     #>
     [OutputType([bool])]
     [CmdletBinding()]

@@ -11,6 +11,9 @@ function Get-Battery {
         .INPUTS
         None. You can't pipe objects to Get-Battery.
 
+        .OUTPUTS
+        Battery. The function returns a Battery object with properties describing the current battery status.
+
         .EXAMPLE
         PS> Get-Battery
 
@@ -20,9 +23,6 @@ function Get-Battery {
         PS> battery
 
         Alias for Get-Battery.
-
-        .OUTPUTS
-        Battery. The function returns a Battery object with properties describing the current battery status.
     #>
     [Alias("battery")]
     [OutputType([Battery])]

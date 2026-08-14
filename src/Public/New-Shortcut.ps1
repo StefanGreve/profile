@@ -27,6 +27,9 @@ function New-Shortcut {
         .INPUTS
         None. You can't pipe objects to New-Shortcut.
 
+        .OUTPUTS
+        [FileSystemInfo]. Returns the created shortcut file.
+
         .EXAMPLE
         PS> New-Shortcut -Name "MyApp" -Path "C:\Shortcuts" -Target "C:\Program Files\MyApp\MyApp.exe"
 
@@ -38,9 +41,6 @@ function New-Shortcut {
 
         Creates a shortcut named WebsiteShortcut.lnk in the C:\Shortcuts directory
         pointing to https://example.com with a description.
-
-        .OUTPUTS
-        [FileSystemInfo]. Returns the created shortcut file.
     #>
     [OutputType([FileSystemInfo])]
     [CmdletBinding()]

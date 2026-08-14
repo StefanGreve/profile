@@ -14,11 +14,6 @@ function Stop-LocalServer {
         .INPUTS
         None. You can't pipe objects to Stop-LocalServer.
 
-        .EXAMPLE
-        PS> Stop-LocalServer -Port 8080
-
-        Identifies the process listening on port 8080 and prompts the user before stopping it.
-
         .OUTPUTS
         None. This function does not produce any output.
 
@@ -27,6 +22,11 @@ function Stop-LocalServer {
         stopped: on Windows this requires an elevated session, and on macOS and Linux
         'lsof' must run under 'sudo'. A server started under a different account will
         therefore not be found unless the function is run with the necessary privileges.
+
+        .EXAMPLE
+        PS> Stop-LocalServer -Port 8080
+
+        Identifies the process listening on port 8080 and prompts the user before stopping it.
     #>
     [OutputType([void])]
     [CmdletBinding(ConfirmImpact = "High", SupportsShouldProcess)]

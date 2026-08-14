@@ -21,6 +21,9 @@ function Get-FileCount {
         .INPUTS
         System.String[]. Accepts an array of strings representing directory paths.
 
+        .OUTPUTS
+        System.Int32. The function outputs the count of files as an integer for each specified path.
+
         .EXAMPLE
         PS> Get-FileCount -Path $home/Desktop
 
@@ -30,9 +33,6 @@ function Get-FileCount {
         PS> "src", "docs" | Get-FileCount
 
         Counts all files in the "src" and "docs" folder separately.
-
-        .OUTPUTS
-        System.Int32. The function outputs the count of files as an integer for each specified path.
     #>
     [OutputType([int])]
     [CmdletBinding()]

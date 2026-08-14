@@ -14,11 +14,11 @@ function Set-SystemTheme {
         .INPUTS
         None. You can't pipe objects to Set-SystemTheme.
 
-        .EXAMPLE
-        PS> Set-SystemTheme Dark
-
         .OUTPUTS
         None. This function does not produce any output.
+
+        .EXAMPLE
+        PS> Set-SystemTheme Dark
     #>
     [OutputType([void])]
     [CmdletBinding()]

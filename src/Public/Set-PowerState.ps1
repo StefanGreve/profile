@@ -26,6 +26,9 @@ function Set-PowerState {
         .INPUTS
         None. You can't pipe objects to Set-PowerState.
 
+        .OUTPUTS
+        None. This function does not produce any output.
+
         .EXAMPLE
         PS> Set-PowerState
 
@@ -34,10 +37,7 @@ function Set-PowerState {
         .EXAMPLE
         PS> Set-PowerState -PowerState Hibernate -DisableWake -Force
 
-        Puts the system into suspend mode and disables all wake events.
-
-        .OUTPUTS
-        None. This function does not produce any output.
+        Puts the system into hibernation and disables all wake events.
     #>
     [OutputType([void])]
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "High")]

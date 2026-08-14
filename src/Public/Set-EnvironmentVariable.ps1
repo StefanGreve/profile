@@ -32,13 +32,16 @@ function Set-EnvironmentVariable {
         .INPUTS
         None. You can't pipe objects to Set-EnvironmentVariable.
 
+        .OUTPUTS
+        None. This function does not produce any output.
+
         .EXAMPLE
         PS> Set-EnvironmentVariable -Key PROFILE_ENABLE_BRANCH_USERNAME -Value 1
 
         Sets the value of the PROFILE_ENABLE_BRANCH_USERNAME environment variable to 1 in Process scope.
 
         .EXAMPLE
-        PS> Set-EnvironmentVariable -Key API_KEY -Value "REDACTED" -Scope Process -Override
+        PS> Set-EnvironmentVariable -Key API_KEY -Value "REDACTED" -Scope User -Override
 
         Sets the value of the API_KEY environment variable to "REDACTED" in the User scope, overwriting any existing value.
 
@@ -46,9 +49,6 @@ function Set-EnvironmentVariable {
         PS> Set-EnvironmentVariable -Key PATH -Value "C:\NewPath" -Scope Machine -Force
 
         Adds "C:\NewPath" to the PATH environment variable in the Machine scope, even if the PATH variable already exists.
-
-        .OUTPUTS
-        None. This function does not produce any output.
 
         .LINK
         https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables

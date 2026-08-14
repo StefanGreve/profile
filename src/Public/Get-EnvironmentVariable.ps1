@@ -20,6 +20,9 @@ function Get-EnvironmentVariable {
         .INPUTS
         None. You can't pipe objects to Get-EnvironmentVariable.
 
+        .OUTPUTS
+        System.String[]. A collection of strings representing the values of the retrieved environment variable(s).
+
         .EXAMPLE
         PS> Get-EnvironmentVariable -Scope Machine
 
@@ -29,9 +32,6 @@ function Get-EnvironmentVariable {
         PS> Get-EnvironmentVariable -Key PROFILE_ENABLE_BRANCH_USERNAME -Scope User
 
         Returns all values from the PROFILE_ENABLE_BRANCH_USERNAME environment variable defined in User scope.
-
-        .OUTPUTS
-        System.String[]. A collection of strings representing the values of the retrieved environment variable(s).
 
         .LINK
         https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables

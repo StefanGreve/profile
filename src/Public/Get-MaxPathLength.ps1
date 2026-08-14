@@ -13,14 +13,14 @@ function Get-MaxPathLength {
         .INPUTS
         None. You can't pipe objects to Get-MaxPathLength.
 
+        .OUTPUTS
+        System.Int32. The maximum path length supported by the file system on the host
+        operating system.
+
         .EXAMPLE
         PS> Get-MaxPathLength
 
         Returns the maximum path length supported by the current operating system.
-
-        .OUTPUTS
-        System.Int32. The maximum path length supported by the file system on the host
-        operating system.
     #>
     [OutputType([int])]
     [CmdletBinding()]

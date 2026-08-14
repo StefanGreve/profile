@@ -26,6 +26,9 @@ function Get-StringHash {
         .INPUTS
         System.String[]. Strings to hash. Can be passed via pipeline.
 
+        .OUTPUTS
+        System.String. The computed hash as a lowercase hexadecimal string.
+
         .EXAMPLE
         PS> Get-StringHash -String "Hello, World!"
 
@@ -35,9 +38,6 @@ function Get-StringHash {
         PS> "password" | Get-StringHash -Algorithm MD5
 
         Computes the MD5 hash of the string "password" from pipeline input.
-
-        .OUTPUTS
-        System.String. The computed hash as a lowercase hexadecimal string.
 
         .LINK
         https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography

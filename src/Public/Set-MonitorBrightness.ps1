@@ -16,13 +16,13 @@ function Set-MonitorBrightness {
         None. You can't pipe objects to Set-MonitorBrightness. The value must be
         an integer between 0 (minimum brightness) and 100 (maximum brightness).
 
+        .OUTPUTS
+        None. This function does not produce any output.
+
         .EXAMPLE
         PS> Set-MonitorBrightness -Brightness 65
 
         Sets the monitor brightness to 65%.
-
-        .OUTPUTS
-        None. This function does not produce any output.
     #>
     [OutputType([void])]
     [CmdletBinding()]

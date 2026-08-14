@@ -17,6 +17,12 @@ function Get-Definition {
         .INPUTS
         None. You can't pipe objects to Get-Definition.
 
+        .OUTPUTS
+        The definition of the specified command is returned as a string.
+
+        .NOTES
+        If the bat syntax highlighter is installed and accessible, it formats the output.
+
         .EXAMPLE
         PS> Get-Definition Get-Battery
 
@@ -26,12 +32,6 @@ function Get-Definition {
         PS> Get-Definition battery
 
         Resolves the "battery" alias to Get-Battery and returns its implementation.
-
-        .OUTPUTS
-        The definition of the specified command is returned as a string.
-
-        .NOTES
-        If the bat syntax highlighter is installed and accessible, it formats the output.
     #>
     [OutputType([string])]
     [CmdletBinding()]
