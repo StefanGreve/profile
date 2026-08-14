@@ -30,17 +30,25 @@ function Stop-LocalServer {
     )
 
     process {
-        $TcpConnection = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+        $TcpConnections = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
 
-        if ($null -eq $TcpConnection) {
+        if ($null -eq $TcpConnections) {
             Write-Error "No owning process found listening on port ${Port}." -Category ConnectionError -ErrorAction Stop
             return
         }
 
-        $Process = Get-Process -Id $TcpConnection.OwningProcess
+        # A single port can be held by more than one connection (e.g. IPv4 and IPv6),
+        # so collect every distinct owning process and stop all of them.
+        $ProcessIds = $TcpConnections.OwningProcess | Select-Object -Unique
 
-        if ($PSCmdlet.ShouldProcess("Stop Process", "Are you sure that you want to stop this process with force?", "Stopping Process with ID=$($Process.Id) (Process Name: $($Process.ProcessName))")) {
-            Stop-Process $Process -Force -ErrorAction Stop
+        foreach ($ProcessId in $ProcessIds) {
+            $Process = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue
+
+            if ($null -eq $Process) { continue }
+
+            if ($PSCmdlet.ShouldProcess("Stop Process", "Are you sure that you want to stop this process with force?", "Stopping Process with ID=$($Process.Id) (Process Name: $($Process.ProcessName))")) {
+                Stop-Process -InputObject $Process -Force -ErrorAction Stop
+            }
         }
     }
 }
