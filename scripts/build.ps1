@@ -15,7 +15,7 @@ begin {
     $ManifestPath = "${ModuleName}.psd1"
 }
 process {
-    #region Step 1 - Update Manifest
+    # 1 - Update Manifest
 
     Write-Host "[1/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Update Manifest"
@@ -42,7 +42,7 @@ process {
         | Select-Object -ExpandProperty FullName
         | Resolve-Path -Relative
 
-    $ManifestParameter = @{
+    $ManifestArgs = @{
         Path = $ManifestPath
         ModuleVersion = $Version
         FunctionsToExport = @($FunctionsToExport)
@@ -52,22 +52,18 @@ process {
         ScriptsToProcess = @($Scripts)
     }
 
-    Update-ModuleManifest @ManifestParameter -ErrorAction Stop
+    Update-ModuleManifest @ManifestArgs -ErrorAction Stop
     $Module = Import-PowerShellDataFile -Path $ManifestPath
     $Module | Write-Output | Format-Table
 
-    #endregion
-
-    #region Step 2 - Test Module Manifest
+    # 2 - Test Module Manifest
 
     Write-Host "[2/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Test Module Manifest"
     Test-ModuleManifest -Path $ManifestPath -ErrorAction Stop
     Write-Host
 
-    #endregion
-
-    #region Step 3 - Import Module
+    # 3 - Import Module
 
     Write-Host "[3/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Import Module"
@@ -75,9 +71,7 @@ process {
 
     Import-Module -Name "./${ManifestPath}" -Force -ErrorAction Stop
 
-    #endregion
-
-    #region Step 4 - Run Analyzer
+    # 4 - Run Analyzer
 
     Write-Host "[4/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Run Analyzer"
@@ -87,13 +81,15 @@ process {
         Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
     }
 
-    Import-Module PSScriptAnalyzer
-    Invoke-ScriptAnalyzer -Path "./${ManifestPath}" `
-        -Severity Warning `
-        -Recurse `
-        -ReportSummary
+    $ScriptAnalyzerArgs = @{
+        Path = "./${ManifestPath}"
+        Severity = "Warning"
+        Recurse = $true
+        ReportSummary = $true
+    }
 
-    #endregion
+    Import-Module PSScriptAnalyzer
+    Invoke-ScriptAnalyzer @ScriptAnalyzerArgs
 }
 clean {
     Pop-Location
