@@ -7,7 +7,7 @@
 ![GitHub License](https://img.shields.io/github/license/stefangreve/profile)
 
 The project contains the source code of my PowerShell profile as well as the
-`PowerTools` module. You need *at least* version 7.4 or higher to use this project.
+`PowerTools` module. You need version 7.4 or higher to use this project.
 
 ## Setup
 
@@ -47,16 +47,16 @@ repository.
 Some additional features can be turned on by setting their respective environment
 variables:
 
-- `PROFILE_LOAD_CUSTOM_SCRIPTS`: Declare a single path to dot-source Powershell
+- `PROFILE_LOAD_CUSTOM_SCRIPTS`: Declare a single path to dot-source PowerShell
   scripts from on profile launch.
 - `PROFILE_ENABLE_BRANCH_USERNAME`: Set this value to `1` to display the active
-  Git user name next to the branch name in the console prompt (off by default)
+  Git user name next to the branch name in the console prompt (off by default).
 - `PROFILE_ENABLE_TIMESTAMP`: Set this value to `1` to display the current
-  wall-clock time (`HH:mm:ss`) next to the elapsed execution time (off by default)
+  wall-clock time (`HH:mm:ss`) next to the elapsed execution time (off by default).
 
 ## Developer Notes
 
-Setup the development environment:
+Set up the development environment:
 
 ```powershell
 dotnet tool restore
@@ -73,17 +73,23 @@ and cannot be changed (see also:
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted
 ```
 
-Use the `build.ps1` script for creating a new version of the `PowerTools` module.
-Remember to unload the module if you have installed it from the PowerShell Gallery.
+Use the `dev.ps1` script to build and load a local development version of the
+`PowerTools` module. It unloads the currently installed module, builds a local
+`0.0.0` version, and re-imports it from source.
 
 ```powershell
-Remove-Module PowerTools
-
-# Local builds should use this version number
-./scripts/build.ps1 -Version 0.0.0
+./scripts/dev.ps1
 ```
 
-During development, the `Version` number of this module is configured as `0.0.0`.
+New releases are published to the PowerShell Gallery by the `Publish Module`
+GitHub Actions workflow, which takes the version number as an input.
+
+Run the unit tests with the `test.ps1` script. Pass `-Build` to rebuild the module
+before the test run.
+
+```powershell
+./scripts/test.ps1 -Build
+```
 
 See also
 [`Types.ps1xml` and `Format.ps1xml` files](https://code.visualstudio.com/docs/languages/powershell#_typesps1xml-and-formatps1xml-files)
