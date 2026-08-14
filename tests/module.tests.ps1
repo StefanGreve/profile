@@ -148,4 +148,115 @@ Describe "Get-FileCount" {
     }
 }
 
+Describe "Set-EnvironmentVariable" {
+    BeforeAll {
+        $Key = "PROFILE_PESTER_SET"
+        $Token = $IsWindows ? ";" : ":"
+    }
+
+    AfterEach {
+        # These functions mutate real process-level state, so reset between cases to keep them independent.
+        [Environment]::SetEnvironmentVariable($Key, $null, "Process")
+    }
+
+    Context "Happy Path" {
+        It "Should set a new value in the Process scope" {
+            Set-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Confirm:$false
+            [Environment]::GetEnvironmentVariable($Key, "Process") | Should -Be "foo"
+        }
+
+        It "Should append a second value using the platform path separator" {
+            Set-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Confirm:$false
+            Set-EnvironmentVariable -Key $Key -Value "bar" -Scope Process -Confirm:$false
+            [Environment]::GetEnvironmentVariable($Key, "Process") | Should -Be "foo${Token}bar"
+        }
+
+        It "Should replace the existing value when -Override is specified" {
+            Set-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Confirm:$false
+            Set-EnvironmentVariable -Key $Key -Value "baz" -Scope Process -Override -Confirm:$false
+            [Environment]::GetEnvironmentVariable($Key, "Process") | Should -Be "baz"
+        }
+    }
+
+    Context "Duplicate Values" {
+        It "Should not add a duplicate value without -Force" {
+            Set-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Confirm:$false
+            Set-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Confirm:$false -WarningAction SilentlyContinue
+            [Environment]::GetEnvironmentVariable($Key, "Process") | Should -Be "foo"
+        }
+
+        It "Should add a duplicate value when -Force is specified" {
+            Set-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Confirm:$false
+            Set-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Force -Confirm:$false -WarningAction SilentlyContinue
+            [Environment]::GetEnvironmentVariable($Key, "Process") | Should -Be "foo${Token}foo"
+        }
+    }
+}
+
+Describe "Get-EnvironmentVariable" {
+    BeforeAll {
+        $Key = "PROFILE_PESTER_GET"
+    }
+
+    AfterEach {
+        [Environment]::SetEnvironmentVariable($Key, $null, "Process")
+    }
+
+    Context "Happy Path" {
+        It "Should read a value from the Process scope" {
+            [Environment]::SetEnvironmentVariable($Key, "foo", "Process")
+            Get-EnvironmentVariable -Key $Key -Scope Process | Should -Be "foo"
+        }
+
+        It "Should split multiple values on the platform path separator" {
+            $Token = $IsWindows ? ";" : ":"
+            [Environment]::SetEnvironmentVariable($Key, "foo${Token}bar", "Process")
+            $Values = Get-EnvironmentVariable -Key $Key -Scope Process
+            $Values.Count | Should -Be 2
+            $Values[1] | Should -Be "bar"
+        }
+    }
+
+    Context "Negative Testing" {
+        It "Should throw when the variable is not defined" {
+            { Get-EnvironmentVariable -Key $Key -Scope Process } | Should -Throw -Because "the variable is empty or undefined"
+        }
+    }
+}
+
+Describe "Remove-EnvironmentVariable" {
+    BeforeAll {
+        $Key = "PROFILE_PESTER_REMOVE"
+        $Token = $IsWindows ? ";" : ":"
+    }
+
+    AfterEach {
+        [Environment]::SetEnvironmentVariable($Key, $null, "Process")
+    }
+
+    Context "Happy Path" {
+        It "Should remove the entire variable when no value is specified" {
+            [Environment]::SetEnvironmentVariable($Key, "foo", "Process")
+            Remove-EnvironmentVariable -Key $Key -Scope Process -Confirm:$false
+            [Environment]::GetEnvironmentVariable($Key, "Process") | Should -BeNullOrEmpty
+        }
+
+        It "Should remove only the specified value" {
+            [Environment]::SetEnvironmentVariable($Key, "foo${Token}bar", "Process")
+            Remove-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Confirm:$false
+            [Environment]::GetEnvironmentVariable($Key, "Process") | Should -Be "bar"
+        }
+    }
+}
+
+Describe "Get-MaxPathLength" {
+    Context "Happy Path" {
+        It "Should return a positive path length" {
+            # The exact value is OS-dependent (260/32767 on Windows, PATH_MAX elsewhere),
+            # so assert only that it is a positive integer.
+            [int](Get-MaxPathLength) | Should -BeGreaterThan 0
+        }
+    }
+}
+
 #endregion
