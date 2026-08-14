@@ -21,8 +21,10 @@ function Set-SystemTheme {
         None. This function does not produce any output.
     #>
     [OutputType([void])]
+    [CmdletBinding()]
     param(
         [ValidateSet("Light", "Dark")]
+        [Parameter(Position = 0)]
         [string] $Theme
     )
 

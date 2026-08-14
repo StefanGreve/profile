@@ -41,9 +41,10 @@ function Export-Branch {
         https://git-scm.com/docs/git
         https://github.com/qw3rtman/git-fire
     #>
-    [OutputType([void])]
     [Alias("git-fire")]
+    [OutputType([void])]
     [SuppressMessage("PSAvoidUsingCmdletAliases", "")]
+    [CmdletBinding()]
     param(
         [string] $Message,
 

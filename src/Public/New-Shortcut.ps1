@@ -42,8 +42,8 @@ function New-Shortcut {
         .OUTPUTS
         [FileSystemInfo]. Returns the created shortcut file.
     #>
-    [CmdletBinding()]
     [OutputType([FileSystemInfo])]
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [string] $Name,

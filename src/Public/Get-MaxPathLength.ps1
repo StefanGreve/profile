@@ -23,6 +23,7 @@ function Get-MaxPathLength {
         operating system.
     #>
     [OutputType([int])]
+    [CmdletBinding()]
     param()
 
     process {

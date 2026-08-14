@@ -26,6 +26,7 @@ function Get-Battery {
     #>
     [Alias("battery")]
     [OutputType([Battery])]
+    [CmdletBinding()]
     param()
 
     process {

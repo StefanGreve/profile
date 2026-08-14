@@ -18,6 +18,7 @@ function Restart-GpgAgent {
         None. This function does not produce any output.
     #>
     [OutputType([void])]
+    [CmdletBinding()]
     param()
 
     process {

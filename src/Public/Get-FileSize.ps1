@@ -35,12 +35,13 @@ function Get-FileSize {
         System.Double. The function outputs the size of each file as a double-precision floating-point number.
     #>
     [OutputType([double])]
+    [CmdletBinding()]
     param(
         [Parameter(Position = 0, Mandatory, ValueFromPipeline)]
         [string[]] $Path,
 
-        [Parameter(Position = 1)]
         [ValidateSet("B", "KiB", "MiB", "GiB", "TiB", "PiB")]
+        [Parameter(Position = 1)]
         [string] $Unit = "B"
     )
 

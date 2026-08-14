@@ -29,7 +29,9 @@ function Get-Salt {
         https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.randomnumbergenerator
     #>
     [OutputType([Byte[]])]
+    [CmdletBinding()]
     param(
+        [Parameter(Position = 0)]
         [int] $Length = 32
     )
 

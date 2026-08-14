@@ -93,11 +93,10 @@ function Invoke-XKCD {
         [Parameter(Mandatory, ParameterSetName = "Random")]
         [switch] $Random,
 
-        [Parameter(Mandatory, ParameterSetName = "Range")]
         [ValidateRange(1, [int]::MaxValue)]
+        [Parameter(Mandatory, ParameterSetName = "Range")]
         [int] $From,
 
-        [Parameter(Mandatory, ParameterSetName = "Range")]
         [ValidateScript({
             if ($_ -le $From) {
                 Write-Error "The value of -To must be greater than -From" -Category InvalidArgument -ErrorAction Stop
@@ -105,6 +104,7 @@ function Invoke-XKCD {
 
             return $true
         })]
+        [Parameter(Mandatory, ParameterSetName = "Range")]
         [int] $To,
 
         [Parameter(ParameterSetName = "Last")]

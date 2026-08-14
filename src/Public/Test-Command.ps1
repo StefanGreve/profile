@@ -23,6 +23,7 @@ function Test-Command {
         [bool] Returns $true if the command exists, otherwise $false.
     #>
     [OutputType([bool])]
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [string] $Name

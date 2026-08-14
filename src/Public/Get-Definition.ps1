@@ -34,7 +34,9 @@ function Get-Definition {
         If the bat syntax highlighter is installed and accessible, it formats the output.
     #>
     [OutputType([string])]
+    [CmdletBinding()]
     param(
+        [Parameter(Position = 0)]
         [string] $Command
     )
 

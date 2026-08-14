@@ -16,7 +16,7 @@ function Install-Certificate {
         after a reboot.
 
         .PARAMETER FilePath
-         Path to the certificate file to import. Supports .pfx and PEM-encoded formats
+        Path to the certificate file to import. Supports .pfx and PEM-encoded formats
         such as .crt.
 
         .PARAMETER PrivateKeyPath
@@ -55,7 +55,8 @@ function Install-Certificate {
         .OUTPUTS
         X509Certificate. Returns an object representing the installed X.509 certificate.
     #>
-    [OutputType([System.Security.Cryptography.X509Certificates.X509Certificate2])]
+    [OutputType([X509Certificate2])]
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [string] $FilePath,

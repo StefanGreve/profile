@@ -35,6 +35,7 @@ function Get-FileCount {
         System.Int32. The function outputs the count of files as an integer for each specified path.
     #>
     [OutputType([int])]
+    [CmdletBinding()]
     param(
         [Parameter(Position = 0, Mandatory, ValueFromPipeline)]
         [string[]] $Path,

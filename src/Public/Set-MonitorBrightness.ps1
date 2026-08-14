@@ -25,8 +25,10 @@ function Set-MonitorBrightness {
         None. This function does not produce any output.
     #>
     [OutputType([void])]
+    [CmdletBinding()]
     param(
         [ValidateRange(0, 100)]
+        [Parameter(Position = 0)]
         [int] $Brightness
     )
 

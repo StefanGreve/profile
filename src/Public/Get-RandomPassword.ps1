@@ -30,9 +30,10 @@ function Get-RandomPassword {
         https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.randomnumbergenerator
     #>
     [OutputType([string])]
+    [CmdletBinding()]
     param(
-        [Parameter(Position = 0)]
         [ValidateRange(8, 256)]
+        [Parameter(Position = 0)]
         [int] $Length = 64
     )
 

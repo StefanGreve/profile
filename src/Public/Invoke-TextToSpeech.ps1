@@ -47,17 +47,18 @@ function Invoke-TextToSpeech {
         https://learn.microsoft.com/en-us/dotnet/api/system.speech.synthesis.speechsynthesizer
     #>
     [OutputType([void])]
+    [CmdletBinding()]
     param(
         [ValidateNotNullOrEmpty()]
         [Parameter(Mandatory, ValueFromPipeline)]
         [string] $Message,
 
         [ValidateRange(-10, 10)]
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [int] $Rate = 0,
 
         [ValidateRange(0, 100)]
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [int] $Volume = 60
     )
 
@@ -106,6 +107,7 @@ function Invoke-TextToSpeech {
     process {
         $SpeechSynthesizer.Speak($Message)
     }
+
     clean {
         $SpeechSynthesizer.Dispose()
     }

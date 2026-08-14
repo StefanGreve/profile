@@ -22,6 +22,7 @@ function Copy-FilePath {
         None. This function does not produce any output.
     #>
     [OutputType([void])]
+    [CmdletBinding()]
     param (
         [Parameter(Position = 0, Mandatory)]
         [string] $Path

@@ -43,12 +43,13 @@ function Get-StringHash {
         https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography
     #>
     [OutputType([string])]
+    [CmdletBinding()]
     param(
         [Parameter(Position = 0, Mandatory, ValueFromPipeline)]
         [string[]] $String,
 
-        [Parameter(Position = 1)]
         [ValidateSet("MD5", "SHA1", "SHA256", "SHA384", "SHA512")]
+        [Parameter(Position = 1)]
         $Algorithm = "SHA256"
     )
 
