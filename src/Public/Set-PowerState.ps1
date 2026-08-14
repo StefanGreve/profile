@@ -73,9 +73,9 @@ function Set-PowerState {
                 $PowerState = $PowerState -eq "Hibernate" ? [System.Windows.Forms.PowerState]::Hibernate : [System.Windows.Forms.PowerState]::Suspend
                 [System.Windows.Forms.Application]::SetSuspendState($PowerState, $Force, $DisableWake)
             } elseif ($IsLinux) {
-                systemctl $State.ToLower() $($Force ? "--force" : [string]::Empty)
+                systemctl $PowerState.ToLower() $($Force ? "--force" : [string]::Empty)
             } elseif ($IsMacOS) {
-                sudo pmset -a hibernatemode $($State -eq "Hibernate" ? 25 : 3)
+                sudo pmset -a hibernatemode $($PowerState -eq "Hibernate" ? 25 : 3)
                 pmset sleepnow
             } else {
                 Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
