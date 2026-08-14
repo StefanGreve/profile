@@ -55,7 +55,7 @@ function Remove-EnvironmentVariable {
     )
 
     begin {
-        $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
+        $Token = $IsWindows ? ";" : ":"
     }
     process {
         $Title = "Remove `"${Value}`" from `"${Key}`""

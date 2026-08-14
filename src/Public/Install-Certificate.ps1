@@ -75,7 +75,7 @@ function Install-Certificate {
         [string] $User = "$env:USERDOMAIN\$env:USERNAME"
     )
     begin {
-        if ([Environment]::OSVersion.Platform -ne "Win32NT") {
+        if (!$IsWindows) {
             Write-Error "This Cmdlet only works on the Windows Operating System" `
                 -Category NotImplemented `
                 -ErrorAction Stop

@@ -71,7 +71,7 @@ function Set-EnvironmentVariable {
     )
 
     begin {
-        $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
+        $Token = $IsWindows ? ";" : ":"
         $OldValue = $Override.IsPresent ? [string]::Empty : [Environment]::GetEnvironmentVariable($Key, $Scope)
         $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
     }
