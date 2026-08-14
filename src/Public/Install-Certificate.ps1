@@ -141,8 +141,9 @@ function Install-Certificate {
                 $CertificateStore.Add($PemCertificate)
             }
             catch [ArgumentException], [CryptographicException] {
-                Write-Warning "Failed to load certificate '$FilePath' to the certificate store: $_"
-                exit 1
+                Write-Error "Failed to load certificate '$FilePath' to the certificate store: $_" `
+                    -ErrorAction Stop `
+                    -Category InvalidData
             }
             finally {
                 $CertificateStore.Close()
@@ -167,9 +168,9 @@ function Install-Certificate {
         }
 
         if ($null -eq $UniqueName) {
-            Write-Warning "The certificate '$FilePath' has no private key."
-            Write-Output $Certificate
-            exit 0
+            Write-Error "The certificate '$FilePath' has no private key." `
+                -ErrorAction Stop `
+                -Category ObjectNotFound
         }
 
         Write-Verbose "Detected Unique Name '$UniqueName'."
