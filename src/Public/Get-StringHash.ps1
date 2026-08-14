@@ -1,4 +1,4 @@
-using namespace System.Security
+using namespace System.Security.Cryptography
 using namespace System.Text
 
 function Get-StringHash {
@@ -50,35 +50,36 @@ function Get-StringHash {
 
         [ValidateSet("MD5", "SHA1", "SHA256", "SHA384", "SHA512")]
         [Parameter(Position = 1)]
-        $Algorithm = "SHA256"
+        [string] $Algorithm = "SHA256"
     )
 
+    begin {
+        $HashAlgorithm = switch ($Algorithm) {
+            MD5 {
+                [MD5]::Create()
+            }
+            SHA1 {
+                [SHA1]::Create()
+            }
+            SHA256 {
+                [SHA256]::Create()
+            }
+            SHA384 {
+                [SHA384]::Create()
+            }
+            SHA512 {
+                [SHA512]::Create()
+            }
+        }
+    }
     process {
         foreach ($s in $String) {
-            $Constructor = switch ($Algorithm) {
-                MD5 {
-                    [Cryptography.MD5]::Create()
-                }
-                SHA1 {
-                    [Cryptography.SHA1]::Create()
-                }
-                SHA256 {
-                    [Cryptography.SHA256]::Create()
-                }
-                SHA384 {
-                    [Cryptography.SHA384]::Create()
-                }
-                SHA512 {
-                    [Cryptography.SHA512]::Create()
-                }
-            }
-
-            $Buffer = $Constructor.ComputeHash([Encoding]::UTF8.GetBytes($s))
+            $Buffer = $HashAlgorithm.ComputeHash([Encoding]::UTF8.GetBytes($s))
             $Hash = [BitConverter]::ToString($Buffer).Replace("-", [string]::Empty).ToLower()
             Write-Output $Hash
         }
     }
     clean {
-        $Constructor.Dispose()
+        $HashAlgorithm.Dispose()
     }
 }
