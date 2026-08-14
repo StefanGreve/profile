@@ -36,6 +36,95 @@ Describe "Get-Definition" {
     }
 }
 
+Describe "Get-EnvironmentVariable" {
+    BeforeAll {
+        $Key = "PROFILE_PESTER_GET"
+    }
+
+    AfterEach {
+        [Environment]::SetEnvironmentVariable($Key, $null, "Process")
+    }
+
+    Context "Happy Path" {
+        It "Should read a value from the Process scope" {
+            [Environment]::SetEnvironmentVariable($Key, "foo", "Process")
+            Get-EnvironmentVariable -Key $Key -Scope Process | Should -Be "foo"
+        }
+
+        It "Should split multiple values on the platform path separator" {
+            $Token = $IsWindows ? ";" : ":"
+            [Environment]::SetEnvironmentVariable($Key, "foo${Token}bar", "Process")
+            $Values = Get-EnvironmentVariable -Key $Key -Scope Process
+            $Values.Count | Should -Be 2
+            $Values[1] | Should -Be "bar"
+        }
+    }
+
+    Context "Negative Testing" {
+        It "Should throw when the variable is not defined" {
+            { Get-EnvironmentVariable -Key $Key -Scope Process } | Should -Throw -Because "the variable is empty or undefined"
+        }
+    }
+}
+
+Describe "Get-FileCount" {
+    BeforeAll {
+        $Root = Join-Path $TestDrive "count"
+        New-Item -ItemType Directory -Path $Root | Out-Null
+        1..3 | ForEach-Object { New-Item -ItemType File -Path (Join-Path $Root "file$_.txt") | Out-Null }
+
+        $SubDirectory = Join-Path $Root "nested"
+        New-Item -ItemType Directory -Path $SubDirectory | Out-Null
+        New-Item -ItemType File -Path (Join-Path $SubDirectory "deep.txt") | Out-Null
+    }
+
+    Context "Happy Path" {
+        It "Should count files in all subdirectories by default" {
+            Get-FileCount -Path $Root | Should -Be 4 -Because "there are three top-level files and one nested file"
+        }
+
+        It "Should count only top-level files when requested" {
+            Get-FileCount -Path $Root -SearchOption TopDirectoryOnly | Should -Be 3 -Because "the nested file is excluded"
+        }
+    }
+}
+
+Describe "Get-FileSize" {
+    BeforeAll {
+        # A file of exactly 1 KiB (1024 bytes) makes the base-2 conversions exact.
+        $File = Join-Path $TestDrive "sample.bin"
+        [System.IO.File]::WriteAllBytes($File, [byte[]]::new(1024))
+    }
+
+    Context "Happy Path" {
+        It "Should return the size in bytes by default" {
+            Get-FileSize -Path $File | Should -Be 1024
+        }
+
+        It "Should convert the size to KiB" {
+            Get-FileSize -Path $File -Unit KiB | Should -Be 1
+        }
+    }
+
+    Context "Negative Testing" {
+        It "Should skip directories and emit a non-terminating error" {
+            $Result = Get-FileSize -Path $TestDrive -ErrorVariable FileSizeError 2>$null
+            $Result | Should -BeNullOrEmpty -Because "a directory is not a file"
+            $FileSizeError | Should -Not -BeNullOrEmpty -Because "a directory path is invalid input"
+        }
+    }
+}
+
+Describe "Get-MaxPathLength" {
+    Context "Happy Path" {
+        It "Should return a positive path length" {
+            # The exact value is OS-dependent (260/32767 on Windows, PATH_MAX elsewhere),
+            # so assert only that it is a positive integer.
+            [int](Get-MaxPathLength) | Should -BeGreaterThan 0
+        }
+    }
+}
+
 Describe "Get-RandomPassword" {
     Context "Happy Path" {
         It "Should return a password of the specified length" {
@@ -52,22 +141,6 @@ Describe "Get-Salt" {
             $ExpectedLength = 10
             $Salt = Get-Salt -Length $ExpectedLength
             $Salt.Length | Should -Be $ExpectedLength -Because "that is was the input specified"
-        }
-    }
-}
-
-Describe "Test-Command" {
-    Context "Happy Path" {
-        It "Should return true if the command exists" {
-            $Exists = Test-Command Get-Content
-            $Exists | Should -Be $true -Because "this command exists"
-        }
-    }
-
-    Context "Negative Testing" {
-        It "Should return false if the command does not exist" {
-            $Exists = Test-Command Get-Nothing
-            $Exists | Should -Be $false -Because "this command does not exist"
         }
     }
 }
@@ -100,50 +173,27 @@ Describe "Get-StringHash" {
     }
 }
 
-Describe "Get-FileSize" {
+Describe "Remove-EnvironmentVariable" {
     BeforeAll {
-        # A file of exactly 1 KiB (1024 bytes) makes the base-2 conversions exact.
-        $File = Join-Path $TestDrive "sample.bin"
-        [System.IO.File]::WriteAllBytes($File, [byte[]]::new(1024))
+        $Key = "PROFILE_PESTER_REMOVE"
+        $Token = $IsWindows ? ";" : ":"
+    }
+
+    AfterEach {
+        [Environment]::SetEnvironmentVariable($Key, $null, "Process")
     }
 
     Context "Happy Path" {
-        It "Should return the size in bytes by default" {
-            Get-FileSize -Path $File | Should -Be 1024
+        It "Should remove the entire variable when no value is specified" {
+            [Environment]::SetEnvironmentVariable($Key, "foo", "Process")
+            Remove-EnvironmentVariable -Key $Key -Scope Process -Confirm:$false
+            [Environment]::GetEnvironmentVariable($Key, "Process") | Should -BeNullOrEmpty
         }
 
-        It "Should convert the size to KiB" {
-            Get-FileSize -Path $File -Unit KiB | Should -Be 1
-        }
-    }
-
-    Context "Negative Testing" {
-        It "Should skip directories and emit a non-terminating error" {
-            $Result = Get-FileSize -Path $TestDrive -ErrorVariable FileSizeError 2>$null
-            $Result | Should -BeNullOrEmpty -Because "a directory is not a file"
-            $FileSizeError | Should -Not -BeNullOrEmpty -Because "a directory path is invalid input"
-        }
-    }
-}
-
-Describe "Get-FileCount" {
-    BeforeAll {
-        $Root = Join-Path $TestDrive "count"
-        New-Item -ItemType Directory -Path $Root | Out-Null
-        1..3 | ForEach-Object { New-Item -ItemType File -Path (Join-Path $Root "file$_.txt") | Out-Null }
-
-        $SubDirectory = Join-Path $Root "nested"
-        New-Item -ItemType Directory -Path $SubDirectory | Out-Null
-        New-Item -ItemType File -Path (Join-Path $SubDirectory "deep.txt") | Out-Null
-    }
-
-    Context "Happy Path" {
-        It "Should count files in all subdirectories by default" {
-            Get-FileCount -Path $Root | Should -Be 4 -Because "there are three top-level files and one nested file"
-        }
-
-        It "Should count only top-level files when requested" {
-            Get-FileCount -Path $Root -SearchOption TopDirectoryOnly | Should -Be 3 -Because "the nested file is excluded"
+        It "Should remove only the specified value" {
+            [Environment]::SetEnvironmentVariable($Key, "foo${Token}bar", "Process")
+            Remove-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Confirm:$false
+            [Environment]::GetEnvironmentVariable($Key, "Process") | Should -Be "bar"
         }
     }
 }
@@ -193,68 +243,18 @@ Describe "Set-EnvironmentVariable" {
     }
 }
 
-Describe "Get-EnvironmentVariable" {
-    BeforeAll {
-        $Key = "PROFILE_PESTER_GET"
-    }
-
-    AfterEach {
-        [Environment]::SetEnvironmentVariable($Key, $null, "Process")
-    }
-
+Describe "Test-Command" {
     Context "Happy Path" {
-        It "Should read a value from the Process scope" {
-            [Environment]::SetEnvironmentVariable($Key, "foo", "Process")
-            Get-EnvironmentVariable -Key $Key -Scope Process | Should -Be "foo"
-        }
-
-        It "Should split multiple values on the platform path separator" {
-            $Token = $IsWindows ? ";" : ":"
-            [Environment]::SetEnvironmentVariable($Key, "foo${Token}bar", "Process")
-            $Values = Get-EnvironmentVariable -Key $Key -Scope Process
-            $Values.Count | Should -Be 2
-            $Values[1] | Should -Be "bar"
+        It "Should return true if the command exists" {
+            $Exists = Test-Command Get-Content
+            $Exists | Should -Be $true -Because "this command exists"
         }
     }
 
     Context "Negative Testing" {
-        It "Should throw when the variable is not defined" {
-            { Get-EnvironmentVariable -Key $Key -Scope Process } | Should -Throw -Because "the variable is empty or undefined"
-        }
-    }
-}
-
-Describe "Remove-EnvironmentVariable" {
-    BeforeAll {
-        $Key = "PROFILE_PESTER_REMOVE"
-        $Token = $IsWindows ? ";" : ":"
-    }
-
-    AfterEach {
-        [Environment]::SetEnvironmentVariable($Key, $null, "Process")
-    }
-
-    Context "Happy Path" {
-        It "Should remove the entire variable when no value is specified" {
-            [Environment]::SetEnvironmentVariable($Key, "foo", "Process")
-            Remove-EnvironmentVariable -Key $Key -Scope Process -Confirm:$false
-            [Environment]::GetEnvironmentVariable($Key, "Process") | Should -BeNullOrEmpty
-        }
-
-        It "Should remove only the specified value" {
-            [Environment]::SetEnvironmentVariable($Key, "foo${Token}bar", "Process")
-            Remove-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Confirm:$false
-            [Environment]::GetEnvironmentVariable($Key, "Process") | Should -Be "bar"
-        }
-    }
-}
-
-Describe "Get-MaxPathLength" {
-    Context "Happy Path" {
-        It "Should return a positive path length" {
-            # The exact value is OS-dependent (260/32767 on Windows, PATH_MAX elsewhere),
-            # so assert only that it is a positive integer.
-            [int](Get-MaxPathLength) | Should -BeGreaterThan 0
+        It "Should return false if the command does not exist" {
+            $Exists = Test-Command Get-Nothing
+            $Exists | Should -Be $false -Because "this command does not exist"
         }
     }
 }
