@@ -18,38 +18,22 @@ Windows, unless you have turned on `Developer Mode` in the settings app:
 <summary>Instructions</summary>
 
 ```powershell
-# Save the PowerShell profile in the current working directory
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/StefanGreve/profile/refs/heads/master/profile.ps1 -Out profile.ps1
+# Get the PowerShell profile repository
+git clone https://github.com/StefanGreve/profile.git
+$ProfileSource = $(Resolve-Path "./profile/profile.ps1").Path
 
 # Add some additional features to the profile on startup (optional)
 Install-Module -Name PowerTools -Force
-```
 
-### Windows
-
-```powershell
 # Select a profile path (Recommended: CurrentUserAllHosts)
 $PROFILE | Get-Member -Type NoteProperty | Format-List
-
-$Definition = $PROFILE
-  | Get-Member -Type NoteProperty
-  | Where-Object Name -eq CurrentUserAllHosts
-  | Select-Object -ExpandProperty Definition
-
-$ProfilePath = $Definition.Split("=")[1]
+$ProfilePath = $PROFILE.CurrentUserAllHosts
 
 # Create a PowerShell directory if necessary
-New-Item $(Split-Path -Parent $ProfilePath) -ItemType Directory -ErrorAction SilentlyContinue
+New-Item $(Split-Path -Parent $ProfilePath) -ItemType Directory -Force
 
 # Create a new symbolic link
-New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $(Resolve-Path profile.ps1).Path
-```
-
-### MacOS
-
-```powershell
-# Create a new symbolic link
-New-Item -Path $PROFILE -ItemType SymbolicLink -Value $(Resolve-Path ./profile.ps1).Value -Force
+New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $ProfileSource -Force
 ```
 
 </details>
@@ -81,7 +65,7 @@ dotnet husky install
 
 Set your `ExecutionPolicy` to `Unrestricted` in order to run any of these
 scripts. Note that this configuration step only applies to Windows users.
-on non-Windows computers, `Unrestricted` is already the default `ExecutionPolicy`
+On non-Windows computers, `Unrestricted` is already the default `ExecutionPolicy`
 and cannot be changed (see also:
 [About Execution Policy](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.4#long-description))
 
