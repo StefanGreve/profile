@@ -69,7 +69,7 @@ function New-Shortcut {
         $Name = [Path]::ChangeExtension([Path]::Combine($Directory, $Name), ".lnk")
 
         if ([File]::Exists($Name)) {
-            Write-Error -Message "The file \"${Name}\" already exists" -Category ResourceExists -CategoryTargetName $Name -ErrorAction Stop
+            Write-Error -Message "The file `"${Name}`" already exists" -Category ResourceExists -CategoryTargetName $Name -ErrorAction Stop
             return
         }
 
