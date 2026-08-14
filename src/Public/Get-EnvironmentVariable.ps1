@@ -47,14 +47,15 @@ function Get-EnvironmentVariable {
     )
 
     begin {
-        $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
+        $Token = $IsWindows ? ";" : ":"
     }
     process {
         $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope)
 
-        if ($EnvironmentVariables.Length -eq 0) {
-            Write-Warning "Environment variable `"{$Key}`" is empty or not defined."
-            return
+        if ([string]::IsNullOrEmpty($EnvironmentVariables)) {
+            Write-Error "Environment variable `"$Key`" is empty or not defined." `
+                -ErrorAction Stop `
+                -Category InvalidData
         }
 
         $EnvironmentVariableArray = $EnvironmentVariables -Split $Token
