@@ -45,10 +45,6 @@ function Set-MonitorBrightness {
             } finally {
                 $WmiMonitor.Dispose()
             }
-        } elseif ($IsLinux) {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
-        } elseif ($IsMacOS) {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
         } else {
             Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
         }
