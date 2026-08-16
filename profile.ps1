@@ -1,5 +1,6 @@
 using namespace System
 using namespace System.IO
+using namespace System.Management.Automation
 using namespace System.Security
 using namespace System.Text
 
@@ -116,6 +117,29 @@ Set-PSReadLineKeyHandler -Key ")", "]", "}" -BriefDescription SmartClosingBraces
 #region Tab Completions
 
 dotnet completions script pwsh | Out-String | Invoke-Expression
+
+# dotnet suggest shell start
+if (Get-Command "dotnet-suggest" -ErrorAction SilentlyContinue) {
+    $AvailableToComplete = (dotnet-suggest list) | Out-String
+    $AvailableToCompleteArray = $AvailableToComplete.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
+
+    Register-ArgumentCompleter -Native -CommandName $AvailableToCompleteArray -ScriptBlock {
+        param($WordToComplete, $CommandAst, $CursorPosition)
+
+        $FullPath = (Get-Command $CommandAst.CommandElements[0]).Source
+        $Arguments = $CommandAst.Extent.ToString().Replace('"', '\"')
+
+        dotnet-suggest get -e $FullPath --position $CursorPosition -- "$Arguments" | ForEach-Object {
+            [CompletionResult]::new($_, $_, 'ParameterValue', $_)
+        }
+    }
+} else {
+    "Unable to provide System.CommandLine tab completion support unless the [dotnet-suggest] tool is first installed."
+    "See the following for tool installation: https://www.nuget.org/packages/dotnet-suggest"
+}
+
+$env:DOTNET_SUGGEST_SCRIPT_VERSION = "1.0.2"
+# dotnet suggest script end
 
 #endregion
 
