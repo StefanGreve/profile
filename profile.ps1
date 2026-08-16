@@ -113,6 +113,12 @@ Set-PSReadLineKeyHandler -Key ")", "]", "}" -BriefDescription SmartClosingBraces
 
 #endregion
 
+#region Tab Completions
+
+dotnet completions script pwsh | Out-String | Invoke-Expression
+
+#endregion
+
 #region Hook Scripts
 
 if ($env:PROFILE_LOAD_CUSTOM_SCRIPTS -and $(Test-Path $env:PROFILE_LOAD_CUSTOM_SCRIPTS)) {
