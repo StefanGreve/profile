@@ -141,6 +141,10 @@ if (Get-Command "dotnet-suggest" -ErrorAction SilentlyContinue) {
 $env:DOTNET_SUGGEST_SCRIPT_VERSION = "1.0.2"
 # dotnet suggest script end
 
+if (Get-Command "bat" -ErrorAction SilentlyContinue) {
+    bat --completion ps1 | Out-String | Invoke-Expression
+}
+
 #endregion
 
 #region Hook Scripts
