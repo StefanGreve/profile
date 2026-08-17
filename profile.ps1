@@ -141,6 +141,22 @@ if (Get-Command "dotnet-suggest" -ErrorAction SilentlyContinue) {
 $env:DOTNET_SUGGEST_SCRIPT_VERSION = "1.0.2"
 # dotnet suggest script end
 
+if (Get-Command "winget" -ErrorAction SilentlyContinue) {
+    # winget is a native C++ application, so it exposes its own completion backend
+    # independent of what dotnet-suggest is built upon
+    Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
+        param($WordToComplete, $CommandAst, $CursorPosition)
+
+        [Console]::InputEncoding = [Console]::OutputEncoding = $OutputEncoding = [System.Text.Utf8Encoding]::new()
+        $Local:Word = $WordToComplete.Replace('"', '""')
+        $Local:Ast = $CommandAst.ToString().Replace('"', '""')
+
+        winget complete --word="$Local:Word" --commandline "$Local:Ast" --position $CursorPosition | ForEach-Object {
+            [CompletionResult]::new($_, $_, 'ParameterValue', $_)
+        }
+    }
+}
+
 if (Get-Command "gh" -ErrorAction SilentlyContinue) {
     gh completion --shell powershell | Out-String | Invoke-Expression
 }
