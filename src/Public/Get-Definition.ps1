@@ -55,7 +55,7 @@ function Get-Definition {
 
         $Definition = $ResolvedCommand.Definition
 
-        if (Test-Command bat) {
+        if (Get-Command bat -ErrorAction SilentlyContinue) {
             Write-Output $Definition | bat --language powershell
         } else {
             Write-Output $Definition

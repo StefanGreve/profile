@@ -243,20 +243,4 @@ Describe "Set-EnvironmentVariable" {
     }
 }
 
-Describe "Test-Command" {
-    Context "Happy Path" {
-        It "Should return true if the command exists" {
-            $Exists = Test-Command Get-Content
-            $Exists | Should -Be $true -Because "this command exists"
-        }
-    }
-
-    Context "Negative Testing" {
-        It "Should return false if the command does not exist" {
-            $Exists = Test-Command Get-Nothing
-            $Exists | Should -Be $false -Because "this command does not exist"
-        }
-    }
-}
-
 #endregion
