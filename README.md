@@ -12,35 +12,16 @@ The project contains the source code of my PowerShell profile as well as the
 ## Setup
 
 Note that you need administrator rights in order to create symbolic links on
-Windows, unless you have turned on `Developer Mode` in the settings app:
+Windows, unless you have turned on `Developer Mode` in the settings app.
 
-<details>
-<summary>Instructions</summary>
+Run [`install.ps1`](./install.ps1) to clone this repository, install the
+`PowerTools` module, and symlink `profile.ps1` to your selected `$PROFILE`:
 
 ```powershell
-# Get the PowerShell profile repository
-git clone https://github.com/StefanGreve/profile.git
-$ProfileSource = $(Resolve-Path "./profile/profile.ps1").Path
-
-# Add some additional features to the profile on startup (optional)
-Install-Module -Name PowerTools -Force
-
-# Select a profile path (Recommended: CurrentUserAllHosts)
-$PROFILE | Get-Member -Type NoteProperty | Format-List
-$ProfilePath = $PROFILE.CurrentUserAllHosts
-
-# Create a PowerShell directory if necessary
-New-Item $(Split-Path -Parent $ProfilePath) -ItemType Directory -Force
-
-# Create a new symbolic link
-New-Item -Path $ProfilePath -ItemType SymbolicLink -Value $ProfileSource -Force
+irm "https://raw.githubusercontent.com/StefanGreve/profile/master/install.ps1" | iex
 ```
 
-</details>
-
-This profile is also part of the
-[`configuration`](https://github.com/stefangreve/configuration)
-repository.
+See `Get-Help ./install.ps1` for the `-RepositoryPath` and `-ProfileKind` options.
 
 ## Configuration
 
