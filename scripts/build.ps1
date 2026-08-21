@@ -11,7 +11,7 @@ param(
 
     [int] $FoundingYear = 2024,
 
-    [ValidateSet("7.4", "7.5", "7.6")]
+    [ValidateSet("7.4", "7.5", "7.6", "7.7")]
     [string] $PowerShellVersion = "7.4",
 
     [Parameter(Mandatory)]
