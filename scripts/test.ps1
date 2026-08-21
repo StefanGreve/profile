@@ -16,7 +16,7 @@ process {
     }
 
     $Container = New-PesterContainer `
-        -Path $([Path]::Combine($ProjectRoot, "tests", "module.tests.ps1")) `
+        -Path $([Path]::Join($ProjectRoot, "tests", "module.tests.ps1")) `
         -Data @{
             Version = $Version
             Build = $Build.IsPresent

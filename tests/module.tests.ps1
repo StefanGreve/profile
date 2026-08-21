@@ -9,13 +9,13 @@ param(
 )
 
 $ScriptPath = Split-Path -Parent -Path $MyInvocation.MyCommand.Path
-$ProjectRoot = $(Get-Item $([Path]::Combine($ScriptPath, ".."))).FullName
+$ProjectRoot = $(Get-Item $([Path]::Join($ScriptPath, ".."))).FullName
 
 if ($Build.IsPresent) {
-    & $([Path]::Combine($ProjectRoot, "scripts", "build.ps1")) -Version $Version
+    & $([Path]::Join($ProjectRoot, "scripts", "build.ps1")) -Version $Version
 }
 
-Import-Module -Name $([Path]::Combine($ProjectRoot, "src", "${ModuleName}.psd1")) `
+Import-Module -Name $([Path]::Join($ProjectRoot, "src", "${ModuleName}.psd1")) `
     -ErrorAction Stop `
     -PassThru
 

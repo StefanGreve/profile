@@ -20,7 +20,7 @@ param(
 
 begin {
     $ProjectRoot = Split-Path -Path $PSScriptRoot -Parent
-    Push-Location $([Path]::Combine($ProjectRoot, "src"))
+    Push-Location $([Path]::Join($ProjectRoot, "src"))
 
     $Steps = 4
     $ManifestPath = "${ModuleName}.psd1"

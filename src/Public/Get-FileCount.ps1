@@ -46,7 +46,8 @@ function Get-FileCount {
 
     process {
         foreach ($p in $Path) {
-            $FileCount = [Directory]::GetFiles([Path]::Combine($PWD, $p), "*", $SearchOption).Length
+            # Resolve $p against $PWD (not the process CWD that GetFiles would use) and expand ~ and PSDrives.
+            $FileCount = [Directory]::GetFiles($PSCmdlet.GetUnresolvedProviderPathFromPSPath($p), "*", $SearchOption).Length
             Write-Output $FileCount
         }
     }
