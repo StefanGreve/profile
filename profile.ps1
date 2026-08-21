@@ -233,14 +233,6 @@ function prompt {
         )
     }
 
-    $PythonVirtualEnvironment = if ($env:VIRTUAL_ENV) {
-        [string]::Format(" {0}({1}){2}",
-            $PSStyle.Foreground.Magenta,
-            [Path]::GetFileName($env:VIRTUAL_ENV),
-            $PSStyle.Foreground.White
-        )
-    }
-
     $PsPrompt = [StringBuilder]::new()
     $null = & {
         # [username@hostname pwd]
@@ -280,7 +272,11 @@ function prompt {
         # (user@branch)
         $PsPrompt.Append($GitStatus)
         # (active)
-        $PsPrompt.Append($PythonVirtualEnvironment)
+        if ($env:VIRTUAL_ENV) {
+            $PsPrompt.Append($PSStyle.Foreground.Magenta)
+            $PsPrompt.Append([Path]::GetFileName($env:VIRTUAL_ENV))
+            $PsPrompt.Append($PSStyle.Foreground.White)
+        }
         # #/>
         $PsPrompt.Append([Environment]::NewLine)
         $PsPrompt.Append([string]::new($global:IsAdmin ? "#" : ">", $NestedPromptLevel + 1))
