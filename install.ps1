@@ -61,7 +61,9 @@ begin {
     $ErrorActionPreference = "Stop"
 
     $ProfileTargetPath = $PROFILE.$ProfileKind
+    $ProfileBackupPath = "${ProfileTargetPath}.bak"
     $TargetDirectory = [Path]::Join($RepositoryPath, "profile")
+    $LinkProbePath = [Path]::Join([Path]::GetTempPath(), [Path]::GetRandomFileName())
 
     if ([Directory]::Exists($TargetDirectory)) {
         Write-Error "The target directory `"${TargetDirectory}`" already exists; remove it or choose a different -RepositoryPath." `
@@ -89,26 +91,26 @@ process {
     Write-Host "Download PowerShell Profile . . . " -NoNewline
     $ProfileSource = [Path]::GetFullPath([Path]::Join($TargetDirectory, "profile.ps1"))
     $null = [Directory]::CreateDirectory($TargetDirectory)
-
-    try {
-        Invoke-RestMethod -Uri "https://raw.githubusercontent.com/StefanGreve/profile/master/profile.ps1" -OutFile $ProfileSource
-        Write-Host "✓" -ForegroundColor Green
-    } catch {
-        Write-Error "Failed to download the profile from GitHub: $($_.Exception.Message)" `
-            -Category ConnectionError
-    }
+    Invoke-RestMethod -Uri "https://raw.githubusercontent.com/StefanGreve/profile/master/profile.ps1" -OutFile $ProfileSource
+    Write-Host "✓" -ForegroundColor Green
 
     Write-Host "[2/3] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Create Symbolic Link . . . " -NoNewline
+    $ProfileParentDirectory = [Directory]::GetParent($ProfileTargetPath).FullName
+    $null = [Directory]::CreateDirectory($ProfileParentDirectory)
+
+    try {
+        # Probe link creation first so a permission failure aborts before the profile is displaced
+        $null = [File]::CreateSymbolicLink($LinkProbePath, $ProfileSource)
+    } finally {
+        [File]::Delete($LinkProbePath)
+    }
 
     # Back up a pre-existing profile instead of deleting it outright.
-    $ProfileBackupPath = "${ProfileTargetPath}.bak"
     if ([File]::Exists($ProfileTargetPath)) {
         [File]::Move($ProfileTargetPath, $ProfileBackupPath, $true)
     }
 
-    $ProfileParentDirectory = [Directory]::GetParent($ProfileTargetPath).FullName
-    $null = [Directory]::CreateDirectory($ProfileParentDirectory)
     $null = [File]::CreateSymbolicLink($ProfileTargetPath, $ProfileSource)
     Write-Host "✓" -ForegroundColor Green
 
@@ -123,7 +125,8 @@ process {
     Write-Host "Linked `"${ProfileTargetPath}`" -> `"${ProfileSource}`"." -ForegroundColor DarkGray
     Write-Host "Restart PowerShell or run '. `$PROFILE' to load it now." -ForegroundColor DarkGray
 }
-clean {
+end {
+    # Installation succeeded; discard the backup of the previous profile.
     if ([File]::Exists($ProfileBackupPath)) {
         [File]::Delete($ProfileBackupPath)
     }
