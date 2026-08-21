@@ -11,11 +11,12 @@ The project contains the source code of my PowerShell profile as well as the
 
 ## Setup
 
-Note that you need administrator rights in order to create symbolic links on
-Windows, unless you have turned on `Developer Mode` in the settings app.
+On Windows, run this from an _elevated_ (administrator) PowerShell session; the
+script creates a symbolic link, which requires administrator rights.
 
-Run [`install.ps1`](./install.ps1) to clone this repository, install the
-`PowerTools` module, and symlink `profile.ps1` to your selected `$PROFILE`:
+Run [`install.ps1`](./install.ps1) to download `profile.ps1`, symlink it to your
+selected `$PROFILE`, and install the `PowerTools` module (which provides the
+remaining scripts):
 
 ```powershell
 irm "https://raw.githubusercontent.com/StefanGreve/profile/master/install.ps1" | iex
