@@ -3,6 +3,17 @@ using namespace System.IO
 param(
     [string] $ModuleName = "PowerTools",
 
+    [string] $Author = "Stefan Greve",
+
+    [string] $CompanyName = "Advanced Systems",
+
+    [string] $Description = "General purpose Cmdlets for all platforms.",
+
+    [int] $FoundingYear = 2024,
+
+    [ValidateSet("7.4", "7.5", "7.6")]
+    [string] $PowerShellVersion = "7.4",
+
     [Parameter(Mandatory)]
     [string] $Version
 )
@@ -16,7 +27,6 @@ begin {
 }
 process {
     # 1 - Update Manifest
-
     Write-Host "[1/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Update Manifest"
 
@@ -42,9 +52,19 @@ process {
         | Select-Object -ExpandProperty FullName
         | Resolve-Path -Relative
 
+    $CurrentYear = [DateTime]::Today.Year
+    $YearSpan = $CurrentYear -gt $FoundingYear ? "${FoundingYear} - ${CurrentYear}" : "${FoundingYear}"
+    $Copyright = "(c) ${YearSpan} ${CompanyName}. All rights reserved."
+
     $ManifestArgs = @{
-        Path = $ManifestPath
+        RootModule = "${ModuleName}.psm1"
+        Author = $Author
+        Copyright = $Copyright
+        CompanyName = $CompanyName
+        Description = $Description
         ModuleVersion = $Version
+        PowerShellVersion = $PowerShellVersion
+        Path = $ManifestPath
         FunctionsToExport = @($FunctionsToExport)
         AliasesToExport = @($Aliases)
         FileList = @($FileList)
@@ -57,14 +77,12 @@ process {
     $Module | Write-Output | Format-Table
 
     # 2 - Test Module Manifest
-
     Write-Host "[2/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Test Module Manifest"
     Test-ModuleManifest -Path $ManifestPath -ErrorAction Stop
     Write-Host
 
     # 3 - Import Module
-
     Write-Host "[3/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Import Module"
     Write-Host
@@ -72,7 +90,6 @@ process {
     Import-Module -Name "./${ManifestPath}" -Force -ErrorAction Stop
 
     # 4 - Run Analyzer
-
     Write-Host "[4/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Run Analyzer"
     Write-Host
