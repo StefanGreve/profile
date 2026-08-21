@@ -26,7 +26,6 @@ begin {
     $ManifestPath = "${ModuleName}.psd1"
 }
 process {
-    # 1 - Update Manifest
     Write-Host "[1/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Update Manifest"
 
@@ -76,20 +75,17 @@ process {
     $Module = Import-PowerShellDataFile -Path $ManifestPath
     $Module | Write-Output | Format-Table
 
-    # 2 - Test Module Manifest
     Write-Host "[2/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Test Module Manifest"
     Test-ModuleManifest -Path $ManifestPath -ErrorAction Stop
     Write-Host
 
-    # 3 - Import Module
     Write-Host "[3/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Import Module"
     Write-Host
 
     Import-Module -Name "./${ManifestPath}" -Force -ErrorAction Stop
 
-    # 4 - Run Analyzer
     Write-Host "[4/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Run Analyzer"
     Write-Host
