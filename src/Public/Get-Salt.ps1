@@ -1,4 +1,4 @@
-using namespace System.Security
+using namespace System.Security.Cryptography
 
 function Get-Salt {
     <#
@@ -39,7 +39,7 @@ function Get-Salt {
         $Salt = [byte[]]::new($Length)
     }
     process {
-        [Cryptography.RandomNumberGenerator]::Fill($Salt)
+        [RandomNumberGenerator]::Fill($Salt)
         Write-Output $Salt
     }
     clean {
