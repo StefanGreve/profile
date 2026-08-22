@@ -1,32 +1,17 @@
 # Changelog
 
-## Unreleased
+## Version 3.0.0 (22 Aug 2026)
 
-This release rounds out the module into a coherent, documented toolset: every
-public Cmdlet now ships comment-based help, the core functions are covered by unit
-tests, native tab completion is wired up for common tooling, and macOS gains parity
-for the battery and system-theme features.
+This release expands the module with new Cmdlets and broader platform support,
+along with documentation, test coverage, and various fixes to existing functionality.
 
 ### Added
 
-- Native tab completion for `dotnet`, `System.CommandLine`, `bat`, `delta`, `deno`, `gh`,
-  `op`, `pip`, `rustup`, `uv`, and `winget`.
 - `Install-Font` Cmdlet to install fonts on Windows in the User or Machine scope.
+- `Test-Elevation` Cmdlet to check for an elevated (administrator on Windows, root on
+  Linux and macOS) session.
 - `Invoke-TextToSpeech` Cmdlet.
 - PEM certificate import with optional private key in `Install-Certificate`.
-- `settings.json` configuration file (loaded from next to `profile.ps1`) with
-  `DefaultCulture`, `DefaultEncoding`, `DotSourceDirectory`, `EnableClassicProgressbar`,
-  `Modules`, `Prompt`, and `RegisterNativeCompletions` toggles, plus a JSON schema for
-  editor validation; `install.ps1` downloads a default copy during setup.
-- `Modules` setting to import a configurable list of PowerShell modules on profile
-  launch, warning about any that are not installed.
-- `EnableClassicProgressbar` setting to toggle the classic progress bar view
-  (cyan background, yellow text).
-- `RegisterNativeCompletions` setting to opt into argument completers for `bat`, `delta`,
-  `deno`, `gh`, `op`, `pip`, `rustup`, `uv`, and `winget`.
-- Battery charge indicator in the prompt, colored by remaining charge and shown only
-  while on battery power (`Prompt.EnableBatteryStatus`).
-- Prompt timestamp toggle (`Prompt.EnableTimestamp`).
 - `Get-Battery` and `Set-SystemTheme` support on macOS.
 - Unit tests for the environment-variable functions, `Get-MaxPathLength`,
   `Get-StringHash`, `Get-FileSize`, and `Get-FileCount`.
@@ -34,17 +19,19 @@ for the battery and system-theme features.
 
 ### Changed
 
-- Profile configuration moved from environment variables to `settings.json`,
-  replacing `PROFILE_LOAD_CUSTOM_SCRIPTS`, `PROFILE_ENABLE_BRANCH_USERNAME`, and
-  `PROFILE_ENABLE_TIMESTAMP`.
-- Prompt falls back to the conventional default branch when `origin/HEAD` is unset,
-  and hides the Git tag when not on the default branch.
 - `Stop-LocalServer` now terminates every owning process and runs cross-platform.
 - `Set-EnvironmentVariable` now always skips duplicate values with a warning; the
   `-Force` flag that re-added them has been removed.
 - `Get-EnvironmentVariable`, `Set-EnvironmentVariable`, and `Remove-EnvironmentVariable`
   now warn and skip on Linux and macOS when a non-Process scope is requested, since
   .NET only supports the Process scope on those platforms.
+- `Get-Definition` now resolves aliases to their underlying command before printing the
+  definition.
+- `Get-StringHash` accepts the hash algorithm as a validated string (`MD5`, `SHA1`,
+  `SHA256`, `SHA384`, `SHA512`), which enables tab completion; the default remains `SHA256`.
+- `Export-Branch` now verifies the current directory is inside a Git repository before
+  running, and its shutdown countdown works cross-platform.
+- `Start-Timer` now throttles its progress loop instead of updating continuously.
 - Standardized `Write-Error` usage, attribute ordering, and `CmdletBinding` across
   public functions.
 
@@ -54,12 +41,19 @@ for the battery and system-theme features.
 - `Get-Battery` charging detection and unreachable output.
 - `-Random` range and per-comic error handling in `Invoke-XKCD`.
 - Empty and undefined guards in `Get-EnvironmentVariable`.
-- Machine name display in the prompt.
+- `Set-PowerState` referenced an undefined variable on Linux and macOS, so the requested
+  power state was never applied.
+- `Export-Branch` passed a non-existent parameter to `Get-Salt`.
+- `Get-FileSize` now skips directories with a non-terminating error instead of returning
+  a size for them.
+- `Set-MonitorBrightness` now disposes the WMI object safely when the display does not
+  support software brightness control.
 
 ### Removed
 
 - `New-Shortcut`, `Copy-FilePath`, and `Test-Command` Cmdlets. Use the built-in
   `Get-Command -ErrorAction SilentlyContinue` in place of `Test-Command`.
+- `Restart-GpgAgent` Cmdlet, which now lives in the configuration repository instead.
 
 ## Version 2.0.0 (30 Nov 2024)
 
