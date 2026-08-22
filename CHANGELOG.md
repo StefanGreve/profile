@@ -11,6 +11,7 @@ for the battery and system-theme features.
 
 - Native tab completion for `dotnet`, `System.CommandLine`, `bat`, `delta`, `deno`, `gh`,
   `op`, `pip`, `rustup`, `uv`, and `winget`.
+- `Install-Font` Cmdlet to install fonts on Windows in the User or Machine scope.
 - `Invoke-TextToSpeech` Cmdlet.
 - PEM certificate import with optional private key in `Install-Certificate`.
 - `settings.json` configuration file (loaded from next to `profile.ps1`) with
