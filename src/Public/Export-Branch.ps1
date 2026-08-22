@@ -43,7 +43,6 @@ function Export-Branch {
     #>
     [Alias("git-fire")]
     [OutputType([void])]
-    [SuppressMessage("PSAvoidUsingCmdletAliases", "")]
     [CmdletBinding()]
     param(
         [string] $Message,
@@ -108,11 +107,12 @@ function Export-Branch {
         } elseif ($IsLinux) {
             Write-Host $ExitMessage -ForegroundColor Red
             Write-Host $InfoMessage
-            sleep $ShutdownDelay
+            Start-Sleep -Seconds $ShutdownDelay
             systemctl poweroff
         } elseif ($IsMacOS) {
             Write-Host $ExitMessage -ForegroundColor Red
-            osascript -e $InfoMessage
+            Write-Host $InfoMessage
+            Start-Sleep -Seconds $ShutdownDelay
             # Assumes we have permission to shut down the system; otherwise this step will fail
             sudo shutdown -h now
         } else {
