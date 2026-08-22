@@ -26,9 +26,6 @@ function Set-EnvironmentVariable {
         If specified, the function overwrites the existing value of the environment
         variable if it already exists.
 
-        .PARAMETER Force
-        Enable this option to add a value to an existing key multiple times.
-
         .INPUTS
         None. You can't pipe objects to Set-EnvironmentVariable.
 
@@ -45,11 +42,6 @@ function Set-EnvironmentVariable {
 
         Sets the value of the API_KEY environment variable to "REDACTED" in the User scope, overwriting any existing value.
 
-        .EXAMPLE
-        PS> Set-EnvironmentVariable -Key PATH -Value "C:\NewPath" -Scope Machine -Force
-
-        Adds "C:\NewPath" to the PATH environment variable in the Machine scope, even if the PATH variable already exists.
-
         .LINK
         https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables
     #>
@@ -65,9 +57,7 @@ function Set-EnvironmentVariable {
         [Parameter(Position = 2)]
         [EnvironmentVariableTarget] $Scope = [EnvironmentVariableTarget]::Process,
 
-        [switch] $Override,
-
-        [switch] $Force
+        [switch] $Override
     )
 
     begin {
@@ -80,15 +70,8 @@ function Set-EnvironmentVariable {
             $IsDuplicatedValue = $($OldValue -Split $Token).Contains($Value)
 
             if ($IsDuplicatedValue) {
-                Write-Warning "The value `"${Value}`" already exists for the key `"${Key}`"."
-
-                if (!$Force) {
-                    $Message = "To add a value to an existing key multiple times, use the -Force flag."
-                    Write-Information -MessageData $Message -Tags "Instructions" -InformationAction Continue
-                    return
-                }
-
-                Write-Warning "Forcing addition due to the -Force flag."
+                Write-Warning "The value `"${Value}`" already exists for the key `"${Key}`"; skipping."
+                return
             }
 
             [Environment]::SetEnvironmentVariable($Key, $NewValue, $Scope)

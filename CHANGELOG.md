@@ -39,6 +39,8 @@ for the battery and system-theme features.
 - Prompt falls back to the conventional default branch when `origin/HEAD` is unset,
   and hides the Git tag when not on the default branch.
 - `Stop-LocalServer` now terminates every owning process and runs cross-platform.
+- `Set-EnvironmentVariable` now always skips duplicate values with a warning; the
+  `-Force` flag that re-added them has been removed.
 - Standardized `Write-Error` usage, attribute ordering, and `CmdletBinding` across
   public functions.
 

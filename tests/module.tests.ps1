@@ -229,16 +229,10 @@ Describe "Set-EnvironmentVariable" {
     }
 
     Context "Duplicate Values" {
-        It "Should not add a duplicate value without -Force" {
+        It "Should skip a duplicate value with a warning" {
             Set-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Confirm:$false
             Set-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Confirm:$false -WarningAction SilentlyContinue
             [Environment]::GetEnvironmentVariable($Key, "Process") | Should -Be "foo"
-        }
-
-        It "Should add a duplicate value when -Force is specified" {
-            Set-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Confirm:$false
-            Set-EnvironmentVariable -Key $Key -Value "foo" -Scope Process -Force -Confirm:$false -WarningAction SilentlyContinue
-            [Environment]::GetEnvironmentVariable($Key, "Process") | Should -Be "foo${Token}foo"
         }
     }
 }
