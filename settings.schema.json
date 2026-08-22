@@ -53,6 +53,15 @@
             "uniqueItems": true,
             "default": [ "PowerTools" ]
         },
+        "RegisterNativeCompletions": {
+            "type": "array",
+            "description": "Native command-line tools to register argument completers for on profile launch. Each tool is only registered when it is also installed.",
+            "items": {
+                "type": "string",
+                "enum": [ "bat", "delta", "deno", "gh", "op", "pip", "rustup", "uv", "winget" ]
+            },
+            "uniqueItems": true
+        },
         "Prompt": {
             "type": "object",
             "description": "Toggles for optional segments of the command prompt.",

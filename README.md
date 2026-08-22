@@ -36,14 +36,13 @@ customize the profile:
     "DefaultEncoding": "utf8",
     "DotSourceDirectory": "~/Documents/Scripts",
     "EnableClassicProgressbar": true,
-    "Modules": [
-      "PowerTools"
-    ],
+    "Modules": [ "PowerTools" ],
     "Prompt": {
         "EnableBatteryStatus": true,
         "EnableBranchUserName": true,
         "EnableTimestamp": true
-    }
+    },
+    "RegisterNativeCompletions": [ "bat", "gh", "pip", "winget" ]
 }
 ```
 
@@ -64,6 +63,10 @@ customize the profile:
   name in the console prompt.
 - `Prompt.EnableTimestamp`: Display the current wall-clock time (`HH:mm:ss`) next to
   the elapsed execution time.
+- `RegisterNativeCompletions`: Native tools to register argument completers for on
+  launch, one of `bat`, `delta`, `deno`, `gh`, `op`, `pip`, `rustup`, `uv`, `winget`.
+  Each is only registered when also installed. Note that `deno` and `uv` emit very
+  large completion scripts and noticeably slow profile load.
 
 </details>
 

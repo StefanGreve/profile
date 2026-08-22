@@ -11,5 +11,11 @@
         "EnableBatteryStatus": true,
         "EnableBranchUserName": true,
         "EnableTimestamp": true
-    }
+    },
+    "RegisterNativeCompletions": [
+        "bat",
+        "gh",
+        "pip",
+        "winget"
+    ]
 }

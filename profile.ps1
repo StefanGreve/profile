@@ -153,7 +153,7 @@ Set-PSReadLineKeyHandler -Key ")", "]", "}" -BriefDescription SmartClosingBraces
 
 dotnet completions script pwsh | Out-String | Invoke-Expression
 
-# dotnet suggest shell start
+#region Dotnet Suggest Shell Start
 if (Get-Command "dotnet-suggest" -ErrorAction SilentlyContinue) {
     $AvailableToComplete = (dotnet-suggest list) | Out-String
     $AvailableToCompleteArray = $AvailableToComplete.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
@@ -174,9 +174,12 @@ if (Get-Command "dotnet-suggest" -ErrorAction SilentlyContinue) {
 }
 
 $env:DOTNET_SUGGEST_SCRIPT_VERSION = "1.0.2"
-# dotnet suggest script end
+#endregion
 
-if (Get-Command "winget" -ErrorAction SilentlyContinue) {
+# Opt-in per tool; the more completions you enable, the slower the profile loads.
+$NativeCompletions = $SettingsFile.RegisterNativeCompletions
+
+if (($NativeCompletions -contains "winget") -and (Get-Command "winget" -ErrorAction SilentlyContinue)) {
     # winget is a native C++ application, so it exposes its own completion backend
     # independent of what dotnet-suggest is built upon
     Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
@@ -192,12 +195,37 @@ if (Get-Command "winget" -ErrorAction SilentlyContinue) {
     }
 }
 
-if (Get-Command "gh" -ErrorAction SilentlyContinue) {
+if (($NativeCompletions -contains "gh") -and (Get-Command "gh" -ErrorAction SilentlyContinue)) {
     gh completion --shell powershell | Out-String | Invoke-Expression
 }
 
-if (Get-Command "bat" -ErrorAction SilentlyContinue) {
+if (($NativeCompletions -contains "bat") -and (Get-Command "bat" -ErrorAction SilentlyContinue)) {
     bat --completion ps1 | Out-String | Invoke-Expression
+}
+
+if (($NativeCompletions -contains "uv") -and (Get-Command "uv" -ErrorAction SilentlyContinue)) {
+    uv generate-shell-completion powershell | Out-String | Invoke-Expression
+}
+
+if (($NativeCompletions -contains "pip") -and (Get-Command "pip" -ErrorAction SilentlyContinue)) {
+    pip completion --powershell | Out-String | Invoke-Expression
+}
+
+if (($NativeCompletions -contains "op") -and (Get-Command "op" -ErrorAction SilentlyContinue)) {
+    op completion powershell | Out-String | Invoke-Expression
+}
+
+if (($NativeCompletions -contains "delta") -and (Get-Command "delta" -ErrorAction SilentlyContinue)) {
+    delta --generate-completion powershell | Out-String | Invoke-Expression
+}
+
+if (($NativeCompletions -contains "rustup") -and (Get-Command "rustup" -ErrorAction SilentlyContinue)) {
+    rustup completions powershell | Out-String | Invoke-Expression
+}
+
+# deno emits a very large completion script (~635 KB), so enabling it noticeably slows profile load.
+if (($NativeCompletions -contains "deno") -and (Get-Command "deno" -ErrorAction SilentlyContinue)) {
+    deno completions powershell | Out-String | Invoke-Expression
 }
 
 #endregion
