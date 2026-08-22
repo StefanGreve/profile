@@ -6,10 +6,6 @@ using namespace System.Text
 
 using namespace Microsoft.PowerShell
 
-if (Get-Module PowerTools -ListAvailable) {
-    Import-Module PowerTools
-}
-
 # Follow $PSCommandPath through its symlink target so settings.json is read from the profile's real directory
 $ProfilePath = (Get-Item -LiteralPath $PSCommandPath).ResolveLinkTarget($true)?.FullName ?? $PSCommandPath
 $SettingsPath = [Path]::Join([Path]::GetDirectoryName($ProfilePath), "settings.json")
@@ -19,6 +15,7 @@ $SettingsFile = if (Test-Path $SettingsPath) {
     [PSCustomObject]@{
         DefaultCulture = "en-US"
         DefaultEncoding = "utf8"
+        Modules = @("PowerTools")
     }
 }
 
@@ -44,6 +41,14 @@ $global:IsAdmin = if ($IsWindows) {
 
 if ($IsWindows) {
     $global:Natural = { [Regex]::Replace($_.Name, "\d+", { $Args[0].Value.PadLeft(20) }) }
+}
+
+foreach ($Module in $SettingsFile.Modules) {
+    if (Get-Module -Name $Module -ListAvailable) {
+        Import-Module -Name $Module
+    } else {
+        Write-Warning "The configured module `"$Module`" is not installed; skipping import."
+    }
 }
 
 if ($null -ne $SettingsFile.DotSourceDirectory) {

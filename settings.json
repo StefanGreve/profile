@@ -3,6 +3,9 @@
     "DefaultCulture": "en-US",
     "DefaultEncoding": "utf8",
     "DotSourceDirectory": "~/Documents/Scripts",
+    "Modules": [
+        "PowerTools"
+    ],
     "Prompt": {
         "EnableBatteryStatus": true,
         "EnableBranchUserName": true,

@@ -13,8 +13,11 @@ for the battery and system-theme features.
 - `Invoke-TextToSpeech` Cmdlet.
 - PEM certificate import with optional private key in `Install-Certificate`.
 - `settings.json` configuration file (loaded from next to `profile.ps1`) with
-  `DefaultCulture`, `DefaultEncoding`, `DotSourceDirectory`, and `Prompt` toggles;
-  `install.ps1` downloads a default copy during setup.
+  `DefaultCulture`, `DefaultEncoding`, `DotSourceDirectory`, `Modules`, and `Prompt`
+  toggles, plus a JSON schema for editor validation; `install.ps1` downloads a default
+  copy during setup.
+- `Modules` setting to import a configurable list of PowerShell modules on profile
+  launch, warning about any that are not installed.
 - Battery charge indicator in the prompt, colored by remaining charge and shown only
   while on battery power (`Prompt.EnableBatteryStatus`).
 - Prompt timestamp toggle (`Prompt.EnableTimestamp`).
