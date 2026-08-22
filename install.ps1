@@ -46,13 +46,13 @@ param(
     [Parameter(HelpMessage = "Parent directory into which profile.ps1 is downloaded (placed in a 'profile' subdirectory).")]
     [string] $RepositoryPath = $PWD.Path,
 
-    [Parameter(HelpMessage = "The member of the `$PROFILE automatic variable to link.")]
     [ValidateSet(
         "AllUsersAllHosts",
         "AllUsersCurrentHost",
         "CurrentUserAllHosts",
         "CurrentUserCurrentHost"
     )]
+    [Parameter(HelpMessage = "The member of the `$PROFILE automatic variable to link.")]
     [string] $ProfileKind = "CurrentUserAllHosts",
 
     [Parameter(HelpMessage = "Replace an existing profile without prompting for confirmation.")]
@@ -66,6 +66,7 @@ begin {
     $ProfileTargetPath = $PROFILE.$ProfileKind
     $ProfileBackupPath = "${ProfileTargetPath}.bak"
     $TargetDirectory = [Path]::Join($RepositoryPath, "profile")
+    $SettingsPath = [Path]::GetFullPath([Path]::Join($TargetDirectory, "settings.json"))
     $LinkProbePath = [Path]::Join([Path]::GetTempPath(), [Path]::GetRandomFileName())
 
     if ([Directory]::Exists($TargetDirectory)) {
@@ -117,7 +118,6 @@ process {
     $null = [File]::CreateSymbolicLink($ProfileTargetPath, $ProfileSource)
 
     # Initialize PowerShell Profile with default settings
-    $SettingsPath = [Path]::GetFullPath([Path]::Join($TargetDirectory, "settings.json"))
     Invoke-RestMethod -Uri "https://raw.githubusercontent.com/StefanGreve/profile/master/settings.json" -OutFile $SettingsPath
 
     Write-Host "✓" -ForegroundColor Green
