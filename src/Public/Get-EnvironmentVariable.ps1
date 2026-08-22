@@ -15,7 +15,7 @@ function Get-EnvironmentVariable {
 
         .PARAMETER Scope
         Specifies the scope of the environment variable to read.
-        The default is Process.
+        The default is Process. On Linux and macOS, only the Process scope is supported.
 
         .INPUTS
         None. You can't pipe objects to Get-EnvironmentVariable.
@@ -32,6 +32,11 @@ function Get-EnvironmentVariable {
         PS> Get-EnvironmentVariable -Key PROFILE_ENABLE_BRANCH_USERNAME -Scope User
 
         Returns all values from the PROFILE_ENABLE_BRANCH_USERNAME environment variable defined in User scope.
+
+        .NOTES
+        On Linux and macOS, .NET only supports the Process scope for environment variables.
+        The User and Machine scopes are ignored by the runtime, so on those platforms this
+        Cmdlet emits a warning and performs no action when a non-Process scope is requested.
 
         .LINK
         https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables
@@ -50,6 +55,11 @@ function Get-EnvironmentVariable {
         $Token = $IsWindows ? ";" : ":"
     }
     process {
+        if (!$IsWindows -and $Scope -ne [EnvironmentVariableTarget]::Process) {
+            Write-Warning "On Linux and macOS, only the Process scope is supported; the '$Scope' scope has no effect."
+            return
+        }
+
         $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope)
 
         if ([string]::IsNullOrEmpty($EnvironmentVariables)) {

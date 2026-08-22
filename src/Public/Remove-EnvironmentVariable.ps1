@@ -21,6 +21,7 @@ function Remove-EnvironmentVariable {
         Specifies the scope of the environment variable to remove.
         The default is Process. The terminal session requires a restart if the
         scope is not set to Process for the changes to take effect.
+        On Linux and macOS, only the Process scope is supported.
 
         .INPUTS
         None. You can't pipe objects to Remove-EnvironmentVariable.
@@ -38,6 +39,11 @@ function Remove-EnvironmentVariable {
         PS> Remove-EnvironmentVariable -Key PATH -Value "C:\Program Files\bin" -Scope User
 
         Removes "C:\Program Files\bin" from PATH.
+
+        .NOTES
+        On Linux and macOS, .NET only supports the Process scope for environment variables.
+        The User and Machine scopes are ignored by the runtime, so on those platforms this
+        Cmdlet emits a warning and performs no action when a non-Process scope is requested.
 
         .LINK
         https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables
@@ -58,6 +64,11 @@ function Remove-EnvironmentVariable {
         $Token = $IsWindows ? ";" : ":"
     }
     process {
+        if (!$IsWindows -and $Scope -ne [EnvironmentVariableTarget]::Process) {
+            Write-Warning "On Linux and macOS, only the Process scope is supported; the '$Scope' scope has no effect."
+            return
+        }
+
         $Title = "Remove `"${Value}`" from `"${Key}`""
         $Description = "Are you sure that you want to remove `"${Value}`" from the environment variable `"${Key}`"?"
         $RemoveValue = $([Environment]::GetEnvironmentVariable($Key, $Scope) -Split $Token | Where-Object { $_ -ne $Value }) -Join $Token

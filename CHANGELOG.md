@@ -41,6 +41,9 @@ for the battery and system-theme features.
 - `Stop-LocalServer` now terminates every owning process and runs cross-platform.
 - `Set-EnvironmentVariable` now always skips duplicate values with a warning; the
   `-Force` flag that re-added them has been removed.
+- `Get-EnvironmentVariable`, `Set-EnvironmentVariable`, and `Remove-EnvironmentVariable`
+  now warn and skip on Linux and macOS when a non-Process scope is requested, since
+  .NET only supports the Process scope on those platforms.
 - Standardized `Write-Error` usage, attribute ordering, and `CmdletBinding` across
   public functions.
 

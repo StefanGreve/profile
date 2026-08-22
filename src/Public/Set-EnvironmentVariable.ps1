@@ -20,7 +20,8 @@ function Set-EnvironmentVariable {
         .PARAMETER Scope
         Specifies the scope of the environment variable to set.
         The default is Process. The terminal session requires a restart if the
-        scope is not set to Process for the changes to take effect
+        scope is not set to Process for the changes to take effect.
+        On Linux and macOS, only the Process scope is supported.
 
         .PARAMETER Override
         If specified, the function overwrites the existing value of the environment
@@ -41,6 +42,11 @@ function Set-EnvironmentVariable {
         PS> Set-EnvironmentVariable -Key API_KEY -Value "REDACTED" -Scope User -Override
 
         Sets the value of the API_KEY environment variable to "REDACTED" in the User scope, overwriting any existing value.
+
+        .NOTES
+        On Linux and macOS, .NET only supports the Process scope for environment variables.
+        The User and Machine scopes are ignored by the runtime, so on those platforms this
+        Cmdlet emits a warning and performs no action when a non-Process scope is requested.
 
         .LINK
         https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables
@@ -66,6 +72,11 @@ function Set-EnvironmentVariable {
         $NewValue = $OldValue.Length ? [string]::Join($Token, $OldValue, $Value) : $Value
     }
     process {
+        if (!$IsWindows -and $Scope -ne [EnvironmentVariableTarget]::Process) {
+            Write-Warning "On Linux and macOS, only the Process scope is supported; the '$Scope' scope has no effect."
+            return
+        }
+
         if ($PSCmdlet.ShouldProcess($null, "Are you sure that you want to add `"${Value}`" to the environment variable `"${Key}`"?", "Add `"${Value}`" to `"${Key}`"")) {
             $IsDuplicatedValue = $($OldValue -Split $Token).Contains($Value)
 
