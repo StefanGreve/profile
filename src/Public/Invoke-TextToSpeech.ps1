@@ -2,17 +2,63 @@ using namespace System.Collections.ObjectModel
 using namespace System.Management.Automation
 
 function Invoke-TextToSpeech {
+    <#
+        .SYNOPSIS
+        Converts text into spoken audio using speech synthesis.
+
+        .DESCRIPTION
+        Speaks the supplied message out loud using the System.Speech synthesizer.
+        The speaking rate and volume can be adjusted, and on Windows a specific
+        installed voice can be selected. This function is only supported on Windows.
+
+        .PARAMETER Message
+        Specifies the text to be spoken. This value can be piped to the function.
+
+        .PARAMETER Rate
+        Specifies the speaking rate. The value must be between -10 (slowest) and
+        10 (fastest). The default rate is 0.
+
+        .PARAMETER Volume
+        Specifies the output volume as a percentage. The value must be between 0
+        (silent) and 100 (loudest). The default volume is 60.
+
+        .PARAMETER Voice
+        Specifies the voice used for speech synthesis. This dynamic parameter is
+        only available on Windows and is validated against the set of installed
+        voices. If omitted, the default system voice is used.
+
+        .INPUTS
+        System.String. You can pipe the message to be spoken to Invoke-TextToSpeech.
+
+        .OUTPUTS
+        None. This function does not produce any output.
+
+        .EXAMPLE
+        PS> Invoke-TextToSpeech -Message "Hello, world."
+
+        Speaks the message using the default voice, rate, and volume.
+
+        .EXAMPLE
+        PS> "Build complete." | Invoke-TextToSpeech -Rate 2 -Volume 80
+
+        Speaks a piped message slightly faster than normal at 80% volume.
+
+        .LINK
+        https://learn.microsoft.com/en-us/dotnet/api/system.speech.synthesis.speechsynthesizer
+    #>
+    [OutputType([void])]
+    [CmdletBinding()]
     param(
         [ValidateNotNullOrEmpty()]
         [Parameter(Mandatory, ValueFromPipeline)]
         [string] $Message,
 
         [ValidateRange(-10, 10)]
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [int] $Rate = 0,
 
         [ValidateRange(0, 100)]
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [int] $Volume = 60
     )
 
@@ -44,7 +90,9 @@ function Invoke-TextToSpeech {
 
     begin {
         if (!$IsWindows) {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
+            Write-Error $OperatingSystemNotSupportedError `
+                -Category NotImplemented `
+                -ErrorAction Stop
         }
 
         Add-Type -AssemblyName System.Speech
@@ -61,6 +109,7 @@ function Invoke-TextToSpeech {
     process {
         $SpeechSynthesizer.Speak($Message)
     }
+
     clean {
         $SpeechSynthesizer.Dispose()
     }

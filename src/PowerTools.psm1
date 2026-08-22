@@ -1,6 +1,8 @@
 using namespace System
 using namespace System.Management.Automation
 
+Set-StrictMode -Version 3.0
+
 $IsDebugMode = $MyInvocation.MyCommand.Path -like "*src*"
 
 #region Export Functions and Classes

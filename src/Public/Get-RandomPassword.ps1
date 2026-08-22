@@ -18,21 +18,22 @@ function Get-RandomPassword {
         .INPUTS
         None. You can't pipe objects to Get-RandomPassword.
 
+        .OUTPUTS
+        System.String. A randomly generated password in Base64 format of the specified length.
+
         .EXAMPLE
         PS> Get-RandomPassword
 
         Generates a random password of the default length (64 characters).
 
-        .OUTPUTS
-        System.String. A randomly generated password in Base64 format of the specified length.
-
         .LINK
         https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.randomnumbergenerator
     #>
     [OutputType([string])]
+    [CmdletBinding()]
     param(
-        [Parameter(Position = 0)]
         [ValidateRange(8, 256)]
+        [Parameter(Position = 0)]
         [int] $Length = 64
     )
 

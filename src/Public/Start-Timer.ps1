@@ -24,6 +24,9 @@ function Start-Timer {
         .INPUTS
         None. You can't pipe objects to Start-Timer.
 
+        .OUTPUTS
+        None. This function does not produce any output.
+
         .EXAMPLE
         PS> Start-Timer -Seconds 30
 
@@ -33,9 +36,6 @@ function Start-Timer {
         PS> Start-Timer -Hours 1
 
         Starts a 1-hour countdown timer and displays the progress bar.
-
-        .OUTPUTS
-        None. This function does not produce any output.
     #>
     [OutputType([void])]
     [CmdletBinding()]
@@ -70,8 +70,20 @@ function Start-Timer {
     process {
         while ($t -le $CountDown) {
             [int] $PercentComplete = [Math]::Round($t * 100 / $CountDown, 0)
-            Write-Progress -Activity "Timer" -Status "$PercentComplete%" -PercentComplete $PercentComplete -SecondsRemaining ($CountDown - $t)
+
+            $ProgressArgs = @{
+                Activity = "Timer"
+                Status = "$PercentComplete%"
+                PercentComplete = $PercentComplete
+                SecondsRemaining = $CountDown - $t
+            }
+
+            Write-Progress @ProgressArgs
             $t = $StopWatch.Elapsed.TotalSeconds
+
+            # Yield the CPU between updates so the countdown
+            # loop doesn't spin at ~100% on one core.
+            Start-Sleep -Milliseconds 250
         }
     }
     end {

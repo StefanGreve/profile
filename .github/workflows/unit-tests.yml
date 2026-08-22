@@ -1,9 +1,12 @@
 name: Unit Test
 on:
   push:
-    branches: [ master ]
+    branches: [ master, dev ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, dev ]
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -14,17 +17,8 @@ jobs:
         os: [ ubuntu-latest, macOS-latest, windows-latest ]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Build Dependencies
-        shell: pwsh
-        run: |
-          Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted
-          Install-Module PSScriptAnalyzer
+        uses: actions/checkout@v5
 
       - name: Run Unit Tests
         shell: pwsh
-        run: |
-          pwsh -NoProfile -ExecutionPolicy ByPass -File ./scripts/test.ps1 -Build
-
-
+        run: ./scripts/test.ps1 -Build

@@ -26,6 +26,9 @@ function Set-PowerState {
         .INPUTS
         None. You can't pipe objects to Set-PowerState.
 
+        .OUTPUTS
+        None. This function does not produce any output.
+
         .EXAMPLE
         PS> Set-PowerState
 
@@ -34,10 +37,7 @@ function Set-PowerState {
         .EXAMPLE
         PS> Set-PowerState -PowerState Hibernate -DisableWake -Force
 
-        Puts the system into suspend mode and disables all wake events.
-
-        .OUTPUTS
-        None. This function does not produce any output.
+        Puts the system into hibernation and disables all wake events.
     #>
     [OutputType([void])]
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "High")]
@@ -70,15 +70,18 @@ function Set-PowerState {
         if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, $PowerState)) {
             if ($IsWindows) {
                 Add-Type -AssemblyName System.Windows.Forms
+                $DisableWake = [bool]$PSBoundParameters["DisableWake"]
                 $PowerState = $PowerState -eq "Hibernate" ? [System.Windows.Forms.PowerState]::Hibernate : [System.Windows.Forms.PowerState]::Suspend
                 [System.Windows.Forms.Application]::SetSuspendState($PowerState, $Force, $DisableWake)
             } elseif ($IsLinux) {
-                systemctl $State.ToLower() $($Force ? "--force" : [string]::Empty)
+                systemctl $PowerState.ToLower() $($Force ? "--force" : [string]::Empty)
             } elseif ($IsMacOS) {
-                sudo pmset -a hibernatemode $($State -eq "Hibernate" ? 25 : 3)
+                sudo pmset -a hibernatemode $($PowerState -eq "Hibernate" ? 25 : 3)
                 pmset sleepnow
             } else {
-                Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
+                Write-Error $OperatingSystemNotSupportedError `
+                    -Category NotImplemented `
+                    -ErrorAction Stop
             }
         }
     }

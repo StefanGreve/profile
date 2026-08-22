@@ -14,13 +14,19 @@ function Stop-LocalServer {
         .INPUTS
         None. You can't pipe objects to Stop-LocalServer.
 
+        .OUTPUTS
+        None. This function does not produce any output.
+
+        .NOTES
+        Without elevation, only processes owned by the current user can be resolved and
+        stopped: on Windows this requires an elevated session, and on macOS and Linux
+        'lsof' must run under 'sudo'. A server started under a different account will
+        therefore not be found unless the function is run with the necessary privileges.
+
         .EXAMPLE
         PS> Stop-LocalServer -Port 8080
 
         Identifies the process listening on port 8080 and prompts the user before stopping it.
-
-        .OUTPUTS
-        None. This function does not produce any output.
     #>
     [OutputType([void])]
     [CmdletBinding(ConfirmImpact = "High", SupportsShouldProcess)]
@@ -30,17 +36,32 @@ function Stop-LocalServer {
     )
 
     process {
-        $TcpConnection = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
-
-        if ($null -eq $TcpConnection) {
-            Write-Error "No owning process found listening on port ${Port}." -Category ConnectionError -ErrorAction Stop
-            return
+        [int[]] $ProcessIds = if ($IsWindows) {
+            # A single port can be held by more than one connection (e.g. IPv4 and IPv6),
+            # so collect every distinct owning process and stop all of them.
+            Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+                | Select-Object -ExpandProperty OwningProcess
+                | Select-Object -Unique
+        } else {
+            # -t: terse output (PIDs only), -sTCP:LISTEN: only listening sockets.
+            # lsof exits non-zero and prints nothing when no process owns the port.
+            lsof -nP -iTCP:$Port -sTCP:LISTEN -t 2>$null | Select-Object -Unique
         }
 
-        $Process = Get-Process -Id $TcpConnection.OwningProcess
+        if ($null -eq $ProcessIds -or $ProcessIds.Count -eq 0) {
+            Write-Error "No owning process found listening on port ${Port}." `
+                -Category ConnectionError `
+                -ErrorAction Stop
+        }
 
-        if ($PSCmdlet.ShouldProcess("Stop Process", "Are you sure that you want to stop this process with force?", "Stopping Process with ID=$($Process.Id) (Process Name: $($Process.ProcessName))")) {
-            Stop-Process $Process -Force -ErrorAction Stop
+        foreach ($ProcessId in $ProcessIds) {
+            $Process = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue
+
+            if ($null -eq $Process) { continue }
+
+            if ($PSCmdlet.ShouldProcess("Process ID=$($Process.Id) (Name: $($Process.ProcessName)) on port ${Port}", "Are you sure you want to force-stop this process?", "Stop Process")) {
+                Stop-Process -InputObject $Process -Force -ErrorAction Stop
+            }
         }
     }
 }

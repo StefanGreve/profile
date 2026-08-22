@@ -21,6 +21,9 @@ function Get-FileSize {
         .INPUTS
         System.String[]. Accepts an array of strings representing file paths.
 
+        .OUTPUTS
+        System.Double. The function outputs the size of each file as a double-precision floating-point number.
+
         .EXAMPLE
         PS> Get-FileSize $PROFILE
 
@@ -30,17 +33,15 @@ function Get-FileSize {
         PS> "picture1.png", "picture2.png", "picture3.png" | Get-FileSize -Unit MiB | Measure-Object -Sum | Select-Object -ExpandProperty Sum
 
         Calculates the total file size of all three images in MiB.
-
-        .OUTPUTS
-        System.Double. The function outputs the size of each file as a double-precision floating-point number.
     #>
     [OutputType([double])]
+    [CmdletBinding()]
     param(
         [Parameter(Position = 0, Mandatory, ValueFromPipeline)]
         [string[]] $Path,
 
-        [Parameter(Position = 1)]
         [ValidateSet("B", "KiB", "MiB", "GiB", "TiB", "PiB")]
+        [Parameter(Position = 1)]
         [string] $Unit = "B"
     )
 
@@ -49,7 +50,11 @@ function Get-FileSize {
             $Item = Get-Item -Path $p
 
             if ($Item.PSIsContainer) {
-                Write-Error "The path '$p' refers to a directory, not a file."
+                Write-Error "The path '$p' refers to a directory, not a file." `
+                    -Category InvalidArgument `
+                    -ErrorAction Continue
+
+                # also continue with the loop flow, not just the error stream
                 continue
             }
 

@@ -1,17 +1,33 @@
 using namespace System
 using namespace System.IO
+using namespace System.Management.Automation
 using namespace System.Security
 using namespace System.Text
 
 using namespace Microsoft.PowerShell
 
-[CultureInfo]::CurrentCulture = [CultureInfo]::CreateSpecificCulture("en-US")
-$PSDefaultParameterValues["*:Encoding"] = "utf8"
+# Follow $PSCommandPath through its symlink target so settings.json is read from the profile's real directory
+$ProfilePath = (Get-Item -LiteralPath $PSCommandPath).ResolveLinkTarget($true)?.FullName ?? $PSCommandPath
+$SettingsPath = [Path]::Join([Path]::GetDirectoryName($ProfilePath), "settings.json")
+$SettingsFile = if (Test-Path $SettingsPath) {
+    Get-Content -Path $SettingsPath | ConvertFrom-Json
+} else {
+    [PSCustomObject]@{
+        DefaultCulture = "en-US"
+        DefaultEncoding = "utf8"
+        Modules = @("PowerTools")
+    }
+}
 
-$PSStyle.Progress.View = "Classic"
-$Host.PrivateData.ProgressBackgroundColor = "Cyan"
-$Host.PrivateData.ProgressForegroundColor = "Yellow"
+[CultureInfo]::CurrentCulture = [CultureInfo]::CreateSpecificCulture($SettingsFile.DefaultCulture)
+$PSDefaultParameterValues["*:Encoding"] = $SettingsFile.DefaultEncoding
 $ErrorView = "ConciseView"
+
+if ($SettingsFile.EnableClassicProgressbar -eq $true) {
+    $PSStyle.Progress.View = "Classic"
+    $Host.PrivateData.ProgressBackgroundColor = "Cyan"
+    $Host.PrivateData.ProgressForegroundColor = "Yellow"
+}
 
 $global:IsAdmin = if ($IsWindows) {
     $CurrentUser = [Principal.WindowsPrincipal][Principal.WindowsIdentity]::GetCurrent()
@@ -28,6 +44,26 @@ $global:IsAdmin = if ($IsWindows) {
 if ($IsWindows) {
     $global:Natural = { [Regex]::Replace($_.Name, "\d+", { $Args[0].Value.PadLeft(20) }) }
 }
+
+foreach ($Module in $SettingsFile.Modules) {
+    if (Get-Module -Name $Module -ListAvailable) {
+        Import-Module -Name $Module
+    } else {
+        Write-Warning "The configured module `"$Module`" is not installed; skipping import."
+    }
+}
+
+if ($null -ne $SettingsFile.DotSourceDirectory) {
+    if (!(Test-Path $SettingsFile.DotSourceDirectory)) {
+        Write-Warning "DotSourceDirectory `"$($SettingsFile.DotSourceDirectory)`" does not exist; no scripts were dot-sourced."
+    } else {
+        Get-ChildItem -Path $SettingsFile.DotSourceDirectory -Filter "*.ps1"
+            | ForEach-Object { . $_.FullName }
+    }
+}
+
+# Required by Python for custom virtual environment status indicator in prompt function
+$env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 #region Aliases
 
@@ -113,12 +149,83 @@ Set-PSReadLineKeyHandler -Key ")", "]", "}" -BriefDescription SmartClosingBraces
 
 #endregion
 
-#region Hook Scripts
+#region Tab Completions
 
-if ($env:PROFILE_LOAD_CUSTOM_SCRIPTS -and $(Test-Path $env:PROFILE_LOAD_CUSTOM_SCRIPTS)) {
-    Get-ChildItem -Path $env:PROFILE_LOAD_CUSTOM_SCRIPTS -Filter "*.ps1" | ForEach-Object {
-        . $_.FullName
+dotnet completions script pwsh | Out-String | Invoke-Expression
+
+#region Dotnet Suggest Shell Start
+if (Get-Command "dotnet-suggest" -ErrorAction SilentlyContinue) {
+    $AvailableToComplete = (dotnet-suggest list) | Out-String
+    $AvailableToCompleteArray = $AvailableToComplete.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
+
+    Register-ArgumentCompleter -Native -CommandName $AvailableToCompleteArray -ScriptBlock {
+        param($WordToComplete, $CommandAst, $CursorPosition)
+
+        $FullPath = (Get-Command $CommandAst.CommandElements[0]).Source
+        $Arguments = $CommandAst.Extent.ToString().Replace('"', '\"')
+
+        dotnet-suggest get -e $FullPath --position $CursorPosition -- "$Arguments" | ForEach-Object {
+            [CompletionResult]::new($_, $_, 'ParameterValue', $_)
+        }
     }
+} else {
+    "Unable to provide System.CommandLine tab completion support unless the [dotnet-suggest] tool is first installed."
+    "See the following for tool installation: https://www.nuget.org/packages/dotnet-suggest"
+}
+
+$env:DOTNET_SUGGEST_SCRIPT_VERSION = "1.0.2"
+#endregion
+
+# Opt-in per tool; the more completions you enable, the slower the profile loads.
+$NativeCompletions = $SettingsFile.RegisterNativeCompletions
+
+if (($NativeCompletions -contains "winget") -and (Get-Command "winget" -ErrorAction SilentlyContinue)) {
+    # winget is a native C++ application, so it exposes its own completion backend
+    # independent of what dotnet-suggest is built upon
+    Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
+        param($WordToComplete, $CommandAst, $CursorPosition)
+
+        [Console]::InputEncoding = [Console]::OutputEncoding = $OutputEncoding = [System.Text.Utf8Encoding]::new()
+        $Local:Word = $WordToComplete.Replace('"', '""')
+        $Local:Ast = $CommandAst.ToString().Replace('"', '""')
+
+        winget complete --word="$Local:Word" --commandline "$Local:Ast" --position $CursorPosition | ForEach-Object {
+            [CompletionResult]::new($_, $_, 'ParameterValue', $_)
+        }
+    }
+}
+
+if (($NativeCompletions -contains "gh") -and (Get-Command "gh" -ErrorAction SilentlyContinue)) {
+    gh completion --shell powershell | Out-String | Invoke-Expression
+}
+
+if (($NativeCompletions -contains "bat") -and (Get-Command "bat" -ErrorAction SilentlyContinue)) {
+    bat --completion ps1 | Out-String | Invoke-Expression
+}
+
+if (($NativeCompletions -contains "uv") -and (Get-Command "uv" -ErrorAction SilentlyContinue)) {
+    uv generate-shell-completion powershell | Out-String | Invoke-Expression
+}
+
+if (($NativeCompletions -contains "pip") -and (Get-Command "pip" -ErrorAction SilentlyContinue)) {
+    pip completion --powershell | Out-String | Invoke-Expression
+}
+
+if (($NativeCompletions -contains "op") -and (Get-Command "op" -ErrorAction SilentlyContinue)) {
+    op completion powershell | Out-String | Invoke-Expression
+}
+
+if (($NativeCompletions -contains "delta") -and (Get-Command "delta" -ErrorAction SilentlyContinue)) {
+    delta --generate-completion powershell | Out-String | Invoke-Expression
+}
+
+if (($NativeCompletions -contains "rustup") -and (Get-Command "rustup" -ErrorAction SilentlyContinue)) {
+    rustup completions powershell | Out-String | Invoke-Expression
+}
+
+# deno emits a very large completion script (~635 KB), so enabling it noticeably slows profile load.
+if (($NativeCompletions -contains "deno") -and (Get-Command "deno" -ErrorAction SilentlyContinue)) {
+    deno completions powershell | Out-String | Invoke-Expression
 }
 
 #endregion
@@ -136,27 +243,16 @@ function Get-ExecutionTime {
     }
 }
 
-#region Automatically Executing Scripts
-
-if (Get-Module PowerTools) {
-    Import-Module PowerTools
-}
-
-# Required by Python for custom virtual environment status indicator in prompt function
-$env:VIRTUAL_ENV_DISABLE_PROMPT = 1
-
-#endregion
-
 function prompt {
     $ExecTime = Get-ExecutionTime
     git rev-parse --is-inside-work-tree *> $null
 
-    $GitStatus = if ($LASTEXITCODE -eq 0) {
+    $GitInfo = if ($LASTEXITCODE -eq 0) {
         $CurrentBranch = git branch --show-current
         $DefaultBranch = (git rev-parse --abbrev-ref origin/HEAD 2>$null) -replace "^origin/", [string]::Empty
 
         # origin/HEAD is not populated in every clone; fall back to the conventional default branch
-        if (-not $DefaultBranch) {
+        if (!$DefaultBranch) {
             $DefaultBranch = @("main","master") | Where-Object {
                 git show-ref --quiet --verify "refs/heads/$_"; $LASTEXITCODE -eq 0
             } | Select-Object -First 1
@@ -165,7 +261,7 @@ function prompt {
         # Name of branch takes precedence over any Git tag if not positioned on the default branch
         $Tag = if ($CurrentBranch -and $CurrentBranch -eq $DefaultBranch) { git tag --points-at HEAD }
         $Head = $Tag ?? $CurrentBranch ?? (git rev-parse --short HEAD)
-        $DisplayUserName = $env:PROFILE_ENABLE_BRANCH_USERNAME -eq 1
+        $DisplayUserName = $SettingsFile.Prompt.EnableBranchUserName -eq $true
 
         #                          U        @     H
         [string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",
@@ -179,13 +275,7 @@ function prompt {
         )
     }
 
-    $PythonVirtualEnvironment = if ($env:VIRTUAL_ENV) {
-        [string]::Format(" {0}({1}){2}",
-            $PSStyle.Foreground.Magenta,
-            [Path]::GetFileName($env:VIRTUAL_ENV),
-            $PSStyle.Foreground.White
-        )
-    }
+    $Battery = $SettingsFile.Prompt.EnableBatteryStatus -eq $true ? (Get-Battery) : $null
 
     $PsPrompt = [StringBuilder]::new()
     $null = & {
@@ -202,6 +292,31 @@ function prompt {
         $PsPrompt.Append($PSStyle.Foreground.White)
         $PsPrompt.Append("]")
         $PsPrompt.Append(" ")
+        # [ddd%]
+        if ($null -ne $Battery -and !$Battery.Status.StartsWith("Connected")) {
+            $PsPrompt.Append($PSStyle.Foreground.White)
+            $PsPrompt.Append("[")
+            $ChargeColor = switch ($Battery.ChargeRemaining) {
+                { $_ -ge 70 -and $_ -le 100 } {
+                    $PSStyle.Foreground.Green
+                }
+                { $_ -ge 30 -and $_ -le 69 } {
+                    $PSStyle.Foreground.Yellow
+                }
+                { $_ -ge 0 -and $_ -le 29 } {
+                    $PSStyle.Foreground.Red
+                }
+                default {
+                    $PSStyle.Foreground.White
+                }
+            }
+            $PsPrompt.Append($ChargeColor)
+            $PsPrompt.Append($Battery.ChargeRemaining)
+            $PsPrompt.Append("%")
+            $PsPrompt.Append($PSStyle.Foreground.White)
+            $PsPrompt.Append("]")
+            $PsPrompt.Append(" ")
+        }
         # (HH:mm:ss:ms)
         $PsPrompt.Append($PSStyle.Foreground.Yellow)
         $PsPrompt.Append("(")
@@ -215,7 +330,7 @@ function prompt {
         $PsPrompt.Append(")")
         $PsPrompt.Append($PSStyle.Foreground.White)
         # (HH:mm:ss)
-        if ($env:PROFILE_ENABLE_TIMESTAMP -eq "1") {
+        if ($SettingsFile.Prompt.EnableTimestamp -eq $true) {
             $PsPrompt.Append(" ")
             $PsPrompt.Append($PSStyle.Foreground.BrightBlack)
             $PsPrompt.Append("(")
@@ -224,9 +339,13 @@ function prompt {
             $PsPrompt.Append($PSStyle.Foreground.White)
         }
         # (user@branch)
-        $PsPrompt.Append($GitStatus)
+        $PsPrompt.Append($GitInfo)
         # (active)
-        $PsPrompt.Append($PythonVirtualEnvironment)
+        if ($env:VIRTUAL_ENV) {
+            $PsPrompt.Append($PSStyle.Foreground.Magenta)
+            $PsPrompt.Append([Path]::GetFileName($env:VIRTUAL_ENV))
+            $PsPrompt.Append($PSStyle.Foreground.White)
+        }
         # #/>
         $PsPrompt.Append([Environment]::NewLine)
         $PsPrompt.Append([string]::new($global:IsAdmin ? "#" : ">", $NestedPromptLevel + 1))

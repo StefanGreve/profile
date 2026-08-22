@@ -22,6 +22,9 @@ function Export-Branch {
         .INPUTS
         None. You can't pipe objects to Export-Branch.
 
+        .OUTPUTS
+        None. This function does not produce any output.
+
         .EXAMPLE
         PS> git-fire
 
@@ -34,16 +37,13 @@ function Export-Branch {
         Stages all changes in a new Git branch, commits them with the specified
         message and schedules a system shutdown after 30 seconds.
 
-        .OUTPUTS
-        None. This function does not produce any output.
-
         .LINK
         https://git-scm.com/docs/git
         https://github.com/qw3rtman/git-fire
     #>
-    [OutputType([void])]
     [Alias("git-fire")]
-    [SuppressMessage("PSAvoidUsingCmdletAliases", "")]
+    [OutputType([void])]
+    [CmdletBinding()]
     param(
         [string] $Message,
 
@@ -51,6 +51,14 @@ function Export-Branch {
     )
 
     begin {
+        git rev-parse --is-inside-work-tree *> $null
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "The current directory is not inside a Git repository." `
+                -Category ObjectNotFound `
+                -ErrorAction Stop
+        }
+
         $Author = git config user.name
         $Remotes = git remote
         $CurrentBranch = git branch --show-current
@@ -61,13 +69,12 @@ function Export-Branch {
         git fetch --all --quiet
         $RemoteBranches = git branch --remote --format="%(refname:lstrip=3)"
 
-        if (!$IsValidBranch -or $RemoteBranches.Contains($NewBranch)) {
-            $Salt = Get-Salt -MaxLength 16
+        if (!$IsValidBranch -or @($RemoteBranches) -contains $NewBranch) {
+            $Salt = Get-Salt -Length 16
             $RandomString = [BitConverter]::ToString($Salt).Replace("-", [string]::Empty)
             $NewBranch = "fire/$CurrentBranch/$RandomString"
-         }
+        }
 
-        # TODO: test that the current working directory contains a git repository
         Push-Location $(git rev-parse --show-toplevel)
     }
     process {
@@ -100,15 +107,18 @@ function Export-Branch {
         } elseif ($IsLinux) {
             Write-Host $ExitMessage -ForegroundColor Red
             Write-Host $InfoMessage
-            sleep $ShutdownDelay
+            Start-Sleep -Seconds $ShutdownDelay
             systemctl poweroff
         } elseif ($IsMacOS) {
             Write-Host $ExitMessage -ForegroundColor Red
-            # TODO: Ensure we have permissions to perform system shutdown
-            osascript -e $InfoMessage
+            Write-Host $InfoMessage
+            Start-Sleep -Seconds $ShutdownDelay
+            # Assumes we have permission to shut down the system; otherwise this step will fail
             sudo shutdown -h now
         } else {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
+            Write-Error $OperatingSystemNotSupportedError `
+                -Category NotImplemented `
+                -ErrorAction Stop
         }
     }
 }

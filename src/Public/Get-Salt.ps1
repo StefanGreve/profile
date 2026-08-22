@@ -1,4 +1,4 @@
-using namespace System.Security
+using namespace System.Security.Cryptography
 
 function Get-Salt {
     <#
@@ -17,19 +17,21 @@ function Get-Salt {
         .INPUTS
         None. You can't pipe objects to Get-Salt.
 
+        .OUTPUTS
+        byte[]. A cryptographically secure random byte array of the specified length.
+
         .EXAMPLE
         PS> Get-Salt -Length 64
 
         Generates a 64-byte salt and displays it as an array of bytes.
 
-        .OUTPUTS
-        byte[]. A cryptographically secure random byte array of the specified length.
-
         .LINK
         https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.randomnumbergenerator
     #>
     [OutputType([Byte[]])]
+    [CmdletBinding()]
     param(
+        [Parameter(Position = 0)]
         [int] $Length = 32
     )
 
@@ -37,7 +39,7 @@ function Get-Salt {
         $Salt = [byte[]]::new($Length)
     }
     process {
-        [Cryptography.RandomNumberGenerator]::Fill($Salt)
+        [RandomNumberGenerator]::Fill($Salt)
         Write-Output $Salt
     }
     clean {

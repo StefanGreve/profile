@@ -16,17 +16,19 @@ function Set-MonitorBrightness {
         None. You can't pipe objects to Set-MonitorBrightness. The value must be
         an integer between 0 (minimum brightness) and 100 (maximum brightness).
 
+        .OUTPUTS
+        None. This function does not produce any output.
+
         .EXAMPLE
         PS> Set-MonitorBrightness -Brightness 65
 
         Sets the monitor brightness to 65%.
-
-        .OUTPUTS
-        None. This function does not produce any output.
     #>
     [OutputType([void])]
+    [CmdletBinding()]
     param(
         [ValidateRange(0, 100)]
+        [Parameter(Position = 0)]
         [int] $Brightness
     )
 
@@ -39,16 +41,19 @@ function Set-MonitorBrightness {
                 $WmiMonitor.WmiSetBrightness($Timeout, $Brightness)
             }
             catch {
-                Write-Error "This computer may not support software-based brightness adjustments. Try updating your display adapter drivers to resolve the issue." -Category DeviceError -ErrorAction Stop
+                Write-Error "This computer may not support software-based brightness adjustments. Try updating your display adapter drivers to resolve the issue." `
+                    -Category DeviceError `
+                    -ErrorAction Stop
             } finally {
-                $WmiMonitor.Dispose()
+                # $WmiMonitor is null when brightness control is unsupported.
+                if ($null -ne $WmiMonitor) {
+                    $WmiMonitor.Dispose()
+                }
             }
-        } elseif ($IsLinux) {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
-        } elseif ($IsMacOS) {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
         } else {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
+            Write-Error $OperatingSystemNotSupportedError `
+                -Category NotImplemented `
+                -ErrorAction Stop
         }
     }
 }

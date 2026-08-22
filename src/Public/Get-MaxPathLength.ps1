@@ -13,16 +13,17 @@ function Get-MaxPathLength {
         .INPUTS
         None. You can't pipe objects to Get-MaxPathLength.
 
+        .OUTPUTS
+        System.Int32. The maximum path length supported by the file system on the host
+        operating system.
+
         .EXAMPLE
         PS> Get-MaxPathLength
 
         Returns the maximum path length supported by the current operating system.
-
-        .OUTPUTS
-        System.Int32. The maximum path length supported by the file system on the host
-        operating system.
     #>
     [OutputType([int])]
+    [CmdletBinding()]
     param()
 
     process {
@@ -42,7 +43,9 @@ function Get-MaxPathLength {
             # Unicode characters always require 32 bits (4 bytes) of memory
             getconf PATH_MAX /
         } else {
-            Write-Error $OperatingSystemNotSupportedError -Category NotImplemented -ErrorAction Stop
+            Write-Error $OperatingSystemNotSupportedError `
+                -Category NotImplemented `
+                -ErrorAction Stop
         }
 
         Write-Output $MaxPathLength

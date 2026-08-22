@@ -1,4 +1,3 @@
-using namespace System
 using namespace System.IO
 using namespace System.Security.AccessControl
 using namespace System.Security.Cryptography
@@ -16,13 +15,12 @@ function Install-Certificate {
         after a reboot.
 
         .PARAMETER FilePath
-         Path to the certificate file to import. Supports .pfx and PEM-encoded formats
+        Path to the certificate file to import. Supports .pfx and PEM-encoded formats
         such as .crt.
 
         .PARAMETER PrivateKeyPath
         Path to a PEM-encoded private key file to associate with the certificate.
         Only applicable for PEM certificates; ignored for .pfx files.
-        Requires PowerShell 6 or later, as ImportFromPem is not available on .NET Framework.
 
         .PARAMETER StoreLocation
         Specifies the certificate store location where the certificate will be installed.
@@ -44,6 +42,9 @@ function Install-Certificate {
         .INPUTS
         None. You can't pipe objects to Install-Certificate.
 
+        .OUTPUTS
+        X509Certificate. Returns an object representing the installed X.509 certificate.
+
         .EXAMPLE
         PS>$Certificate = "./path/to/certificate.pfx"
         PS>$Password = Read-Host -Prompt "Password" -AsSecureString
@@ -51,11 +52,9 @@ function Install-Certificate {
 
         Installs the certificate.pfx certificate into the LocalMachine certificate
         store using the specified password.
-
-        .OUTPUTS
-        X509Certificate. Returns an object representing the installed X.509 certificate.
     #>
-    [OutputType([System.Security.Cryptography.X509Certificates.X509Certificate2])]
+    [OutputType([X509Certificate2])]
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [string] $FilePath,
@@ -74,7 +73,7 @@ function Install-Certificate {
         [string] $User = "$env:USERDOMAIN\$env:USERNAME"
     )
     begin {
-        if ([Environment]::OSVersion.Platform -ne "Win32NT") {
+        if (!$IsWindows) {
             Write-Error "This Cmdlet only works on the Windows Operating System" `
                 -Category NotImplemented `
                 -ErrorAction Stop
@@ -108,14 +107,6 @@ function Install-Certificate {
                 }
 
                 if (![string]::IsNullOrEmpty($PrivateKeyPath)) {
-                    if ($PSVersionTable.PSVersion.Major -eq 5) {
-                        # On PS5, RSA.Create() returns RSACryptoServiceProvider (and not RSABCrypt), which
-                        # does not support ImportFromPem or ImportFromEncryptedPem as these are .NET 5+ methods.
-                        Write-Error "Importing a PEM certificate with a separate private key requires PowerShell 6 or later." `
-                            -Category NotImplemented `
-                            -ErrorAction Stop
-                    }
-
                     $PemContent = [File]::ReadAllText($PrivateKeyPath)
                     $PrivateKey = [RSA]::Create()
 
@@ -140,8 +131,9 @@ function Install-Certificate {
                 $CertificateStore.Add($PemCertificate)
             }
             catch [ArgumentException], [CryptographicException] {
-                Write-Warning "Failed to load certificate '$FilePath' to the certificate store: $_"
-                exit 1
+                Write-Error "Failed to load certificate '$FilePath' to the certificate store: $_" `
+                    -Category InvalidData `
+                    -ErrorAction Stop
             }
             finally {
                 $CertificateStore.Close()
@@ -152,31 +144,24 @@ function Install-Certificate {
             Write-Output $PemCertificate
         }
 
-        # Beware that the PrivateKey (PK) property returns a different type between .NET Framework and .NET Core.
-        $UniqueName = if ($PSVersionTable.PSVersion.Major -eq 5) {
-            # PK returns a RSACryptoServiceProvider instance provided by the Cryptographic Service Provider (CSP).
-            # This cryptography subsystem was superseded by CNG with the advent of .NET Core.
-            $Certificate.PrivateKey.CspKeyContainerInfo.UniqueKeyContainerName
-        } else {
-            # PK returns a RSACng instance provided by the Cryptography Next Generation (CNG), which isn't available for
-            # operating systems other than Windows. On Linux and MacOS, the PK would be of type RSAOpenSsl. The PrivateKey
-            # property was obsoleted for these reasons, and it is now recommended to use the GetRSAPrivateKey extension method
-            # which returns an implementation-agnostic abstract base class.
-            [RSACertificateExtensions]::GetRSAPrivateKey($Certificate).Key.UniqueName
+        # Use the GetRSAPrivateKey extension method, which returns an implementation-agnostic abstract base class.
+        # On Windows the private key is backed by an RSACng instance (Cryptography Next Generation); the legacy
+        # PrivateKey property is avoided because it returns platform-specific types (RSAOpenSsl on Linux/macOS).
+        $PrivateKey = [RSACertificateExtensions]::GetRSAPrivateKey($Certificate)
+
+        if ($null -eq $PrivateKey) {
+            Write-Error "The certificate '$FilePath' has no private key." `
+                -Category ObjectNotFound `
+                -ErrorAction Stop
         }
 
-        if ($null -eq $UniqueName) {
-            Write-Warning "The certificate '$FilePath' has no private key."
-            Write-Output $Certificate
-            exit 0
-        }
-
+        $UniqueName = $PrivateKey.Key.UniqueName
         Write-Verbose "Detected Unique Name '$UniqueName'."
 
         $AclPath = if ($IsPfx) {
-            "C:\ProgramData\Microsoft\Crypto\RSA\MachineKeys\$UniqueName"
+            "$env:ProgramData\Microsoft\Crypto\RSA\MachineKeys\$UniqueName"
         } else {
-            "C:\ProgramData\Microsoft\Crypto\Keys\$UniqueName"
+            "$env:ProgramData\Microsoft\Crypto\Keys\$UniqueName"
         }
 
         # Grant persistent read permissions to the domain user, so that the certificate doesn't need to

@@ -17,14 +17,14 @@ function Invoke-XKCD {
         Retrieves all available XKCD comics.
 
         .PARAMETER Number
-         Retrieves specific XKCD comic based on its identifier (ID).
+        Retrieves specific XKCD comic based on its identifier (ID).
 
         .PARAMETER Random
         Retrieves a random XKCD comic.
 
         .PARAMETER From
-         Specifies the starting number of a range of XKCD comics to retrieve.
-         Must be used with the -To parameter.
+        Specifies the starting number of a range of XKCD comics to retrieve.
+        Must be used with the -To parameter.
 
         .PARAMETER To
         Specifies the ending number of a range of XKCD comics to retrieve.
@@ -38,8 +38,8 @@ function Invoke-XKCD {
         The default path is the current working directory.
 
         .PARAMETER Download
-         Indicates that the retrieved XKCD comics should be downloaded to the
-         specified -Path.
+        Indicates that the retrieved XKCD comics should be downloaded to the
+        specified -Path.
 
         .PARAMETER Force
         Forces overwriting of existing files during download operations, if they
@@ -47,6 +47,9 @@ function Invoke-XKCD {
 
         .INPUTS
         None. You can't pipe objects to Invoke-XKCD.
+
+        .OUTPUTS
+        XKCD. The function returns a XKCD object with properties describing the comic.
 
         .EXAMPLE
         PS> Invoke-XKCD -Number 42
@@ -73,9 +76,6 @@ function Invoke-XKCD {
 
         Downloads all XKCD comics to the current working directory.
 
-        .OUTPUTS
-        XKCD. The function returns a XKCD object with properties describing the comic.
-
         .LINK
         https://xkcd.com/
         https://en.wikipedia.org/wiki/Xkcd
@@ -93,18 +93,20 @@ function Invoke-XKCD {
         [Parameter(Mandatory, ParameterSetName = "Random")]
         [switch] $Random,
 
-        [Parameter(Mandatory, ParameterSetName = "Range")]
         [ValidateRange(1, [int]::MaxValue)]
+        [Parameter(Mandatory, ParameterSetName = "Range")]
         [int] $From,
 
-        [Parameter(Mandatory, ParameterSetName = "Range")]
         [ValidateScript({
             if ($_ -le $From) {
-                Write-Error "The value of -To must be greater than -From" -Category InvalidArgument -ErrorAction Stop
+                Write-Error "The value of -To must be greater than -From" `
+                    -Category InvalidArgument `
+                    -ErrorAction Stop
             }
 
             return $true
         })]
+        [Parameter(Mandatory, ParameterSetName = "Range")]
         [int] $To,
 
         [Parameter(ParameterSetName = "Last")]
@@ -147,7 +149,7 @@ function Invoke-XKCD {
                 $Number
             }
             "Random" {
-                @([System.Random]::Shared.Next(1, $Info.Num))
+                @([System.Random]::Shared.Next(1, $Info.Num + 1))
             }
             "Range" {
                 @($From..$To)
@@ -166,8 +168,8 @@ function Invoke-XKCD {
 
             try {
                 $Response = Invoke-RestMethod -Uri "https://xkcd.com/$Id/info.0.json"
-                $FileExtension = $Response.Img.Split("/")[-1].Split(".")[1]
-                $FilePath = [Path]::Combine($Path, "${Id}.${FileExtension}")
+                $FileExtension = $Response.Img.Split("/")[-1].Split(".")[-1]
+                $FilePath = [Path]::Join($Path, "${Id}.${FileExtension}")
 
                 if ($Download.IsPresent -and $PSCmdlet.ShouldProcess($Response.img, "Download $($FilePath)")) {
                     [int] $PercentComplete = [Math]::Round($i / $Ids.Count * 100, 0)
@@ -190,11 +192,10 @@ function Invoke-XKCD {
                     "https://xkcd.com/$Id/"
                 ))
             } catch {
-                Write-Error "A comic with ID=${Id} does not exist." -Category InvalidArgument -ErrorAction Stop
+                Write-Error "A comic with ID=${Id} does not exist." `
+                    -Category InvalidArgument `
+                    -ErrorAction Continue
             }
         }
-    }
-    clean {
-
     }
 }

@@ -3,20 +3,29 @@ using namespace System.IO
 param(
     [string] $ModuleName = "PowerTools",
 
+    [string] $Author = "Stefan Greve",
+
+    [string] $CompanyName = "Advanced Systems",
+
+    [string] $Description = "General purpose Cmdlets for all platforms.",
+
+    [int] $FoundingYear = 2024,
+
+    [ValidateSet("7.4", "7.5", "7.6", "7.7")]
+    [string] $PowerShellVersion = "7.4",
+
     [Parameter(Mandatory)]
     [string] $Version
 )
 
 begin {
     $ProjectRoot = Split-Path -Path $PSScriptRoot -Parent
-    Push-Location $([Path]::Combine($ProjectRoot, "src"))
+    Push-Location $([Path]::Join($ProjectRoot, "src"))
 
     $Steps = 4
     $ManifestPath = "${ModuleName}.psd1"
 }
 process {
-    #region Step 1 - Update Manifest
-
     Write-Host "[1/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Update Manifest"
 
@@ -42,9 +51,19 @@ process {
         | Select-Object -ExpandProperty FullName
         | Resolve-Path -Relative
 
-    $ManifestParameter = @{
-        Path = $ManifestPath
+    $CurrentYear = [DateTime]::Today.Year
+    $YearSpan = $CurrentYear -gt $FoundingYear ? "${FoundingYear} - ${CurrentYear}" : "${FoundingYear}"
+    $Copyright = "(c) ${YearSpan} ${CompanyName}. All rights reserved."
+
+    $ManifestArgs = @{
+        RootModule = "${ModuleName}.psm1"
+        Author = $Author
+        Copyright = $Copyright
+        CompanyName = $CompanyName
+        Description = $Description
         ModuleVersion = $Version
+        PowerShellVersion = $PowerShellVersion
+        Path = $ManifestPath
         FunctionsToExport = @($FunctionsToExport)
         AliasesToExport = @($Aliases)
         FileList = @($FileList)
@@ -52,32 +71,20 @@ process {
         ScriptsToProcess = @($Scripts)
     }
 
-    Update-ModuleManifest @ManifestParameter -ErrorAction Stop
+    Update-ModuleManifest @ManifestArgs -ErrorAction Stop
     $Module = Import-PowerShellDataFile -Path $ManifestPath
     $Module | Write-Output | Format-Table
-
-    #endregion
-
-    #region Step 2 - Test Module Manifest
 
     Write-Host "[2/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Test Module Manifest"
     Test-ModuleManifest -Path $ManifestPath -ErrorAction Stop
     Write-Host
 
-    #endregion
-
-    #region Step 3 - Import Module
-
     Write-Host "[3/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Import Module"
     Write-Host
 
     Import-Module -Name "./${ManifestPath}" -Force -ErrorAction Stop
-
-    #endregion
-
-    #region Step 4 - Run Analyzer
 
     Write-Host "[4/${Steps}] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Run Analyzer"
@@ -87,13 +94,15 @@ process {
         Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
     }
 
-    Import-Module PSScriptAnalyzer
-    Invoke-ScriptAnalyzer -Path "./${ManifestPath}" `
-        -Severity Warning `
-        -Recurse `
-        -ReportSummary
+    $ScriptAnalyzerArgs = @{
+        Path = "./${ManifestPath}"
+        Severity = "Warning"
+        Recurse = $true
+        ReportSummary = $true
+    }
 
-    #endregion
+    Import-Module PSScriptAnalyzer
+    Invoke-ScriptAnalyzer @ScriptAnalyzerArgs
 }
 clean {
     Pop-Location

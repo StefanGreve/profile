@@ -15,10 +15,13 @@ function Get-EnvironmentVariable {
 
         .PARAMETER Scope
         Specifies the scope of the environment variable to read.
-        The default is Process.
+        The default is Process. On Linux and macOS, only the Process scope is supported.
 
         .INPUTS
         None. You can't pipe objects to Get-EnvironmentVariable.
+
+        .OUTPUTS
+        System.String[]. A collection of strings representing the values of the retrieved environment variable(s).
 
         .EXAMPLE
         PS> Get-EnvironmentVariable -Scope Machine
@@ -30,8 +33,10 @@ function Get-EnvironmentVariable {
 
         Returns all values from the PROFILE_ENABLE_BRANCH_USERNAME environment variable defined in User scope.
 
-        .OUTPUTS
-        System.String[]. A collection of strings representing the values of the retrieved environment variable(s).
+        .NOTES
+        On Linux and macOS, .NET only supports the Process scope for environment variables.
+        The User and Machine scopes are ignored by the runtime, so on those platforms this
+        Cmdlet emits a warning and performs no action when a non-Process scope is requested.
 
         .LINK
         https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables
@@ -47,14 +52,20 @@ function Get-EnvironmentVariable {
     )
 
     begin {
-        $Token = [OperatingSystem]::IsWindows() ? ";" : ":"
+        $Token = $IsWindows ? ";" : ":"
     }
     process {
+        if (!$IsWindows -and $Scope -ne [EnvironmentVariableTarget]::Process) {
+            Write-Warning "On Linux and macOS, only the Process scope is supported; the '$Scope' scope has no effect."
+            return
+        }
+
         $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope)
 
-        if ($EnvironmentVariables.Length -eq 0) {
-            Write-Warning "Environment variable `"{$Key}`" is empty or not defined."
-            return
+        if ([string]::IsNullOrEmpty($EnvironmentVariables)) {
+            Write-Error "Environment variable `"$Key`" is empty or not defined." `
+                -Category InvalidData `
+                -ErrorAction Stop
         }
 
         $EnvironmentVariableArray = $EnvironmentVariables -Split $Token
