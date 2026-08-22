@@ -65,21 +65,25 @@ customize the profile:
   the elapsed execution time.
 - `RegisterNativeCompletions`: Native tools to register argument completers for on
   launch, one of `bat`, `delta`, `deno`, `gh`, `op`, `pip`, `rustup`, `uv`, `winget`.
-  Each is only registered when also installed. Note that `deno` and `uv` emit very
-  large completion scripts and noticeably slow profile load.
+  Each is only registered when also installed.
+
+> [!WARNING]
+> Enabling too many tab completions can degrade profile load performance slightly,
+> and the cost varies by program: some emit small completion scripts, while others
+> (notably `deno` and `uv`) emit very large ones that noticeably slow profile load.
+
+> [!TIP]
+> The shipped `settings.json` references a JSON schema for editor validation and
+> completion. Visual Studio Code downloads remote schemas only from trusted domains,
+> so add the following to your `settings.json` (User or Workspace) to allow it:
+> ```json
+> "json.schemaDownload.trustedDomains": {
+>     "https://aka.ms/": true,
+>     "https://raw.githubusercontent.com/": true
+> }
+> ```
 
 </details>
-
-The shipped `settings.json` references a JSON schema for editor validation and
-completion. Visual Studio Code downloads remote schemas only from trusted domains,
-so add the following to your `settings.json` (User or Workspace) to allow it:
-
-```json
-"json.schemaDownload.trustedDomains": {
-    "https://aka.ms/": true,
-    "https://raw.githubusercontent.com/": true
-}
-```
 
 ## Developer Notes
 
