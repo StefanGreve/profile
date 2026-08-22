@@ -70,6 +70,7 @@ function Set-PowerState {
         if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, $PowerState)) {
             if ($IsWindows) {
                 Add-Type -AssemblyName System.Windows.Forms
+                $DisableWake = [bool]$PSBoundParameters["DisableWake"]
                 $PowerState = $PowerState -eq "Hibernate" ? [System.Windows.Forms.PowerState]::Hibernate : [System.Windows.Forms.PowerState]::Suspend
                 [System.Windows.Forms.Application]::SetSuspendState($PowerState, $Force, $DisableWake)
             } elseif ($IsLinux) {

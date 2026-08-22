@@ -45,7 +45,10 @@ function Set-MonitorBrightness {
                     -Category DeviceError `
                     -ErrorAction Stop
             } finally {
-                $WmiMonitor.Dispose()
+                # $WmiMonitor is null when brightness control is unsupported.
+                if ($null -ne $WmiMonitor) {
+                    $WmiMonitor.Dispose()
+                }
             }
         } else {
             Write-Error $OperatingSystemNotSupportedError `

@@ -39,7 +39,8 @@ function Stop-LocalServer {
         [int[]] $ProcessIds = if ($IsWindows) {
             # A single port can be held by more than one connection (e.g. IPv4 and IPv6),
             # so collect every distinct owning process and stop all of them.
-            $(Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue).OwningProcess
+            Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+                | Select-Object -ExpandProperty OwningProcess
                 | Select-Object -Unique
         } else {
             # -t: terse output (PIDs only), -sTCP:LISTEN: only listening sockets.

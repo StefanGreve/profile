@@ -32,6 +32,13 @@ function Get-Battery {
     process {
         $Battery = if ($IsWindows) {
             $Win32Battery = Get-CimInstance -ClassName Win32_Battery
+
+            if ($null -eq $Win32Battery) {
+                Write-Error "No battery detected on this device." `
+                    -Category ObjectNotFound `
+                    -ErrorAction Stop
+            }
+
             $ChargeRemaining = $Win32Battery.EstimatedChargeRemaining
             $Minutes = $Win32Battery.EstimatedRunTime
 

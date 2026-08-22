@@ -147,14 +147,15 @@ function Install-Certificate {
         # Use the GetRSAPrivateKey extension method, which returns an implementation-agnostic abstract base class.
         # On Windows the private key is backed by an RSACng instance (Cryptography Next Generation); the legacy
         # PrivateKey property is avoided because it returns platform-specific types (RSAOpenSsl on Linux/macOS).
-        $UniqueName = [RSACertificateExtensions]::GetRSAPrivateKey($Certificate).Key.UniqueName
+        $PrivateKey = [RSACertificateExtensions]::GetRSAPrivateKey($Certificate)
 
-        if ($null -eq $UniqueName) {
+        if ($null -eq $PrivateKey) {
             Write-Error "The certificate '$FilePath' has no private key." `
                 -Category ObjectNotFound `
                 -ErrorAction Stop
         }
 
+        $UniqueName = $PrivateKey.Key.UniqueName
         Write-Verbose "Detected Unique Name '$UniqueName'."
 
         $AclPath = if ($IsPfx) {
