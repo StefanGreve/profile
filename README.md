@@ -43,6 +43,9 @@ customize the profile:
 }
 ```
 
+<details>
+<summary>Settings Documentation</summary>
+
 - `DefaultCulture`: Culture used for the session (defaults to `en-US`).
 - `DefaultEncoding`: Default `-Encoding` applied to Cmdlets (defaults to `utf8`).
 - `DotSourceDirectory`: Directory to dot-source `*.ps1` scripts from on profile
@@ -53,6 +56,19 @@ customize the profile:
   name in the console prompt.
 - `Prompt.EnableTimestamp`: Display the current wall-clock time (`HH:mm:ss`) next to
   the elapsed execution time.
+
+</details>
+
+The shipped `settings.json` references a JSON schema for editor validation and
+completion. Visual Studio Code downloads remote schemas only from trusted domains,
+so add the following to your `settings.json` (User or Workspace) to allow it:
+
+```json
+"json.schemaDownload.trustedDomains": {
+    "https://aka.ms/": true,
+    "https://raw.githubusercontent.com/": true
+}
+```
 
 ## Developer Notes
 

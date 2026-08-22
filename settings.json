@@ -1,4 +1,5 @@
 {
+    "$schema": "https://raw.githubusercontent.com/StefanGreve/profile/master/settings.schema.json",
     "DefaultCulture": "en-US",
     "DefaultEncoding": "utf8",
     "DotSourceDirectory": "~/Documents/Scripts",
