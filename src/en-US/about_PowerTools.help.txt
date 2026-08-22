@@ -10,7 +10,53 @@ LONG DESCRIPTION
     supported across all platforms yet.
 
 EXAMPLES
-    TODO
+    List every command the module exports:
+
+        PS> Get-Command -Module PowerTools
+
+    Read the battery status of the current device:
+
+        PS> Get-Battery
+
+    Generate a cryptographically secure password or salt:
+
+        PS> Get-RandomPassword
+        PS> Get-Salt -Length 64
+
+    Compute the hash of a string, optionally from the pipeline:
+
+        PS> Get-StringHash -String "Hello, World!"
+        PS> "password" | Get-StringHash -Algorithm MD5
+
+    Inspect files and directories:
+
+        PS> Get-FileSize $PROFILE
+        PS> "src", "docs" | Get-FileCount
+
+    Read and write environment variables per scope:
+
+        PS> Get-EnvironmentVariable -Scope Machine
+        PS> Set-EnvironmentVariable -Key API_KEY -Value "REDACTED" -Scope User -Override
+
+    Install fonts and certificates:
+
+        PS> Install-Font -Path ./CascadiaCode.ttf
+        PS> Get-ChildItem ./fonts -Filter *.otf | Install-Font -Scope Machine
+
+    Manage the local system:
+
+        PS> Set-SystemTheme Dark
+        PS> Set-MonitorBrightness -Brightness 65
+        PS> Start-Timer -Seconds 30
+        PS> Stop-LocalServer -Port 8080
+
+    Check for an elevated session:
+
+        PS> if (Test-Elevation) { "Elevated" } else { "Not elevated" }
+
+    Use "Get-Help <Cmdlet> -Examples" for the full set of examples per command.
 
 SEE ALSO
     - https://github.com/stefangreve/profile
+    - https://www.powershellgallery.com/packages/PowerTools/
+    - Get-Help about_PowerTools
