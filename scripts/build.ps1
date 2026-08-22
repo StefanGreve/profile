@@ -71,6 +71,11 @@ process {
         ScriptsToProcess = @($Scripts)
     }
 
+    # Reset FileList first: Update-ModuleManifest aborts if the current list references a missing file.
+    $ManifestContent = Get-Content -Path $ManifestPath -Raw
+    $ManifestContent = $ManifestContent -replace "(?s)FileList\s*=.*?(?=\r?\n#\s*Private data)", "FileList = '${ManifestPath}'`n"
+    Set-Content -Path $ManifestPath -Value $ManifestContent -NoNewline
+
     Update-ModuleManifest @ManifestArgs -ErrorAction Stop
     $Module = Import-PowerShellDataFile -Path $ManifestPath
     $Module | Write-Output | Format-Table
