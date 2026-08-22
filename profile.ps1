@@ -6,8 +6,24 @@ using namespace System.Text
 
 using namespace Microsoft.PowerShell
 
-[CultureInfo]::CurrentCulture = [CultureInfo]::CreateSpecificCulture("en-US")
-$PSDefaultParameterValues["*:Encoding"] = "utf8"
+if (Get-Module PowerTools -ListAvailable) {
+    Import-Module PowerTools
+}
+
+# Follow $PSCommandPath through its symlink target so settings.json is read from the profile's real directory
+$ProfilePath = (Get-Item -LiteralPath $PSCommandPath).ResolveLinkTarget($true)?.FullName ?? $PSCommandPath
+$SettingsPath = [Path]::Join([Path]::GetDirectoryName($ProfilePath), "settings.json")
+$SettingsFile = if (Test-Path $SettingsPath) {
+    Get-Content -Path $SettingsPath | ConvertFrom-Json
+} else {
+    [PSCustomObject]@{
+        DefaultCulture = "en-US"
+        DefaultEncoding = "utf8"
+    }
+}
+
+[CultureInfo]::CurrentCulture = [CultureInfo]::CreateSpecificCulture($SettingsFile.DefaultCulture)
+$PSDefaultParameterValues["*:Encoding"] = $SettingsFile.DefaultEncoding
 
 $PSStyle.Progress.View = "Classic"
 $Host.PrivateData.ProgressBackgroundColor = "Cyan"
@@ -29,6 +45,18 @@ $global:IsAdmin = if ($IsWindows) {
 if ($IsWindows) {
     $global:Natural = { [Regex]::Replace($_.Name, "\d+", { $Args[0].Value.PadLeft(20) }) }
 }
+
+if ($null -ne $SettingsFile.DotSourceDirectory) {
+    if (!(Test-Path $SettingsFile.DotSourceDirectory)) {
+        Write-Warning "DotSourceDirectory `"$($SettingsFile.DotSourceDirectory)`" does not exist; no scripts were dot-sourced."
+    } else {
+        Get-ChildItem -Path $SettingsFile.DotSourceDirectory -Filter "*.ps1"
+            | ForEach-Object { . $_.FullName }
+    }
+}
+
+# Required by Python for custom virtual environment status indicator in prompt function
+$env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 #region Aliases
 
@@ -167,16 +195,6 @@ if (Get-Command "bat" -ErrorAction SilentlyContinue) {
 
 #endregion
 
-#region Hook Scripts
-
-if ($env:PROFILE_LOAD_CUSTOM_SCRIPTS -and $(Test-Path $env:PROFILE_LOAD_CUSTOM_SCRIPTS)) {
-    Get-ChildItem -Path $env:PROFILE_LOAD_CUSTOM_SCRIPTS -Filter "*.ps1" | ForEach-Object {
-        . $_.FullName
-    }
-}
-
-#endregion
-
 #region Command Prompt
 
 function Get-ExecutionTime {
@@ -190,27 +208,16 @@ function Get-ExecutionTime {
     }
 }
 
-#region Automatically Executing Scripts
-
-if (Get-Module PowerTools) {
-    Import-Module PowerTools
-}
-
-# Required by Python for custom virtual environment status indicator in prompt function
-$env:VIRTUAL_ENV_DISABLE_PROMPT = 1
-
-#endregion
-
 function prompt {
     $ExecTime = Get-ExecutionTime
     git rev-parse --is-inside-work-tree *> $null
 
-    $GitStatus = if ($LASTEXITCODE -eq 0) {
+    $GitInfo = if ($LASTEXITCODE -eq 0) {
         $CurrentBranch = git branch --show-current
         $DefaultBranch = (git rev-parse --abbrev-ref origin/HEAD 2>$null) -replace "^origin/", [string]::Empty
 
         # origin/HEAD is not populated in every clone; fall back to the conventional default branch
-        if (-not $DefaultBranch) {
+        if (!$DefaultBranch) {
             $DefaultBranch = @("main","master") | Where-Object {
                 git show-ref --quiet --verify "refs/heads/$_"; $LASTEXITCODE -eq 0
             } | Select-Object -First 1
@@ -219,7 +226,7 @@ function prompt {
         # Name of branch takes precedence over any Git tag if not positioned on the default branch
         $Tag = if ($CurrentBranch -and $CurrentBranch -eq $DefaultBranch) { git tag --points-at HEAD }
         $Head = $Tag ?? $CurrentBranch ?? (git rev-parse --short HEAD)
-        $DisplayUserName = $env:PROFILE_ENABLE_BRANCH_USERNAME -eq 1
+        $DisplayUserName = $SettingsFile.Prompt.EnableBranchUserName -eq $true
 
         #                          U        @     H
         [string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",
@@ -232,6 +239,8 @@ function prompt {
             $PSStyle.Foreground.White                                      # 6
         )
     }
+
+    $Battery = $SettingsFile.Prompt.EnableBatteryStatus -eq $true ? (Get-Battery) : $null
 
     $PsPrompt = [StringBuilder]::new()
     $null = & {
@@ -248,6 +257,31 @@ function prompt {
         $PsPrompt.Append($PSStyle.Foreground.White)
         $PsPrompt.Append("]")
         $PsPrompt.Append(" ")
+        # [ddd%]
+        if ($null -ne $Battery -and !$Battery.Status.StartsWith("Connected")) {
+            $PsPrompt.Append($PSStyle.Foreground.White)
+            $PsPrompt.Append("[")
+            $ChargeColor = switch ($Battery.ChargeRemaining) {
+                { $_ -ge 70 -and $_ -le 100 } {
+                    $PSStyle.Foreground.Green
+                }
+                { $_ -ge 30 -and $_ -le 69 } {
+                    $PSStyle.Foreground.Yellow
+                }
+                { $_ -ge 0 -and $_ -le 29 } {
+                    $PSStyle.Foreground.Red
+                }
+                default {
+                    $PSStyle.Foreground.White
+                }
+            }
+            $PsPrompt.Append($ChargeColor)
+            $PsPrompt.Append($Battery.ChargeRemaining)
+            $PsPrompt.Append("%")
+            $PsPrompt.Append($PSStyle.Foreground.White)
+            $PsPrompt.Append("]")
+            $PsPrompt.Append(" ")
+        }
         # (HH:mm:ss:ms)
         $PsPrompt.Append($PSStyle.Foreground.Yellow)
         $PsPrompt.Append("(")
@@ -261,7 +295,7 @@ function prompt {
         $PsPrompt.Append(")")
         $PsPrompt.Append($PSStyle.Foreground.White)
         # (HH:mm:ss)
-        if ($env:PROFILE_ENABLE_TIMESTAMP -eq "1") {
+        if ($SettingsFile.Prompt.EnableTimestamp -eq $true) {
             $PsPrompt.Append(" ")
             $PsPrompt.Append($PSStyle.Foreground.BrightBlack)
             $PsPrompt.Append("(")
@@ -270,7 +304,7 @@ function prompt {
             $PsPrompt.Append($PSStyle.Foreground.White)
         }
         # (user@branch)
-        $PsPrompt.Append($GitStatus)
+        $PsPrompt.Append($GitInfo)
         # (active)
         if ($env:VIRTUAL_ENV) {
             $PsPrompt.Append($PSStyle.Foreground.Magenta)

@@ -43,8 +43,10 @@ using namespace System.IO
 
 [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Medium")]
 param(
+    [Parameter(HelpMessage = "Parent directory into which profile.ps1 is downloaded (placed in a 'profile' subdirectory).")]
     [string] $RepositoryPath = $PWD.Path,
 
+    [Parameter(HelpMessage = "The member of the `$PROFILE automatic variable to link.")]
     [ValidateSet(
         "AllUsersAllHosts",
         "AllUsersCurrentHost",
@@ -53,6 +55,7 @@ param(
     )]
     [string] $ProfileKind = "CurrentUserAllHosts",
 
+    [Parameter(HelpMessage = "Replace an existing profile without prompting for confirmation.")]
     [switch] $Force
 )
 
@@ -85,7 +88,7 @@ begin {
     }
 }
 process {
-    if (-not $PSCmdlet.ShouldProcess($ProfileTargetPath, "Install PowerShell profile")) { return }
+    if (!$PSCmdlet.ShouldProcess($ProfileTargetPath, "Install PowerShell profile")) { return }
 
     Write-Host "[1/3] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Download PowerShell Profile . . . " -NoNewline
@@ -95,7 +98,7 @@ process {
     Write-Host "✓" -ForegroundColor Green
 
     Write-Host "[2/3] " -ForegroundColor DarkGray -NoNewline
-    Write-Host "Create Symbolic Link . . . " -NoNewline
+    Write-Host "Create PowerShell Profile . . . " -NoNewline
     $ProfileParentDirectory = [Directory]::GetParent($ProfileTargetPath).FullName
     $null = [Directory]::CreateDirectory($ProfileParentDirectory)
 
@@ -112,6 +115,11 @@ process {
     }
 
     $null = [File]::CreateSymbolicLink($ProfileTargetPath, $ProfileSource)
+
+    # Initialize PowerShell Profile with default settings
+    $SettingsPath = [Path]::GetFullPath([Path]::Join($TargetDirectory, "settings.json"))
+    Invoke-RestMethod -Uri "https://raw.githubusercontent.com/StefanGreve/profile/master/settings.json" -OutFile $SettingsPath
+
     Write-Host "✓" -ForegroundColor Green
 
     Write-Host "[3/3] " -ForegroundColor DarkGray -NoNewline

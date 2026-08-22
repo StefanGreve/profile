@@ -12,7 +12,12 @@ for the battery and system-theme features.
 - Native tab completion for `dotnet`, `System.CommandLine`, `bat`, `gh`, and `winget`.
 - `Invoke-TextToSpeech` Cmdlet.
 - PEM certificate import with optional private key in `Install-Certificate`.
-- `PROFILE_ENABLE_TIMESTAMP` toggle to display a timestamp in the prompt.
+- `settings.json` configuration file (loaded from next to `profile.ps1`) with
+  `DefaultCulture`, `DefaultEncoding`, `DotSourceDirectory`, and `Prompt` toggles;
+  `install.ps1` downloads a default copy during setup.
+- Battery charge indicator in the prompt, colored by remaining charge and shown only
+  while on battery power (`Prompt.EnableBatteryStatus`).
+- Prompt timestamp toggle (`Prompt.EnableTimestamp`).
 - `Get-Battery` and `Set-SystemTheme` support on macOS.
 - Unit tests for the environment-variable functions, `Get-MaxPathLength`,
   `Get-StringHash`, `Get-FileSize`, and `Get-FileCount`.
@@ -20,6 +25,9 @@ for the battery and system-theme features.
 
 ### Changed
 
+- Profile configuration moved from environment variables to `settings.json`,
+  replacing `PROFILE_LOAD_CUSTOM_SCRIPTS`, `PROFILE_ENABLE_BRANCH_USERNAME`, and
+  `PROFILE_ENABLE_TIMESTAMP`.
 - Prompt falls back to the conventional default branch when `origin/HEAD` is unset,
   and hides the Git tag when not on the default branch.
 - `Stop-LocalServer` now terminates every owning process and runs cross-platform.

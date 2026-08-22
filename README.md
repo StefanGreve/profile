@@ -26,15 +26,33 @@ See `Get-Help ./install.ps1` for the `-RepositoryPath` and `-ProfileKind` option
 
 ## Configuration
 
-Some additional features can be turned on by setting their respective environment
-variables:
+The profile reads its configuration from a `settings.json` file that lives next to
+`profile.ps1` (`install.ps1` downloads a default copy for you). Edit that file to
+customize the profile:
 
-- `PROFILE_LOAD_CUSTOM_SCRIPTS`: Declare a single path to dot-source PowerShell
-  scripts from on profile launch.
-- `PROFILE_ENABLE_BRANCH_USERNAME`: Set this value to `1` to display the active
-  Git user name next to the branch name in the console prompt (off by default).
-- `PROFILE_ENABLE_TIMESTAMP`: Set this value to `1` to display the current
-  wall-clock time (`HH:mm:ss`) next to the elapsed execution time (off by default).
+```json
+{
+    "DefaultCulture": "en-US",
+    "DefaultEncoding": "utf8",
+    "DotSourceDirectory": "~/Documents/Scripts",
+    "Prompt": {
+        "EnableBatteryStatus": true,
+        "EnableBranchUserName": true,
+        "EnableTimestamp": true
+    }
+}
+```
+
+- `DefaultCulture`: Culture used for the session (defaults to `en-US`).
+- `DefaultEncoding`: Default `-Encoding` applied to Cmdlets (defaults to `utf8`).
+- `DotSourceDirectory`: Directory to dot-source `*.ps1` scripts from on profile
+  launch. A warning is emitted when the path does not exist.
+- `Prompt.EnableBatteryStatus`: Display the remaining battery charge in the prompt
+  while running on battery power.
+- `Prompt.EnableBranchUserName`: Display the active Git user name next to the branch
+  name in the console prompt.
+- `Prompt.EnableTimestamp`: Display the current wall-clock time (`HH:mm:ss`) next to
+  the elapsed execution time.
 
 ## Developer Notes
 

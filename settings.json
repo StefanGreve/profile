@@ -1,0 +1,10 @@
+{
+    "DefaultCulture": "en-US",
+    "DefaultEncoding": "utf8",
+    "DotSourceDirectory": "~/Documents/Scripts",
+    "Prompt": {
+        "EnableBatteryStatus": true,
+        "EnableBranchUserName": true,
+        "EnableTimestamp": true
+    }
+}
