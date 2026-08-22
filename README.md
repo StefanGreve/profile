@@ -35,6 +35,7 @@ customize the profile:
     "DefaultCulture": "en-US",
     "DefaultEncoding": "utf8",
     "DotSourceDirectory": "~/Documents/Scripts",
+    "EnableClassicProgressbar": true,
     "Modules": [
       "PowerTools"
     ],
@@ -53,6 +54,8 @@ customize the profile:
 - `DefaultEncoding`: Default `-Encoding` applied to Cmdlets (defaults to `utf8`).
 - `DotSourceDirectory`: Directory to dot-source `*.ps1` scripts from on profile
   launch. A warning is emitted when the path does not exist.
+- `EnableClassicProgressbar`: Use the classic progress bar (cyan background, yellow
+  text) instead of the default minimal view.
 - `Modules`: PowerShell module names to import on profile launch. A warning is
   emitted for any module that is not installed.
 - `Prompt.EnableBatteryStatus`: Display the remaining battery charge in the prompt

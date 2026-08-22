@@ -21,11 +21,13 @@ $SettingsFile = if (Test-Path $SettingsPath) {
 
 [CultureInfo]::CurrentCulture = [CultureInfo]::CreateSpecificCulture($SettingsFile.DefaultCulture)
 $PSDefaultParameterValues["*:Encoding"] = $SettingsFile.DefaultEncoding
-
-$PSStyle.Progress.View = "Classic"
-$Host.PrivateData.ProgressBackgroundColor = "Cyan"
-$Host.PrivateData.ProgressForegroundColor = "Yellow"
 $ErrorView = "ConciseView"
+
+if ($SettingsFile.EnableClassicProgressbar -eq $true) {
+    $PSStyle.Progress.View = "Classic"
+    $Host.PrivateData.ProgressBackgroundColor = "Cyan"
+    $Host.PrivateData.ProgressForegroundColor = "Yellow"
+}
 
 $global:IsAdmin = if ($IsWindows) {
     $CurrentUser = [Principal.WindowsPrincipal][Principal.WindowsIdentity]::GetCurrent()

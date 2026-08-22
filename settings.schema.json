@@ -39,6 +39,11 @@
             "type": "string",
             "description": "Directory whose *.ps1 scripts are dot-sourced on profile launch. A warning is emitted when the path does not exist."
         },
+        "EnableClassicProgressbar": {
+            "type": "boolean",
+            "description": "Use the classic progress bar view with a cyan background and yellow text instead of the default minimal view.",
+            "default": false
+        },
         "Modules": {
             "type": "array",
             "description": "PowerShell module names to import on profile launch. A warning is emitted for any module that is not installed.",

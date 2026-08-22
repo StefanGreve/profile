@@ -3,6 +3,7 @@
     "DefaultCulture": "en-US",
     "DefaultEncoding": "utf8",
     "DotSourceDirectory": "~/Documents/Scripts",
+    "EnableClassicProgressbar": true,
     "Modules": [
         "PowerTools"
     ],
