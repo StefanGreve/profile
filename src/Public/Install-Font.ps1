@@ -58,7 +58,12 @@ function Install-Font {
 
     begin {
         # ".fon" is a raster format and, unlike the scalable formats, carries no registry type suffix.
-        $SuffixMap = @{ ".ttf" = "(TrueType)"; ".ttc" = "(TrueType)"; ".otf" = "(OpenType)"; ".fon" = "" }
+        $SuffixMap = @{
+            ".ttf" = "(TrueType)"
+            ".ttc" = "(TrueType)"
+            ".otf" = "(OpenType)"
+            ".fon" = ""
+        }
 
         if ($IsWindows) {
             if ($Scope -eq "Machine" -and !(Test-Elevation)) {
@@ -70,7 +75,7 @@ function Install-Font {
             Add-Type -AssemblyName System.Drawing
 
             # Native calls to load the font into the current session and to broadcast the change to running windows.
-            if (!("PowerTools.NativeFonts" -as [type])) {
+            if (!("PowerTools.NativeFonts" -as [Type])) {
                 Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
@@ -110,18 +115,26 @@ namespace PowerTools {
                     continue
                 }
 
+                $FontNames = @()
                 $Collection = [System.Drawing.Text.PrivateFontCollection]::new()
 
                 try {
+                    # A single file (notably a .ttc collection) can hold more than one family.
                     $Collection.AddFontFile($Source)
-                    $FontName = $Collection.Families[0].Name
+                    $FontNames = @($Collection.Families.Name | Select-Object -Unique)
                 } catch {
-                    $FontName = [Path]::GetFileNameWithoutExtension($Source)
-                    Write-Warning "Could not read the font name from '$Source'; using '$FontName' instead."
+                    Write-Warning "Could not read the font name from '$Source'."
                 } finally {
                     $Collection.Dispose()
                 }
 
+                # Raster (.fon) fonts expose no families, and a malformed file may yield none either; fall back to the file name.
+                if ($FontNames.Count -eq 0) {
+                    $FontNames = @([Path]::GetFileNameWithoutExtension($Source))
+                }
+
+                # Windows registers all families in a file under one value name, joined by " & ".
+                $FontName = $FontNames -join " & "
                 $ValueName = "$FontName $($SuffixMap[$Extension])".Trim()
                 $Destination = [Path]::Join($FontDirectory, [Path]::GetFileName($Source))
 
