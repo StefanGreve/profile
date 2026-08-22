@@ -7,6 +7,9 @@ on:
         description: "Version Number"
         required: true
 
+permissions:
+  contents: read
+
 env:
   API_KEY: ${{ secrets.PSGALLERY_API_TOKEN }}
   RELEASE_VERSION: ${{ github.event.inputs.version }}
@@ -17,18 +20,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Build Dependencies
-        shell: pwsh
-        run: |
-          Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted
-          Install-Module PSScriptAnalyzer
+        uses: actions/checkout@v5
 
       - name: Publish Module
         shell: pwsh
         run: |
-          pwsh -NoProfile -ExecutionPolicy ByPass -File "./scripts/publish.ps1" `
-            -Version ${{ env.RELEASE_VERSION }} `
-            -ApiKey ${{ env.API_KEY }} `
+          ./scripts/publish.ps1 `
+            -Version $env:RELEASE_VERSION `
+            -ApiKey $env:API_KEY `
             -Confirm:$false
