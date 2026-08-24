@@ -12,6 +12,7 @@
   script to exclude these entries reliably.
 - Corrected the comment-based help across several public Cmdlets to match their implementation.
 - `Get-MaxPathLength` now returns an `Int32` on Linux and macOS instead of the raw `getconf` string.
+- `Get-Salt` now returns a `System.Byte[]` as documented, instead of an enumerated `Object[]`.
 
 ## Version 3.0.0 (22 Aug 2026)
 

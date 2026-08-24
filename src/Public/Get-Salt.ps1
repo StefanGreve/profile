@@ -40,9 +40,6 @@ function Get-Salt {
     }
     process {
         [RandomNumberGenerator]::Fill($Salt)
-        Write-Output $Salt
-    }
-    clean {
-        $Salt.Clear()
+        Write-Output $Salt -NoEnumerate
     }
 }
