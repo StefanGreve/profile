@@ -72,7 +72,7 @@
                     "description": "Display the remaining battery charge while running on battery power.",
                     "default": false
                 },
-                "EnableBranchUserName": {
+                "EnableGitUserName": {
                     "type": "boolean",
                     "description": "Display the active Git user name next to the branch name.",
                     "default": false

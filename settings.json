@@ -9,7 +9,7 @@
     ],
     "Prompt": {
         "EnableBatteryStatus": true,
-        "EnableBranchUserName": true,
+        "EnableGitUserName": true,
         "EnableTimestamp": true
     },
     "RegisterNativeCompletions": [

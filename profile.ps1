@@ -261,7 +261,7 @@ function prompt {
         # Name of branch takes precedence over any Git tag if not positioned on the default branch
         $Tag = if ($CurrentBranch -and $CurrentBranch -eq $DefaultBranch) { git tag --points-at HEAD }
         $Head = $Tag ?? $CurrentBranch ?? (git rev-parse --short HEAD)
-        $DisplayUserName = $SettingsFile.Prompt.EnableBranchUserName -eq $true
+        $DisplayUserName = $SettingsFile.Prompt.EnableGitUserName -eq $true
 
         #                          U        @     H
         [string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",

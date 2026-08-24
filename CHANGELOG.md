@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 3.0.1 (Unreleased)
+
+### Changed
+
+- Renamed the `Prompt.EnableBranchUserName` setting to `Prompt.EnableGitUserName`.
+
+### Fixed
+
+- Removed stale references to the former `Toolbox` module name and hardened the build
+  script to exclude these entries reliably.
+
 ## Version 3.0.0 (22 Aug 2026)
 
 This release expands the module with new Cmdlets and broader platform support,

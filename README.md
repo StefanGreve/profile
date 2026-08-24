@@ -39,7 +39,7 @@ customize the profile:
     "Modules": [ "PowerTools" ],
     "Prompt": {
         "EnableBatteryStatus": true,
-        "EnableBranchUserName": true,
+        "EnableGitUserName": true,
         "EnableTimestamp": true
     },
     "RegisterNativeCompletions": [ "bat", "gh", "pip", "winget" ]
@@ -59,7 +59,7 @@ customize the profile:
   emitted for any module that is not installed.
 - `Prompt.EnableBatteryStatus`: Display the remaining battery charge in the prompt
   while running on battery power.
-- `Prompt.EnableBranchUserName`: Display the active Git user name next to the branch
+- `Prompt.EnableGitUserName`: Display the active Git user name next to the branch
   name in the console prompt.
 - `Prompt.EnableTimestamp`: Display the current wall-clock time (`HH:mm:ss`) next to
   the elapsed execution time.
