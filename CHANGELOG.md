@@ -18,6 +18,7 @@
 - `Set-MonitorBrightness` now actually changes the brightness. It invoked the WMI method directly on a
   `CimInstance` (which exposes no callable methods), so every call failed and reported a misleading
   unsupported-hardware error; it now uses `Invoke-CimMethod`.
+- `Set-PowerState` no longer emits the `Boolean` returned by `SetSuspendState` to the pipeline.
 
 ## Version 3.0.0 (22 Aug 2026)
 
