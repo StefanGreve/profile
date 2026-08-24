@@ -21,6 +21,8 @@
   `CimInstance` (which exposes no callable methods), so every call failed and reported a misleading
   unsupported-hardware error; it now uses `Invoke-CimMethod`.
 - `Set-PowerState` no longer emits the `Boolean` returned by `SetSuspendState` to the pipeline.
+- `Set-SystemTheme` no longer emits the value echoed by `osascript` to the pipeline on macOS, so its
+  `void` output contract holds on all platforms.
 
 ## Version 3.0.0 (22 Aug 2026)
 

@@ -39,7 +39,9 @@ function Set-SystemTheme {
                 -ErrorAction Stop
         } elseif ($IsMacOS) {
             $IsDarkTheme = $Theme -eq "Dark"
-            osascript -e "tell application `"System Events`" to tell appearance preferences to set dark mode to $IsDarkTheme"
+            # osascript echoes the result of its last statement; a 'set' yields the assigned
+            # value, so discard it to honor the [void] contract on macOS.
+            osascript -e "tell application `"System Events`" to tell appearance preferences to set dark mode to $IsDarkTheme" | Out-Null
         } else {
             Write-Error $OperatingSystemNotSupportedError `
                 -Category NotImplemented `
