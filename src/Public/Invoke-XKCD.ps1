@@ -172,14 +172,18 @@ function Invoke-XKCD {
                 $FilePath = [Path]::Join($Path, "${Id}.${FileExtension}")
 
                 if ($Download.IsPresent -and $PSCmdlet.ShouldProcess($Response.img, "Download $($FilePath)")) {
-                    [int] $PercentComplete = [Math]::Round($i / $Ids.Count * 100, 0)
+                    if ((Test-Path -LiteralPath $FilePath) -and !$Force.IsPresent) {
+                        Write-Warning "'${FilePath}' already exists. Use -Force to overwrite it."
+                    } else {
+                        [int] $PercentComplete = [Math]::Round($i / $Ids.Count * 100, 0)
 
-                    Write-Progress -Activity "Download XKCD ${Id}" `
-                        -Status "${PercentComplete}%" `
-                        -PercentComplete $PercentComplete
+                        Write-Progress -Activity "Download XKCD ${Id}" `
+                            -Status "${PercentComplete}%" `
+                            -PercentComplete $PercentComplete
 
-                    Write-Verbose "Downloading $Id to $Path"
-                    Invoke-WebRequest -Uri $Response.img -OutFile $FilePath
+                        Write-Verbose "Downloading $Id to $Path"
+                        Invoke-WebRequest -Uri $Response.img -OutFile $FilePath
+                    }
                 }
 
                 Write-Output $([XKCD]::new(

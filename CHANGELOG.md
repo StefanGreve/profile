@@ -5,6 +5,8 @@
 ### Changed
 
 - Renamed the `Prompt.EnableBranchUserName` setting to `Prompt.EnableGitUserName`.
+- `Invoke-XKCD -Download` now skips existing files with a warning instead of overwriting them; pass
+  `-Force` to overwrite. The `-Force` switch was previously declared and documented but had no effect.
 
 ### Fixed
 
