@@ -12,7 +12,7 @@ function Set-EnvironmentVariable {
         to take effect.
 
         .PARAMETER Key
-        The name of the environment variable to set.
+        The name of the environment variable to set. Defaults to PATH.
 
         .PARAMETER Value
          The value to assign to the environment variable.
@@ -34,9 +34,9 @@ function Set-EnvironmentVariable {
         None. This function does not produce any output.
 
         .EXAMPLE
-        PS> Set-EnvironmentVariable -Key PROFILE_ENABLE_BRANCH_USERNAME -Value 1
+        PS> Set-EnvironmentVariable -Key EDITOR -Value "vim"
 
-        Sets the value of the PROFILE_ENABLE_BRANCH_USERNAME environment variable to 1 in Process scope.
+        Sets the value of the EDITOR environment variable to "vim" in Process scope.
 
         .EXAMPLE
         PS> Set-EnvironmentVariable -Key API_KEY -Value "REDACTED" -Scope User -Override

@@ -7,7 +7,7 @@ function Get-FileCount {
 
         .DESCRIPTION
         Returns the total number of files in one or more directories.
-        By default, the result will includes files from all subdirectories as well, unless
+        By default, the result includes files from all subdirectories as well, unless
         the search parameter is specified otherwise.
 
         .PARAMETER Path

@@ -23,6 +23,10 @@ function Set-MonitorBrightness {
         PS> Set-MonitorBrightness -Brightness 65
 
         Sets the monitor brightness to 65%.
+
+        .NOTES
+        Only supported on Windows; the function relies on WMI (root/WMI WmiMonitorBrightnessMethods)
+        and throws a NotImplemented error on Linux and macOS.
     #>
     [OutputType([void])]
     [CmdletBinding()]

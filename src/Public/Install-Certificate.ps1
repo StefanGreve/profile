@@ -43,15 +43,15 @@ function Install-Certificate {
         None. You can't pipe objects to Install-Certificate.
 
         .OUTPUTS
-        X509Certificate. Returns an object representing the installed X.509 certificate.
+        X509Certificate2. Returns an object representing the installed X.509 certificate.
 
         .EXAMPLE
         PS>$Certificate = "./path/to/certificate.pfx"
         PS>$Password = Read-Host -Prompt "Password" -AsSecureString
-        PS>Install-Certificate -FilePath $Certificate -StoreLocation LocalMachine -Password $Password
+        PS>Install-Certificate -FilePath $Certificate -StoreLocation LocalMachine -StoreName My -Password $Password
 
-        Installs the certificate.pfx certificate into the LocalMachine certificate
-        store using the specified password.
+        Installs the certificate.pfx certificate into the Personal (My) store of the
+        LocalMachine location using the specified password.
     #>
     [OutputType([X509Certificate2])]
     [CmdletBinding()]

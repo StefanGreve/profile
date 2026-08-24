@@ -19,7 +19,9 @@ function Get-RandomPassword {
         None. You can't pipe objects to Get-RandomPassword.
 
         .OUTPUTS
-        System.String. A randomly generated password in Base64 format of the specified length.
+        System.String. A randomly generated Base64-encoded password of approximately the specified
+        length. Because Base64 emits 4 characters per 3 bytes, the length is rounded up to the
+        nearest multiple of 4.
 
         .EXAMPLE
         PS> Get-RandomPassword
