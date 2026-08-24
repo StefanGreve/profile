@@ -62,7 +62,7 @@ function Install-Font {
             ".ttf" = "(TrueType)"
             ".ttc" = "(TrueType)"
             ".otf" = "(OpenType)"
-            ".fon" = ""
+            ".fon" = [string]::Empty
         }
 
         if ($IsWindows) {
@@ -165,12 +165,22 @@ namespace PowerTools {
     }
     end {
         if ($IsWindows) {
-            # Notify running applications that the font table changed (WM_FONTCHANGE broadcast).
+            # WM_FONTCHANGE broadcast settings.
             $HwndBroadcast = [IntPtr]0xffff
             $WmFontChange = 0x001D
             $SmtoAbortIfHung = 0x0002
             $Result = [IntPtr]::Zero
-            [PowerTools.NativeFonts]::SendMessageTimeout($HwndBroadcast, $WmFontChange, [IntPtr]::Zero, [IntPtr]::Zero, $SmtoAbortIfHung, 1000, [ref]$Result) | Out-Null
+
+            # Notify running applications that the font table changed.
+            [PowerTools.NativeFonts]::SendMessageTimeout(
+                $HwndBroadcast,
+                $WmFontChange,
+                [IntPtr]::Zero,
+                [IntPtr]::Zero,
+                $SmtoAbortIfHung,
+                1000,
+                [ref]$Result
+            ) | Out-Null
         }
     }
 }
