@@ -13,6 +13,8 @@
 - Corrected the comment-based help across several public Cmdlets to match their implementation.
 - `Get-MaxPathLength` now returns an `Int32` on Linux and macOS instead of the raw `getconf` string.
 - `Get-Salt` now returns a `System.Byte[]` as documented, instead of an enumerated `Object[]`.
+- `Get-FileSize` now always returns a `System.Double`; the default `B` unit and any exact conversion
+  previously returned an `Int64`.
 
 ## Version 3.0.0 (22 Aug 2026)
 

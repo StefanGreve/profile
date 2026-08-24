@@ -58,7 +58,8 @@ function Get-FileSize {
                 continue
             }
 
-            $Bytes = $Item.Length
+            # Cast to double to ensure every unit honors the output type
+            $Bytes = [double] $Item.Length
 
             $Size = switch ($Unit) {
                 "PiB" { $Bytes / 1PB }
