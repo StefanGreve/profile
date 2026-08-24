@@ -11,6 +11,7 @@
 - Removed stale references to the former `Toolbox` module name and hardened the build
   script to exclude these entries reliably.
 - Corrected the comment-based help across several public Cmdlets to match their implementation.
+- `Get-MaxPathLength` now returns an `Int32` on Linux and macOS instead of the raw `getconf` string.
 
 ## Version 3.0.0 (22 Aug 2026)
 

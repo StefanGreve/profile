@@ -1,3 +1,5 @@
+using namespace System.Globalization
+
 function Get-MaxPathLength {
     <#
         .SYNOPSIS
@@ -41,7 +43,7 @@ function Get-MaxPathLength {
             # of time. For example, an ASCII or Unicode character in UTF-8 is 8 bits (1 byte), while a Unicode character
             # in UTF-16 may take between 16 bits (2 bytes) and 32 bits (4 bytes) in memory, whereas UTF-32 encoded
             # Unicode characters always require 32 bits (4 bytes) of memory
-            getconf PATH_MAX /
+            [int]::Parse((getconf PATH_MAX /), [CultureInfo]::InvariantCulture)
         } else {
             Write-Error $OperatingSystemNotSupportedError `
                 -Category NotImplemented `
