@@ -39,10 +39,12 @@ function Set-MonitorBrightness {
     process {
         if ($IsWindows) {
             $Timeout = 1 # in seconds
-            $WmiMonitor = Get-CimInstance -Namespace root/WMI -Class WmiMonitorBrightnessMethods
 
             try {
-                $WmiMonitor.WmiSetBrightness($Timeout, $Brightness)
+                $WmiMonitor = Get-CimInstance -Namespace root/WMI -Class WmiMonitorBrightnessMethods
+
+                $null = Invoke-CimMethod -InputObject $WmiMonitor -MethodName WmiSetBrightness `
+                    -Arguments @{ Timeout = [uint32] $Timeout; Brightness = [byte] $Brightness }
             }
             catch {
                 Write-Error "This computer may not support software-based brightness adjustments. Try updating your display adapter drivers to resolve the issue." `

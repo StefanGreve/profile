@@ -15,6 +15,9 @@
 - `Get-Salt` now returns a `System.Byte[]` as documented, instead of an enumerated `Object[]`.
 - `Get-FileSize` now always returns a `System.Double`; the default `B` unit and any exact conversion
   previously returned an `Int64`.
+- `Set-MonitorBrightness` now actually changes the brightness. It invoked the WMI method directly on a
+  `CimInstance` (which exposes no callable methods), so every call failed and reported a misleading
+  unsupported-hardware error; it now uses `Invoke-CimMethod`.
 
 ## Version 3.0.0 (22 Aug 2026)
 
