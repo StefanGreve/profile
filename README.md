@@ -63,6 +63,43 @@ the form of a JSON schema file.
 > }
 > ```
 
+## PowerTools Platform Support
+
+The module targets Windows first, but most Cmdlets run cross-platform. The table below summarizes
+which operating systems each exported Cmdlet supports. Unsupported platforms throw a `NotImplemented`
+error rather than failing silently.
+
+Legend: ✅ supported, ⚠️ partial, ❌ not supported.
+
+| Cmdlet                       | ![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white) | ![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=F0F0F0&logoSize=auto) | ![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black) |
+| ---------------------------- | :--------: | :------: | :------: |
+| `Export-Branch`              | ✅         | ✅       | ✅       |
+| `Get-Battery`                | ✅         | ✅       | ❌       |
+| `Get-Definition`             | ✅         | ✅       | ✅       |
+| `Get-EnvironmentVariable`    | ✅         | ⚠️       | ⚠️       |
+| `Get-FileCount`              | ✅         | ✅       | ✅       |
+| `Get-FileSize`               | ✅         | ✅       | ✅       |
+| `Get-MaxPathLength`          | ✅         | ✅       | ✅       |
+| `Get-RandomPassword`         | ✅         | ✅       | ✅       |
+| `Get-Salt`                   | ✅         | ✅       | ✅       |
+| `Get-StringHash`             | ✅         | ✅       | ✅       |
+| `Install-Certificate`        | ✅         | ❌       | ❌       |
+| `Install-Font`               | ✅         | ❌       | ❌       |
+| `Invoke-TextToSpeech`        | ✅         | ❌       | ❌       |
+| `Invoke-XKCD`                | ✅         | ✅       | ✅       |
+| `Remove-EnvironmentVariable` | ✅         | ⚠️       | ⚠️       |
+| `Set-EnvironmentVariable`    | ✅         | ⚠️       | ⚠️       |
+| `Set-MonitorBrightness`      | ✅         | ❌       | ❌       |
+| `Set-PowerState`             | ✅         | ✅       | ✅       |
+| `Set-SystemTheme`            | ✅         | ✅       | ❌       |
+| `Start-Timer`                | ✅         | ✅       | ✅       |
+| `Stop-LocalServer`           | ✅         | ✅       | ✅       |
+| `Test-Elevation`             | ✅         | ✅       | ✅       |
+
+> [!WARNING]
+> Some Cmdlets offer only partial support on certain platforms: they run but with reduced functionality
+> or platform-specific limitations.
+
 ## Developer Notes
 
 Set up the development environment:
