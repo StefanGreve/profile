@@ -38,6 +38,7 @@ function Get-FileCount {
     [CmdletBinding()]
     param(
         [Parameter(Position = 0, Mandatory, ValueFromPipeline)]
+        [ValidateNotNullOrEmpty()]
         [string[]] $Path,
 
         [Parameter(Position = 1)]
