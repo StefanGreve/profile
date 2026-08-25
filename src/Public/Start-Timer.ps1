@@ -68,21 +68,20 @@ function Start-Timer {
 
         $StartDate = [DateTime]::Now
         $StopWatch = [Stopwatch]::StartNew()
-        [int] $t = 0
     }
     process {
-        while ($t -le $CountDown) {
-            [int] $PercentComplete = [Math]::Round($t * 100 / $CountDown, 0)
+        while ($StopWatch.Elapsed.TotalSeconds -lt $CountDown) {
+            $Elapsed = $StopWatch.Elapsed.TotalSeconds
+            [int] $PercentComplete = [Math]::Round($Elapsed * 100 / $CountDown, 0)
 
             $ProgressArgs = @{
                 Activity = "Timer"
                 Status = "$PercentComplete%"
                 PercentComplete = $PercentComplete
-                SecondsRemaining = $CountDown - $t
+                SecondsRemaining = [Math]::Ceiling($CountDown - $Elapsed)
             }
 
             Write-Progress @ProgressArgs
-            $t = $StopWatch.Elapsed.TotalSeconds
 
             # Yield the CPU between updates so the countdown
             # loop doesn't spin at ~100% on one core.

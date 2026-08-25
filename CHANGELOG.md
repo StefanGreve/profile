@@ -23,6 +23,9 @@
   (UID 0), consistent with the Linux path.
 - `Start-Timer` no longer throws a divide-by-zero error for a zero duration; each of `-Seconds`,
   `-Minutes`, and `-Hours` now requires a value of at least `1`.
+- `Start-Timer` no longer overshoots the requested duration by roughly a second. The loop rounded the
+  elapsed time to an `[int]` and used an inclusive `-le` comparison, pushing the exit threshold to about
+  `duration + 0.5s`; it now compares the raw elapsed seconds with `-lt`.
 
 - Removed stale references to the former `Toolbox` module name and hardened the build
   script to exclude these entries reliably.
