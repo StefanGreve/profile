@@ -10,6 +10,13 @@
   `SpeechSynthesizer` on every invocation, reducing parameter-binding and tab-completion overhead.
 - `Set-MonitorBrightness -Brightness` is now mandatory, so a bare `Set-MonitorBrightness` no longer
   defaults to `0` and blanks the screen.
+- `Get-Definition`, `Stop-LocalServer`, `Get-EnvironmentVariable`, and `Install-Certificate` now accept
+  their primary input (`-Command`, `-Port`, `-Key`, and `-FilePath` respectively) from the pipeline.
+  `Install-Certificate -FilePath` also binds by property name, so file objects from `Get-ChildItem` can
+  be piped directly.
+- Hardened parameter validation: `Invoke-XKCD -Last` requires a value of at least `1`, and the `-Path`
+  parameters of `Get-FileCount`, `Get-FileSize`, `Install-Font`, and `Invoke-XKCD` reject null or empty
+  values.
 
 ### Fixed
 
