@@ -39,6 +39,10 @@
   as an argument or through the pipeline. `[Directory]::GetFiles` threw a terminating error that
   aborted the whole command; each path is now wrapped in a try/catch that writes a non-terminating
   error and continues, so the remaining paths still process.
+- `Get-FileSize` no longer emits a bogus size for a non-existent path. `Get-Item -Path` neither
+  guarded existence nor used `-LiteralPath`, so a missing or wildcard-bearing path yielded a spurious
+  result (and, under `Set-StrictMode -Version 3.0`, a cascade of null-property errors). It now guards
+  the path with `Test-Path -LiteralPath` and reports a single non-terminating error before continuing.
 
 - Removed stale references to the former `Toolbox` module name and hardened the build
   script to exclude these entries reliably.

@@ -11,8 +11,9 @@ function Get-FileSize {
 
         This parameter is mandatory and supports pipeline input.
 
-        Each path must refer to a file. Paths that refer to a directory are
-        skipped and produce a non-terminating error.
+        Each path must refer to an existing file. Paths that do not exist or
+        that refer to a directory are skipped and produce a non-terminating
+        error.
 
         .PARAMETER Unit
         The unit of measurement for the file size in base 2.
@@ -48,14 +49,15 @@ function Get-FileSize {
 
     process {
         foreach ($p in $Path) {
-            $Item = Get-Item -Path $p
+            if (!(Test-Path -LiteralPath $p)) {
+                Write-Error "The path '$p' does not exist." -Category ObjectNotFound
+                continue
+            }
+
+            $Item = Get-Item -LiteralPath $p
 
             if ($Item.PSIsContainer) {
-                Write-Error "The path '$p' refers to a directory, not a file." `
-                    -Category InvalidArgument `
-                    -ErrorAction Continue
-
-                # also continue with the loop flow, not just the error stream
+                Write-Error "The path '$p' refers to a directory, not a file." -Category InvalidArgument
                 continue
             }
 
