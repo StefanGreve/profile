@@ -40,7 +40,8 @@ function Install-Certificate {
         The default value is the current domain user.
 
         .INPUTS
-        None. You can't pipe objects to Install-Certificate.
+        System.String. You can pipe a certificate file path to Install-Certificate, including file
+        objects from Get-ChildItem (bound by their FullName property).
 
         .OUTPUTS
         X509Certificate2. Returns an object representing the installed X.509 certificate.
@@ -56,7 +57,8 @@ function Install-Certificate {
     [OutputType([X509Certificate2])]
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias("FullName", "PSPath")]
         [string] $FilePath,
 
         [Parameter(Mandatory)]
@@ -78,7 +80,9 @@ function Install-Certificate {
                 -Category NotImplemented `
                 -ErrorAction Stop
         }
-
+    }
+    process {
+        # Computed per item so -FilePath can be bound from the pipeline.
         $IsPfx = [Path]::GetExtension($FilePath) -ieq ".pfx"
 
         $Arguments = @{
@@ -89,8 +93,7 @@ function Install-Certificate {
         if ($null -ne $Password) {
             $Arguments.Add("Password", $Password)
         }
-    }
-    process {
+
         $Certificate = if ($IsPfx) {
             Import-PfxCertificate @Arguments
         } else {
@@ -170,8 +173,7 @@ function Install-Certificate {
         $Rule = [FileSystemAccessRule]::new($User, [FileSystemRights]::Read, [AccessControlType]::Allow)
         $Acl.AddAccessRule($Rule)
         Set-Acl -Path $AclPath -AclObject $Acl
-    }
-    end {
+
         Write-Output $Certificate
     }
 }
