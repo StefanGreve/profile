@@ -12,7 +12,7 @@ function Stop-LocalServer {
         this port will be terminated if found.
 
         .INPUTS
-        None. You can't pipe objects to Stop-LocalServer.
+        System.Int32. You can pipe a port number to Stop-LocalServer.
 
         .OUTPUTS
         None. This function does not produce any output.
@@ -31,7 +31,7 @@ function Stop-LocalServer {
     [OutputType([void])]
     [CmdletBinding(ConfirmImpact = "High", SupportsShouldProcess)]
     param (
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, ValueFromPipeline)]
         [int] $Port
     )
 
