@@ -1,6 +1,9 @@
 using namespace System.IO
+using namespace System.Net
 using namespace System.Net.Http
 using namespace System.Net.Http.Headers
+
+using namespace Microsoft.PowerShell.Commands
 
 function Invoke-XKCD {
     <#
@@ -170,38 +173,57 @@ function Invoke-XKCD {
 
             try {
                 $Response = Invoke-RestMethod -Uri "https://xkcd.com/$Id/info.0.json"
-                $FileExtension = $Response.Img.Split("/")[-1].Split(".")[-1]
-                $FilePath = [Path]::Join($Path, "${Id}.${FileExtension}")
+            }
+            catch [HttpResponseException] {
+                # xkcd serves 404 for identifiers that do not map to a comic; any other status is a server fault
+                if ($_.Exception.Response.StatusCode -eq [HttpStatusCode]::NotFound) {
+                    Write-Error "A comic with ID=${Id} does not exist." -Category ObjectNotFound
+                } else {
+                    Write-Error "Failed to retrieve comic ID=${Id}: $($_.Exception.Message)" -Category ConnectionError
+                }
+                continue
+            }
+            catch {
+                # Transport-level failures (DNS, refused connection, TLS, timeout) never reach an HTTP status
+                Write-Error "Failed to retrieve comic ID=${Id}: $($_.Exception.Message)" -Category ConnectionError
+                continue
+            }
 
-                if ($Download.IsPresent -and $PSCmdlet.ShouldProcess($Response.img, "Download $($FilePath)")) {
-                    if ((Test-Path -LiteralPath $FilePath) -and !$Force.IsPresent) {
-                        Write-Warning "'${FilePath}' already exists. Use -Force to overwrite it."
-                    } else {
-                        [int] $PercentComplete = [Math]::Round($i / $Ids.Count * 100, 0)
+            $FileExtension = $Response.Img.Split("/")[-1].Split(".")[-1]
+            $FilePath = [Path]::Join($Path, "${Id}.${FileExtension}")
 
-                        Write-Progress -Activity "Download XKCD ${Id}" `
-                            -Status "${PercentComplete}%" `
-                            -PercentComplete $PercentComplete
+            if ($Download.IsPresent -and $PSCmdlet.ShouldProcess($Response.img, "Download $($FilePath)")) {
+                if ((Test-Path -LiteralPath $FilePath) -and !$Force.IsPresent) {
+                    Write-Warning "'${FilePath}' already exists. Use -Force to overwrite it."
+                } else {
+                    [int] $PercentComplete = [Math]::Round($i / $Ids.Count * 100, 0)
 
-                        Write-Verbose "Downloading $Id to $Path"
+                    Write-Progress -Activity "Download XKCD ${Id}" `
+                        -Status "${PercentComplete}%" `
+                        -PercentComplete $PercentComplete
+
+                    Write-Verbose "Downloading $Id to $Path"
+
+                    try {
                         Invoke-WebRequest -Uri $Response.img -OutFile $FilePath
                     }
+                    catch {
+                        Write-Error "Failed to download comic ID=${Id} from '$($Response.img)': $($_.Exception.Message)" `
+                            -Category $_.CategoryInfo.Category
+                        continue
+                    }
                 }
-
-                Write-Output $([XKCD]::new(
-                    $Id,
-                    $Response.title,
-                    $Response.alt,
-                    $Response.year,
-                    $Response.month,
-                    $Response.day,
-                    "https://xkcd.com/$Id/"
-                ))
-            } catch {
-                Write-Error "A comic with ID=${Id} does not exist." `
-                    -Category InvalidArgument `
-                    -ErrorAction Continue
             }
+
+            Write-Output $([XKCD]::new(
+                $Id,
+                $Response.title,
+                $Response.alt,
+                $Response.year,
+                $Response.month,
+                $Response.day,
+                "https://xkcd.com/$Id/"
+            ))
         }
     }
 }

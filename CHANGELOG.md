@@ -43,6 +43,9 @@
   guarded existence nor used `-LiteralPath`, so a missing or wildcard-bearing path yielded a spurious
   result (and, under `Set-StrictMode -Version 3.0`, a cascade of null-property errors). It now guards
   the path with `Test-Path -LiteralPath` and reports a single non-terminating error before continuing.
+- `Invoke-XKCD` now distinguishes its failure modes instead of labeling every error "A comic with
+  ID=X does not exist." Only an HTTP 404 reports a missing comic; other transport faults and download
+  failures now report their own message and preserve the underlying error category.
 
 - Removed stale references to the former `Toolbox` module name and hardened the build
   script to exclude these entries reliably.
