@@ -14,6 +14,8 @@
 - `Invoke-TextToSpeech` now works on Windows. The `Voice` dynamic parameter was never bound to a
   `$Voice` variable, so the `begin` block threw under `Set-StrictMode -Version 3.0` before any speech;
   it now reads the value from `$PSBoundParameters`.
+- `Invoke-TextToSpeech` no longer clips the first word of the spoken message. A short leading pause now
+  primes the audio device so its start-up latency does not swallow the opening syllables.
 
 - Removed stale references to the former `Toolbox` module name and hardened the build
   script to exclude these entries reliably.

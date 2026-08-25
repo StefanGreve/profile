@@ -114,7 +114,12 @@ function Invoke-TextToSpeech {
     }
 
     process {
-        $SpeechSynthesizer.Speak($Message)
+        # Prime the audio device with a short pause so its start-up latency does not
+        # clip the first word of the utterance.
+        $Prompt = New-Object -TypeName System.Speech.Synthesis.PromptBuilder
+        $Prompt.AppendBreak([System.Speech.Synthesis.PromptBreak]::Small)
+        $Prompt.AppendText($Message)
+        $SpeechSynthesizer.Speak($Prompt)
     }
 
     clean {
