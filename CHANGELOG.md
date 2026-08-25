@@ -4,68 +4,41 @@
 
 ### Changed
 
-- `Invoke-XKCD -Download` now skips existing files with a warning instead of overwriting them; pass
-  `-Force` to overwrite. The `-Force` switch was previously declared and documented but had no effect.
-- `Invoke-TextToSpeech` now caches the installed-voice list for the session instead of constructing a
-  `SpeechSynthesizer` on every invocation, reducing parameter-binding and tab-completion overhead.
-- `Set-MonitorBrightness -Brightness` is now mandatory, so a bare `Set-MonitorBrightness` no longer
-  defaults to `0` and blanks the screen.
-- `Get-Definition`, `Stop-LocalServer`, `Get-EnvironmentVariable`, and `Install-Certificate` now accept
-  their primary input (`-Command`, `-Port`, `-Key`, and `-FilePath` respectively) from the pipeline.
-  `Install-Certificate -FilePath` also binds by property name, so file objects from `Get-ChildItem` can
-  be piped directly. Their failures are now non-terminating (previously `Write-Error -ErrorAction
-  Stop`), so a bad value writes an error and continues rather than throwing, and one bad piped item no
-  longer aborts the rest of the batch; pass `-ErrorAction Stop` to restore halting on the first failure.
-- Hardened parameter validation: `Invoke-XKCD -Last` requires a value of at least `1`, and the `-Path`
-  parameters of `Get-FileCount`, `Get-FileSize`, `Install-Font`, and `Invoke-XKCD` reject null or empty
-  values.
-- `Export-Branch` now verifies that `git` is available before running and fails with a clear
-  terminating error if it is not, instead of emitting confusing output from its `git` calls.
+- `Invoke-XKCD -Download` skips existing files with a warning unless `-Force` is passed; `-Force`
+  previously had no effect.
+- `Invoke-TextToSpeech` caches the installed-voice list per session instead of building a
+  `SpeechSynthesizer` on every call.
+- `Set-MonitorBrightness -Brightness` is now mandatory, so a bare call no longer defaults to `0` and
+  blanks the screen.
+- `Get-Definition`, `Stop-LocalServer`, `Get-EnvironmentVariable`, and `Install-Certificate` accept
+  their primary input from the pipeline (`Install-Certificate -FilePath` also by property name). Their
+  per-item errors are now non-terminating; pass `-ErrorAction Stop` to halt on the first failure.
+- Hardened parameter validation: `Invoke-XKCD -Last` requires at least `1`, and the `-Path` parameters
+  of `Get-FileCount`, `Get-FileSize`, `Install-Font`, and `Invoke-XKCD` reject null or empty values.
+- `Export-Branch` verifies that `git` is available before running and fails clearly if it is not.
 
 ### Fixed
 
-- `Invoke-TextToSpeech` now works on Windows. The `Voice` dynamic parameter was never bound to a
-  `$Voice` variable, so the `begin` block threw under `Set-StrictMode -Version 3.0` before any speech;
-  it now reads the value from `$PSBoundParameters`.
-- `Invoke-TextToSpeech` no longer clips the first word of the spoken message. A short leading pause now
-  primes the audio device so its start-up latency does not swallow the opening syllables.
-- `Test-Elevation` now reports elevation correctly on macOS. It compared the empty stdout of
-  `sudo -n true` against `$true` and so always returned `$false`; it now checks the root user ID
-  (UID 0), consistent with the Linux path.
-- `Start-Timer` no longer throws a divide-by-zero error for a zero duration; each of `-Seconds`,
-  `-Minutes`, and `-Hours` now requires a value of at least `1`.
-- `Start-Timer` no longer overshoots the requested duration by roughly a second. The loop rounded the
-  elapsed time to an `[int]` and used an inclusive `-le` comparison, pushing the exit threshold to about
-  `duration + 0.5s`; it now compares the raw elapsed seconds with `-lt`.
-- `Battery` table view now colors a full (100%) charge green, matching the list view. Its range check
-  used `-lt 100` while the list used `-le 100`, so a full battery rendered white in the table.
-- `Get-FileCount` no longer stops at the first missing or inaccessible path when several are supplied
-  as an argument or through the pipeline. `[Directory]::GetFiles` threw a terminating error that
-  aborted the whole command; each path is now wrapped in a try/catch that writes a non-terminating
-  error and continues, so the remaining paths still process.
-- `Get-FileSize` no longer emits a bogus size for a non-existent path. `Get-Item -Path` neither
-  guarded existence nor used `-LiteralPath`, so a missing or wildcard-bearing path yielded a spurious
-  result (and, under `Set-StrictMode -Version 3.0`, a cascade of null-property errors). It now guards
-  the path with `Test-Path -LiteralPath` and reports a single non-terminating error before continuing.
-- `Invoke-XKCD` now distinguishes its failure modes instead of labeling every error "A comic with
-  ID=X does not exist." Only an HTTP 404 reports a missing comic; other transport faults and download
-  failures now report their own message and preserve the underlying error category.
-
-- Removed stale references to the former `Toolbox` module name and hardened the build
-  script to exclude these entries reliably.
-- Corrected the comment-based help across several public Cmdlets to match their implementation.
-- `Get-MaxPathLength` now returns an `Int32` on Linux and macOS instead of the raw `getconf` string.
-- `Get-Salt` now returns a `System.Byte[]` as documented, instead of an enumerated `Object[]`.
-- `Get-FileSize` now always returns a `System.Double`; the default `B` unit and any exact conversion
-  previously returned an `Int64`.
-- `Set-MonitorBrightness` now actually changes the brightness. It invoked the WMI method directly on a
-  `CimInstance` (which exposes no callable methods), so every call failed and reported a misleading
-  unsupported-hardware error; it now uses `Invoke-CimMethod`.
-- `Set-MonitorBrightness` no longer masks the real device error when the WMI query fails. `$WmiMonitor`
-  is now initialized to `$null`, so the `finally` cleanup does not throw under `Set-StrictMode -Version 3.0`.
-- `Set-PowerState` no longer emits the `Boolean` returned by `SetSuspendState` to the pipeline.
-- `Set-SystemTheme` no longer emits the value echoed by `osascript` to the pipeline on macOS, so its
-  `void` output contract holds on all platforms.
+- `Invoke-TextToSpeech` works on Windows again (the `Voice` parameter is now read from
+  `$PSBoundParameters`) and no longer clips the first spoken word.
+- `Test-Elevation` reports elevation correctly on macOS by checking for a root user ID (UID 0).
+- `Start-Timer` rejects a zero duration (`-Seconds`, `-Minutes`, and `-Hours` require at least `1`) and
+  no longer overshoots the requested duration by about a second.
+- `Battery` table view colors a full (100%) charge green, matching the list view.
+- `Get-FileCount` reports a missing or inaccessible path as a non-terminating error instead of aborting
+  the whole command.
+- `Get-FileSize` always returns a `System.Double` and guards paths with `Test-Path -LiteralPath`, so a
+  missing or wildcard-bearing path no longer yields a bogus size.
+- `Invoke-XKCD` distinguishes a 404 (missing comic) from transport and download failures instead of
+  labeling every error "A comic with ID=X does not exist."
+- `Get-MaxPathLength` returns an `Int32` on Linux and macOS instead of the raw `getconf` string.
+- `Get-Salt` returns a `System.Byte[]` as documented instead of an enumerated `Object[]`.
+- `Set-MonitorBrightness` actually changes brightness (via `Invoke-CimMethod`) and no longer throws in
+  its `finally` cleanup when the WMI query fails.
+- `Set-PowerState` no longer emits the `Boolean` from `SetSuspendState` to the pipeline.
+- `Set-SystemTheme` no longer emits the `osascript` echo on macOS.
+- Removed stale references to the former `Toolbox` module name and hardened the build script.
+- Corrected comment-based help across several public Cmdlets.
 
 ## Version 3.0.0 (22 Aug 2026)
 
