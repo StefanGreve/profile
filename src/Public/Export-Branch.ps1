@@ -51,6 +51,12 @@ function Export-Branch {
     )
 
     begin {
+        if (!(Get-Command git -ErrorAction SilentlyContinue)) {
+            Write-Error "Git is not installed or could not be found in the current session." `
+                -Category NotInstalled `
+                -ErrorAction Stop
+        }
+
         git rev-parse --is-inside-work-tree *> $null
 
         if ($LASTEXITCODE -ne 0) {

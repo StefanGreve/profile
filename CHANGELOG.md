@@ -19,6 +19,8 @@
 - Hardened parameter validation: `Invoke-XKCD -Last` requires a value of at least `1`, and the `-Path`
   parameters of `Get-FileCount`, `Get-FileSize`, `Install-Font`, and `Invoke-XKCD` reject null or empty
   values.
+- `Export-Branch` now verifies that `git` is available before running and fails with a clear
+  terminating error if it is not, instead of emitting confusing output from its `git` calls.
 
 ### Fixed
 
