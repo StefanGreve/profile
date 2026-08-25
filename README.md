@@ -63,13 +63,12 @@ the form of a JSON schema file.
 > }
 > ```
 
-## PowerTools Platform Support
+## Platform Support
 
 The module targets Windows first, but most Cmdlets run cross-platform. The table below summarizes
-which operating systems each exported Cmdlet supports. Unsupported platforms throw a `NotImplemented`
-error rather than failing silently.
-
-Legend: ✅ supported, ⚠️ partial, ❌ not supported.
+which operating systems each exported Cmdlet supports. Cmdlets that are unsupported on a platform
+throw a `NotImplemented` error rather than failing silently. The PowerShell profile (`profile.ps1`)
+itself is supported on all major platforms.
 
 | Cmdlet                       | ![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white) | ![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=F0F0F0&logoSize=auto) | ![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black) |
 | ---------------------------- | :--------: | :------: | :------: |
@@ -102,11 +101,11 @@ Legend: ✅ supported, ⚠️ partial, ❌ not supported.
 
 ## Developer Notes
 
-Set up the development environment:
+Set up the development environment. This restores the local .NET tools and installs the Husky Git
+hooks:
 
-```powershell
-dotnet tool restore
-dotnet husky install
+```pwsh
+./scripts/init.ps1
 ```
 
 Set your `ExecutionPolicy` to `Unrestricted` in order to run any of these
@@ -115,7 +114,7 @@ On non-Windows computers, `Unrestricted` is already the default `ExecutionPolicy
 and cannot be changed (see also:
 [About Execution Policy](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.4#long-description))
 
-```powershell
+```pwsh
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted
 ```
 
@@ -123,7 +122,7 @@ Use the `dev.ps1` script to build and load a local development version of the
 `PowerTools` module. It unloads the currently installed module, builds a local
 `0.0.0` version, and re-imports it from source.
 
-```powershell
+```pwsh
 ./scripts/dev.ps1
 ```
 
@@ -133,7 +132,7 @@ GitHub Actions workflow, which takes the version number as an input.
 Run the unit tests with the `test.ps1` script. Pass `-Build` to rebuild the module
 before the test run.
 
-```powershell
+```pwsh
 ./scripts/test.ps1 -Build
 ```
 
