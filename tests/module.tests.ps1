@@ -30,8 +30,9 @@ Describe "Get-Definition" {
     }
 
     Context "Negative Testing" {
-        It "Should return an error if the argument is invalid" {
-            { Get-Definition Get-Nothing } | Should -Throw -Because "this command does not exist"
+        It "Should emit a non-terminating error if the argument is invalid" {
+            Get-Definition Get-Nothing -ErrorAction SilentlyContinue -ErrorVariable DefinitionError
+            $DefinitionError | Should -Not -BeNullOrEmpty -Because "this command does not exist"
         }
     }
 }
@@ -61,8 +62,9 @@ Describe "Get-EnvironmentVariable" {
     }
 
     Context "Negative Testing" {
-        It "Should throw when the variable is not defined" {
-            { Get-EnvironmentVariable -Key $Key -Scope Process } | Should -Throw -Because "the variable is empty or undefined"
+        It "Should emit a non-terminating error when the variable is not defined" {
+            Get-EnvironmentVariable -Key $Key -Scope Process -ErrorAction SilentlyContinue -ErrorVariable EnvironmentError
+            $EnvironmentError | Should -Not -BeNullOrEmpty -Because "the variable is empty or undefined"
         }
     }
 }
@@ -108,7 +110,7 @@ Describe "Get-FileSize" {
 
     Context "Negative Testing" {
         It "Should skip directories and emit a non-terminating error" {
-            $Result = Get-FileSize -Path $TestDrive -ErrorVariable FileSizeError 2>$null
+            $Result = Get-FileSize -Path $TestDrive -ErrorAction SilentlyContinue -ErrorVariable FileSizeError
             $Result | Should -BeNullOrEmpty -Because "a directory is not a file"
             $FileSizeError | Should -Not -BeNullOrEmpty -Because "a directory path is invalid input"
         }
