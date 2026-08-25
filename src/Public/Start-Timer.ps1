@@ -40,12 +40,15 @@ function Start-Timer {
     [OutputType([void])]
     [CmdletBinding()]
     param(
+        [ValidateRange(1, [int]::MaxValue)]
         [Parameter(Mandatory, ParameterSetName = "Seconds")]
         [int] $Seconds,
 
+        [ValidateRange(1, [int]::MaxValue)]
         [Parameter(Mandatory, ParameterSetName = "Minutes")]
         [int] $Minutes,
 
+        [ValidateRange(1, [int]::MaxValue)]
         [Parameter(Mandatory, ParameterSetName = "Hours")]
         [int] $Hours
     )

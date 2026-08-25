@@ -21,6 +21,8 @@
 - `Test-Elevation` now reports elevation correctly on macOS. It compared the empty stdout of
   `sudo -n true` against `$true` and so always returned `$false`; it now checks the root user ID
   (UID 0), consistent with the Linux path.
+- `Start-Timer` no longer throws a divide-by-zero error for a zero duration; each of `-Seconds`,
+  `-Minutes`, and `-Hours` now requires a value of at least `1`.
 
 - Removed stale references to the former `Toolbox` module name and hardened the build
   script to exclude these entries reliably.
