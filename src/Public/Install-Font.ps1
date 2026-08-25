@@ -49,6 +49,7 @@ function Install-Font {
     param(
         [Parameter(Position = 0, Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [Alias("FullName", "PSPath")]
+        [ValidateNotNullOrEmpty()]
         [string[]] $Path,
 
         [Parameter(Position = 1)]
