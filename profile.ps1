@@ -175,12 +175,15 @@ if (Get-Command "dotnet-suggest" -ErrorAction SilentlyContinue) {
 $env:DOTNET_SUGGEST_SCRIPT_VERSION = "1.0.2"
 #endregion
 
-# Opt-in per tool; the more completions you enable, the slower the profile loads.
+# Opt-in per tool; the more completions you enable, the slower the profile loads. Except for winget,
+# each block below spawns the tool and pipes its emitted script through Invoke-Expression at load, so
+# the parse cost scales with the script size noted above each registration.
 $NativeCompletions = $SettingsFile.RegisterNativeCompletions
 
 if (($NativeCompletions -contains "winget") -and (Get-Command "winget" -ErrorAction SilentlyContinue)) {
     # winget is a native C++ application, so it exposes its own completion backend
-    # independent of what dotnet-suggest is built upon
+    # independent of what dotnet-suggest is built upon. Registers a static scriptblock and defers the
+    # winget complete subprocess to completion time, so its impact on profile load is negligible.
     Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
         param($WordToComplete, $CommandAst, $CursorPosition)
 
@@ -194,35 +197,42 @@ if (($NativeCompletions -contains "winget") -and (Get-Command "winget" -ErrorAct
     }
 }
 
+# gh emits a ~11 KB completion script; light impact on profile load.
 if (($NativeCompletions -contains "gh") -and (Get-Command "gh" -ErrorAction SilentlyContinue)) {
     gh completion --shell powershell | Out-String | Invoke-Expression
 }
 
+# bat emits an ~18 KB completion script; light impact on profile load.
 if (($NativeCompletions -contains "bat") -and (Get-Command "bat" -ErrorAction SilentlyContinue)) {
     bat --completion ps1 | Out-String | Invoke-Expression
 }
 
+# uv emits a very large (~730 KB) completion script; heavy impact on profile load.
 if (($NativeCompletions -contains "uv") -and (Get-Command "uv" -ErrorAction SilentlyContinue)) {
     uv generate-shell-completion powershell | Out-String | Invoke-Expression
 }
 
+# pip emits a sub-1 KB completion script; negligible impact on profile load.
 if (($NativeCompletions -contains "pip") -and (Get-Command "pip" -ErrorAction SilentlyContinue)) {
     pip completion --powershell | Out-String | Invoke-Expression
 }
 
+# op emits a ~10 KB completion script; light impact on profile load.
 if (($NativeCompletions -contains "op") -and (Get-Command "op" -ErrorAction SilentlyContinue)) {
     op completion powershell | Out-String | Invoke-Expression
 }
 
+# delta emits a ~21 KB completion script; light impact on profile load.
 if (($NativeCompletions -contains "delta") -and (Get-Command "delta" -ErrorAction SilentlyContinue)) {
     delta --generate-completion powershell | Out-String | Invoke-Expression
 }
 
+# rustup emits a ~47 KB completion script; minor impact on profile load.
 if (($NativeCompletions -contains "rustup") -and (Get-Command "rustup" -ErrorAction SilentlyContinue)) {
     rustup completions powershell | Out-String | Invoke-Expression
 }
 
-# deno emits a very large completion script (~635 KB), so enabling it noticeably slows profile load.
+# deno emits a very large (~625 KB) completion script; heavy impact on profile load.
 if (($NativeCompletions -contains "deno") -and (Get-Command "deno" -ErrorAction SilentlyContinue)) {
     deno completions powershell | Out-String | Invoke-Expression
 }
