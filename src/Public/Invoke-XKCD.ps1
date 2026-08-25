@@ -109,9 +109,11 @@ function Invoke-XKCD {
         [Parameter(Mandatory, ParameterSetName = "Range")]
         [int] $To,
 
+        [ValidateRange(1, [int]::MaxValue)]
         [Parameter(ParameterSetName = "Last")]
         [int] $Last = 1,
 
+        [ValidateNotNullOrEmpty()]
         [string] $Path = $PWD.Path,
 
         [switch] $Download,
