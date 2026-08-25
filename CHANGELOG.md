@@ -26,6 +26,8 @@
 - `Start-Timer` no longer overshoots the requested duration by roughly a second. The loop rounded the
   elapsed time to an `[int]` and used an inclusive `-le` comparison, pushing the exit threshold to about
   `duration + 0.5s`; it now compares the raw elapsed seconds with `-lt`.
+- `Battery` table view now colors a full (100%) charge green, matching the list view. Its range check
+  used `-lt 100` while the list used `-le 100`, so a full battery rendered white in the table.
 
 - Removed stale references to the former `Toolbox` module name and hardened the build
   script to exclude these entries reliably.

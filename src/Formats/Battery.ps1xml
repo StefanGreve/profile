@@ -91,7 +91,7 @@ IN CONNECTION WITH THE USE OF THIS CODE AND INFORMATION REMAINS WITH THE USER.
                             <TableColumnItem>
                                 <ScriptBlock>
                                     $ChargeColor = switch ($_.ChargeRemaining) {
-                                        { $_ -ge 70 -and $_ -lt 100 } {
+                                        { $_ -ge 70 -and $_ -le 100 } {
                                             $PSStyle.Foreground.Green
                                         }
                                         { $_ -ge 30 -and $_ -le 69 } {
