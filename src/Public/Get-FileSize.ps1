@@ -38,6 +38,7 @@ function Get-FileSize {
     [CmdletBinding()]
     param(
         [Parameter(Position = 0, Mandatory, ValueFromPipeline)]
+        [ValidateNotNullOrEmpty()]
         [string[]] $Path,
 
         [ValidateSet("B", "KiB", "MiB", "GiB", "TiB", "PiB")]
