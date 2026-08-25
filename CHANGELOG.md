@@ -4,11 +4,16 @@
 
 ### Changed
 
-- Renamed the `Prompt.EnableBranchUserName` setting to `Prompt.EnableGitUserName`.
 - `Invoke-XKCD -Download` now skips existing files with a warning instead of overwriting them; pass
   `-Force` to overwrite. The `-Force` switch was previously declared and documented but had no effect.
+- `Invoke-TextToSpeech` now caches the installed-voice list for the session instead of constructing a
+  `SpeechSynthesizer` on every invocation, reducing parameter-binding and tab-completion overhead.
 
 ### Fixed
+
+- `Invoke-TextToSpeech` now works on Windows. The `Voice` dynamic parameter was never bound to a
+  `$Voice` variable, so the `begin` block threw under `Set-StrictMode -Version 3.0` before any speech;
+  it now reads the value from `$PSBoundParameters`.
 
 - Removed stale references to the former `Toolbox` module name and hardened the build
   script to exclude these entries reliably.

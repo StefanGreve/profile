@@ -72,12 +72,18 @@ function Invoke-TextToSpeech {
             $AttributeCollection = [Collection[Attribute]]::new()
             $AttributeCollection.Add($VoiceAttribute)
 
-            Add-Type -AssemblyName System.Speech
-            $SpeechSynthesizer = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
-            $Voices = $SpeechSynthesizer.GetInstalledVoices().VoiceInfo.Name
-            $SpeechSynthesizer.Dispose()
+            $Voices = Get-Variable -Name InstalledVoices -Scope Script -ValueOnly -ErrorAction Ignore
 
-            $ValidateSetAttribute = [ValidateSetAttribute]::new([string[]]$Voices)
+            if ($null -eq $Voices) {
+                Add-Type -AssemblyName System.Speech
+                $SpeechSynthesizer = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
+                $Voices = [string[]]$SpeechSynthesizer.GetInstalledVoices().VoiceInfo.Name
+                $SpeechSynthesizer.Dispose()
+
+                Set-Variable -Name InstalledVoices -Scope Script -Value $Voices
+            }
+
+            $ValidateSetAttribute = [ValidateSetAttribute]::new($Voices)
             $AttributeCollection.Add($ValidateSetAttribute)
 
             $ParameterName = "Voice"
