@@ -49,8 +49,8 @@ function Get-Definition {
 
         if (-not $ResolvedCommand) {
             Write-Error "The command `"$Command`" is not recognized as a name of a cmdlet, function, or alias." `
-                -Category InvalidArgument `
-                -ErrorAction Stop
+                -Category InvalidArgument
+            return
         }
 
         $Definition = $ResolvedCommand.Definition

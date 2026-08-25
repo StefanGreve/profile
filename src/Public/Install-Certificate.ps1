@@ -135,8 +135,8 @@ function Install-Certificate {
             }
             catch [ArgumentException], [CryptographicException] {
                 Write-Error "Failed to load certificate '$FilePath' to the certificate store: $_" `
-                    -Category InvalidData `
-                    -ErrorAction Stop
+                    -Category InvalidData
+                return
             }
             finally {
                 $CertificateStore.Close()
@@ -154,8 +154,8 @@ function Install-Certificate {
 
         if ($null -eq $PrivateKey) {
             Write-Error "The certificate '$FilePath' has no private key." `
-                -Category ObjectNotFound `
-                -ErrorAction Stop
+                -Category ObjectNotFound
+            return
         }
 
         $UniqueName = $PrivateKey.Key.UniqueName
