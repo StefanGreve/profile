@@ -32,13 +32,14 @@ function Set-MonitorBrightness {
     [CmdletBinding()]
     param(
         [ValidateRange(0, 100)]
-        [Parameter(Position = 0)]
+        [Parameter(Mandatory, Position = 0)]
         [int] $Brightness
     )
 
     process {
         if ($IsWindows) {
             $Timeout = 1 # in seconds
+            $WmiMonitor = $null
 
             try {
                 $WmiMonitor = Get-CimInstance -Namespace root/WMI -Class WmiMonitorBrightnessMethods

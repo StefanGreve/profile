@@ -8,6 +8,8 @@
   `-Force` to overwrite. The `-Force` switch was previously declared and documented but had no effect.
 - `Invoke-TextToSpeech` now caches the installed-voice list for the session instead of constructing a
   `SpeechSynthesizer` on every invocation, reducing parameter-binding and tab-completion overhead.
+- `Set-MonitorBrightness -Brightness` is now mandatory, so a bare `Set-MonitorBrightness` no longer
+  defaults to `0` and blanks the screen.
 
 ### Fixed
 
@@ -30,6 +32,8 @@
 - `Set-MonitorBrightness` now actually changes the brightness. It invoked the WMI method directly on a
   `CimInstance` (which exposes no callable methods), so every call failed and reported a misleading
   unsupported-hardware error; it now uses `Invoke-CimMethod`.
+- `Set-MonitorBrightness` no longer masks the real device error when the WMI query fails. `$WmiMonitor`
+  is now initialized to `$null`, so the `finally` cleanup does not throw under `Set-StrictMode -Version 3.0`.
 - `Set-PowerState` no longer emits the `Boolean` returned by `SetSuspendState` to the pipeline.
 - `Set-SystemTheme` no longer emits the value echoed by `osascript` to the pipeline on macOS, so its
   `void` output contract holds on all platforms.
