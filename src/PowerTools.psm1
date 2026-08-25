@@ -3,8 +3,6 @@ using namespace System.Management.Automation
 
 Set-StrictMode -Version 3.0
 
-$IsDebugMode = $MyInvocation.MyCommand.Path -like "*src*"
-
 #region Export Functions and Classes
 
 $Classes = @(Get-ChildItem -Path "${PSScriptRoot}\Classes\*.ps1" -ErrorAction SilentlyContinue)
@@ -15,15 +13,10 @@ foreach ($Import in @($Classes + $Private + $Public)) {
     try {
         $File = $Import.FullName
         . $File
-
-        if (!$IsDebugMode) { continue }
-
-        Write-Host "[ OK ] " -ForegroundColor Green -NoNewline
-        Write-Host "Importing ${File}"
+        Write-Debug "Importing ${File}"
     }
     catch {
-        Write-Host "[ ER ] " -ForegroundColor Red -NoNewline
-        Write-Host "Failed to import file ${File}: $_"
+        Write-Error "Failed to import file ${File}: $_" -Category InvalidOperation
     }
 }
 
