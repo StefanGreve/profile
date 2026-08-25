@@ -97,6 +97,7 @@ function Invoke-TextToSpeech {
 
         Add-Type -AssemblyName System.Speech
         $SpeechSynthesizer = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
+        $Voice = $PSBoundParameters['Voice']
 
         if (![string]::IsNullOrEmpty($Voice)) {
             $SpeechSynthesizer.SelectVoice($Voice)
