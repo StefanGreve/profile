@@ -13,7 +13,6 @@
         "EnableTimestamp": true
     },
     "RegisterNativeCompletions": [
-        "bat",
         "gh",
         "pip",
         "winget"

@@ -24,14 +24,16 @@ irm "https://raw.githubusercontent.com/StefanGreve/profile/master/install.ps1" |
 
 See `Get-Help ./install.ps1` for the `-RepositoryPath` and `-ProfileKind` options.
 
-## Configuration
+## Settings Documentation
 
 The profile reads its configuration from a `settings.json` file that lives next to
 `profile.ps1` (`install.ps1` downloads a default copy for you). Edit that file to
-customize the profile:
+customize the profile; documentation for the configuration options is provided in
+the form of a JSON schema file.
 
 ```json
 {
+    "$schema": "https://raw.githubusercontent.com/StefanGreve/profile/master/settings.schema.json",
     "DefaultCulture": "en-US",
     "DefaultEncoding": "utf8",
     "DotSourceDirectory": "~/Documents/Scripts",
@@ -42,30 +44,9 @@ customize the profile:
         "EnableGitUserName": true,
         "EnableTimestamp": true
     },
-    "RegisterNativeCompletions": [ "bat", "gh", "pip", "winget" ]
+    "RegisterNativeCompletions": [ "gh", "pip", "winget" ]
 }
 ```
-
-<details>
-<summary>Settings Documentation</summary>
-
-- `DefaultCulture`: Culture used for the session (defaults to `en-US`).
-- `DefaultEncoding`: Default `-Encoding` applied to Cmdlets (defaults to `utf8`).
-- `DotSourceDirectory`: Directory to dot-source `*.ps1` scripts from on profile
-  launch. A warning is emitted when the path does not exist.
-- `EnableClassicProgressbar`: Use the classic progress bar (cyan background, yellow
-  text) instead of the default minimal view.
-- `Modules`: PowerShell module names to import on profile launch. A warning is
-  emitted for any module that is not installed.
-- `Prompt.EnableBatteryStatus`: Display the remaining battery charge in the prompt
-  while running on battery power.
-- `Prompt.EnableGitUserName`: Display the active Git user name next to the branch
-  name in the console prompt.
-- `Prompt.EnableTimestamp`: Display the current wall-clock time (`HH:mm:ss`) next to
-  the elapsed execution time.
-- `RegisterNativeCompletions`: Native tools to register argument completers for on
-  launch, one of `bat`, `delta`, `deno`, `gh`, `op`, `pip`, `rustup`, `uv`, `winget`.
-  Each is only registered when also installed.
 
 > [!WARNING]
 > Enabling too many tab completions can degrade profile load performance slightly,
@@ -78,12 +59,9 @@ customize the profile:
 > so add the following to your `settings.json` (User or Workspace) to allow it:
 > ```json
 > "json.schemaDownload.trustedDomains": {
->     "https://aka.ms/": true,
 >     "https://raw.githubusercontent.com/": true
 > }
 > ```
-
-</details>
 
 ## Developer Notes
 
