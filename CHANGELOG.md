@@ -16,6 +16,9 @@
   it now reads the value from `$PSBoundParameters`.
 - `Invoke-TextToSpeech` no longer clips the first word of the spoken message. A short leading pause now
   primes the audio device so its start-up latency does not swallow the opening syllables.
+- `Test-Elevation` now reports elevation correctly on macOS. It compared the empty stdout of
+  `sudo -n true` against `$true` and so always returned `$false`; it now checks the root user ID
+  (UID 0), consistent with the Linux path.
 
 - Removed stale references to the former `Toolbox` module name and hardened the build
   script to exclude these entries reliably.

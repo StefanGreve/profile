@@ -7,9 +7,8 @@ function Test-Elevation {
 
         .DESCRIPTION
         Tests whether the current user runs with elevated privileges. On Windows this checks
-        membership in the built-in Administrators role; on Linux it checks for a root user ID
-        (UID 0); on MacOS it probes for passwordless sudo access. Returns $null on operating
-        systems that cannot be determined.
+        membership in the built-in Administrators role; on Linux and macOS it checks for a root
+        user ID (UID 0). Returns $null on operating systems that cannot be determined.
 
         .INPUTS
         None. You can't pipe objects to Test-Elevation.
@@ -38,10 +37,8 @@ function Test-Elevation {
             $CurrentUser = [Principal.WindowsPrincipal][Principal.WindowsIdentity]::GetCurrent()
             $Administrator = [Principal.WindowsBuiltInRole]::Administrator
             $CurrentUser.IsInRole($Administrator)
-        } elseif ($IsLinux) {
+        } elseif ($IsLinux -or $IsMacOS) {
             $(id -u) -eq 0
-        } elseif ($IsMacOS) {
-            $(sudo -n true 2>$null) -eq $true
         } else {
             $null
         }

@@ -29,14 +29,13 @@ if ($SettingsFile.EnableClassicProgressbar -eq $true) {
     $Host.PrivateData.ProgressForegroundColor = "Yellow"
 }
 
+# Mirrors Test-Elevation so this profile doesn't depend on the PowerTools module
 $global:IsAdmin = if ($IsWindows) {
     $CurrentUser = [Principal.WindowsPrincipal][Principal.WindowsIdentity]::GetCurrent()
     $Administrator = [Principal.WindowsBuiltInRole]::Administrator
     $CurrentUser.IsInRole($Administrator)
-} elseif ($IsLinux) {
+} elseif ($IsLinux -or $IsMacOS) {
     $(id -u) -eq 0
-} elseif ($IsMacOS) {
-    $(sudo -n true 2>$null) -eq $true
 } else {
     $null
 }
