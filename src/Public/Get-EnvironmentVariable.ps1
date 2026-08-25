@@ -17,7 +17,7 @@ function Get-EnvironmentVariable {
         The default is Process. On Linux and macOS, only the Process scope is supported.
 
         .INPUTS
-        None. You can't pipe objects to Get-EnvironmentVariable.
+        System.String. You can pipe a variable name to Get-EnvironmentVariable.
 
         .OUTPUTS
         System.String[]. A collection of strings representing the values of the retrieved environment variable(s).
@@ -43,7 +43,7 @@ function Get-EnvironmentVariable {
     [OutputType([string[]])]
     [CmdletBinding()]
     param(
-        [Parameter(Position = 0)]
+        [Parameter(Position = 0, ValueFromPipeline)]
         [string] $Key = "PATH",
 
         [Parameter(Position = 1)]
