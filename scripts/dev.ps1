@@ -1,5 +1,8 @@
 using namespace System.IO
 
+[CmdletBinding()]
+param()
+
 begin {
     $ModuleName = "PowerTools"
     $ManifestPath = "${ModuleName}.psd1"

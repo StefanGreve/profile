@@ -1,5 +1,6 @@
 using namespace System.IO
 
+[CmdletBinding()]
 param(
     [string] $ModuleName = "PowerTools",
 
