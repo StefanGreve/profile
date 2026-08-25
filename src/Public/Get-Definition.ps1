@@ -15,7 +15,7 @@ function Get-Definition {
         The name of the PowerShell command. Aliases are supported and resolved to their underlying command.
 
         .INPUTS
-        None. You can't pipe objects to Get-Definition.
+        System.String. You can pipe a command name to Get-Definition.
 
         .OUTPUTS
         The definition of the specified command is returned as a string.
@@ -36,7 +36,7 @@ function Get-Definition {
     [OutputType([string])]
     [CmdletBinding()]
     param(
-        [Parameter(Position = 0)]
+        [Parameter(Position = 0, ValueFromPipeline)]
         [string] $Command
     )
 
