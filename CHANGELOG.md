@@ -35,6 +35,10 @@
   `duration + 0.5s`; it now compares the raw elapsed seconds with `-lt`.
 - `Battery` table view now colors a full (100%) charge green, matching the list view. Its range check
   used `-lt 100` while the list used `-le 100`, so a full battery rendered white in the table.
+- `Get-FileCount` no longer stops at the first missing or inaccessible path when several are supplied
+  as an argument or through the pipeline. `[Directory]::GetFiles` threw a terminating error that
+  aborted the whole command; each path is now wrapped in a try/catch that writes a non-terminating
+  error and continues, so the remaining paths still process.
 
 - Removed stale references to the former `Toolbox` module name and hardened the build
   script to exclude these entries reliably.

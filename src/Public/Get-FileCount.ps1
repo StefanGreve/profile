@@ -48,7 +48,25 @@ function Get-FileCount {
     process {
         foreach ($p in $Path) {
             # Resolve $p against $PWD (not the process CWD that GetFiles would use) and expand ~ and PSDrives.
-            $FileCount = [Directory]::GetFiles($PSCmdlet.GetUnresolvedProviderPathFromPSPath($p), "*", $SearchOption).Length
+            $ResolvedPath = $PSCmdlet.GetUnresolvedProviderPathFromPSPath($p)
+
+            # Report a non-terminating error and skip so the remaining pipeline paths still process.
+            try {
+                $FileCount = [Directory]::GetFiles($ResolvedPath, "*", $SearchOption).Length
+            }
+            catch [System.IO.DirectoryNotFoundException] {
+                Write-Error "The directory `"$p`" does not exist." -Category ObjectNotFound
+                continue
+            }
+            catch [System.UnauthorizedAccessException] {
+                Write-Error "Access to the directory `"$p`" is denied." -Category PermissionDenied
+                continue
+            }
+            catch {
+                Write-Error "Failed to count files in `"$p`": $($_.Exception.Message)" -Category ReadError
+                continue
+            }
+
             Write-Output $FileCount
         }
     }
