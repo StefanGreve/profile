@@ -12,7 +12,7 @@
     On Windows, this script must be run from an elevated (administrator) session,
     since creating the symbolic link requires administrator rights.
 
-    .PARAMETER RepositoryPath
+    .PARAMETER InstallDirectory
     Parent directory into which profile.ps1 is downloaded. The file is placed in a
     "profile" subdirectory of this path. Defaults to the current working directory.
 
@@ -33,7 +33,7 @@
     Downloads profile.ps1 into ./profile and links it to the CurrentUserAllHosts profile.
 
     .EXAMPLE
-    PS> ./install.ps1 -RepositoryPath ~/repos -ProfileKind CurrentUserCurrentHost
+    PS> ./install.ps1 -InstallDirectory ~/repos -ProfileKind CurrentUserCurrentHost
 
     Downloads profile.ps1 into ~/repos/profile and links it to the
     CurrentUserCurrentHost profile.
@@ -43,8 +43,9 @@ using namespace System.IO
 
 [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Medium")]
 param(
+    [Alias("RepositoryPath")]
     [Parameter(HelpMessage = "Parent directory into which profile.ps1 is downloaded (placed in a 'profile' subdirectory).")]
-    [string] $RepositoryPath = $PWD.Path,
+    [string] $InstallDirectory = $PWD.Path,
 
     [ValidateSet(
         "AllUsersAllHosts",
@@ -65,12 +66,12 @@ begin {
 
     $ProfileTargetPath = $PROFILE.$ProfileKind
     $ProfileBackupPath = "${ProfileTargetPath}.bak"
-    $TargetDirectory = [Path]::Join($RepositoryPath, "profile")
+    $TargetDirectory = [Path]::Join($InstallDirectory, "profile")
     $SettingsPath = [Path]::GetFullPath([Path]::Join($TargetDirectory, "settings.json"))
     $LinkProbePath = [Path]::Join([Path]::GetTempPath(), [Path]::GetRandomFileName())
 
     if ([Directory]::Exists($TargetDirectory)) {
-        Write-Error "The target directory `"${TargetDirectory}`" already exists; remove it or choose a different -RepositoryPath." `
+        Write-Error "The target directory `"${TargetDirectory}`" already exists; remove it or choose a different -InstallDirectory." `
             -Category ResourceExists
     }
 
@@ -100,7 +101,7 @@ process {
 
     Write-Host "[2/3] " -ForegroundColor DarkGray -NoNewline
     Write-Host "Create PowerShell Profile . . . " -NoNewline
-    $ProfileParentDirectory = [Directory]::GetParent($ProfileTargetPath).FullName
+    $ProfileParentDirectory = [Path]::GetDirectoryName($ProfileTargetPath)
     $null = [Directory]::CreateDirectory($ProfileParentDirectory)
 
     try {
