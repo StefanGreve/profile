@@ -63,6 +63,14 @@ the form of a JSON schema file.
 > and the cost varies by program: some emit small completion scripts, while others
 > (notably `deno` and `uv`) emit very large ones that noticeably slow profile load.
 
+> [!NOTE]
+> To enable tab completion for `dotnet` and .NET-based CLI programs, optionally install the following:
+> ```pwsh
+> # install an LTS .NET SDK, e.g. version 10
+> winget install --id "Microsoft.DotNet.SDK.10"
+> dotnet tool install --global "dotnet-suggest"
+> ```
+
 > [!TIP]
 > The shipped `settings.json` references a JSON schema for editor validation and
 > completion. Visual Studio Code downloads remote schemas only from trusted domains,
