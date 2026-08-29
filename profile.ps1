@@ -288,7 +288,9 @@ function prompt {
         )
     }
 
-    $Battery = $SettingsFile.Prompt.EnableBatteryStatus -eq $true ? (Get-Battery) : $null
+    $Battery = if ($SettingsFile.Prompt.EnableBatteryStatus -eq $true) {
+        Get-Battery -ErrorAction SilentlyContinue
+    }
 
     $PsPrompt = [StringBuilder]::new()
     $null = & {
