@@ -8,13 +8,11 @@
         "PowerTools"
     ],
     "Prompt": {
-        "EnableBatteryStatus": true,
+        "EnableBatteryStatus": false,
         "EnableGitUserName": true,
-        "EnableTimestamp": true
+        "EnableTimestamp": false
     },
     "RegisterNativeCompletions": [
-        "gh",
-        "pip",
         "winget"
     ]
 }
