@@ -20,6 +20,13 @@ function Install-Profile {
         On Windows, this command must be run from an elevated (administrator) session,
         since creating the symbolic link requires administrator rights.
 
+        Re-running the command overwrites a previous installation: the downloaded files
+        under -InstallDirectory and the linked profile are replaced. An existing settings.json
+        is preserved, since it is user-owned configuration. If an earlier run linked to a
+        different -InstallDirectory, that stale download directory is removed once the new
+        installation succeeds. A pre-existing profile that is not one of these managed symbolic
+        links is backed up and confirmed before being replaced, unless -Force is specified.
+
         .PARAMETER InstallDirectory
         Parent directory into which profile.ps1 is downloaded. The file is placed in a
         "profile" subdirectory of this path. Defaults to the current working directory.
@@ -77,8 +84,6 @@ function Install-Profile {
                 -Category NotInstalled
         }
 
-        # UserInteractive stays $true even under -NonInteractive, so also require that input
-        # isn't redirected; the try/catch below is the final backstop if the host still refuses.
         $CanPrompt = [Environment]::UserInteractive -and !([Console]::IsInputRedirected)
 
         if (!$PSBoundParameters.ContainsKey("ProfileKind") -and $CanPrompt) {
@@ -104,25 +109,34 @@ function Install-Profile {
 
         $ProfileTargetPath = $PROFILE.$ProfileKind
         $ProfileBackupPath = "${ProfileTargetPath}.bak"
-        $TargetDirectory = [Path]::Join($InstallDirectory, "profile")
+        $TargetDirectory = [Path]::GetFullPath([Path]::Join($InstallDirectory, "profile"))
         $SettingsPath = [Path]::GetFullPath([Path]::Join([Path]::GetDirectoryName($ProfileTargetPath), "settings.json"))
         $LinkProbePath = [Path]::Join([Path]::GetTempPath(), [Path]::GetRandomFileName())
 
-        if ([Directory]::Exists($TargetDirectory)) {
-            Write-Error "The target directory `"${TargetDirectory}`" already exists; remove it or choose a different -InstallDirectory." `
-                -Category ResourceExists
-        }
+        $PreviousTargetDirectory = $null
 
         if ([File]::Exists($ProfileTargetPath)) {
-            Write-Warning "A PowerShell profile already exists in the selected target location."
+            $ExistingProfile = Get-Item -LiteralPath $ProfileTargetPath -Force
 
-            $Title = "Overwrite existing PowerShell profile"
-            $Description = "The file `"${ProfileTargetPath}`" will be backed up and replaced with a symbolic link to the downloaded profile. Continue?"
+            if ($ExistingProfile.LinkType -eq "SymbolicLink") {
+                $LinkTarget = $ExistingProfile.LinkTarget
+                $CandidateDirectory = [Path]::GetDirectoryName($LinkTarget)
+                $IsProfileDirectory = [Path]::GetFileName($LinkTarget) -eq "profile.ps1" -and [Path]::GetFileName($CandidateDirectory) -eq "profile"
 
-            if ($PSCmdlet.ShouldProcess($ProfileTargetPath, "Replace the existing PowerShell profile")) {
-                if (!($Force.IsPresent -or $PSCmdlet.ShouldContinue($Description, $Title))) {
-                    Write-Error "Aborted installation because the existing profile may not be replaced." `
-                        -Category OperationStopped
+                if ($IsProfileDirectory -and $CandidateDirectory -ne $TargetDirectory) {
+                    $PreviousTargetDirectory = $CandidateDirectory
+                }
+            } else {
+                Write-Warning "A PowerShell profile already exists in the selected target location."
+
+                $Title = "Overwrite existing PowerShell profile"
+                $Description = "The file `"${ProfileTargetPath}`" will be backed up and replaced with a symbolic link to the downloaded profile. Continue?"
+
+                if ($PSCmdlet.ShouldProcess($ProfileTargetPath, "Replace the existing PowerShell profile")) {
+                    if (!($Force.IsPresent -or $PSCmdlet.ShouldContinue($Description, $Title))) {
+                        Write-Error "Aborted installation because the existing profile may not be replaced." `
+                            -Category OperationStopped
+                    }
                 }
             }
         }
@@ -135,15 +149,15 @@ function Install-Profile {
         $ProfileSource = [Path]::GetFullPath([Path]::Join($TargetDirectory, "profile.ps1"))
         $null = [Directory]::CreateDirectory($TargetDirectory)
         Invoke-RestMethod -Uri "https://raw.githubusercontent.com/StefanGreve/profile/master/profile.ps1" -OutFile $ProfileSource
-        Write-Host "✓" -ForegroundColor Green
+        Write-Host "done" -ForegroundColor Green
 
         Write-Host "[2/3] " -ForegroundColor DarkGray -NoNewline
         Write-Host "Create PowerShell Profile . . . " -NoNewline
         $ProfileParentDirectory = [Path]::GetDirectoryName($ProfileTargetPath)
         $null = [Directory]::CreateDirectory($ProfileParentDirectory)
 
+        # Probe link creation first so a permission failure aborts before the profile is displaced
         try {
-            # Probe link creation first so a permission failure aborts before the profile is displaced
             $null = [File]::CreateSymbolicLink($LinkProbePath, $ProfileSource)
         } finally {
             [File]::Delete($LinkProbePath)
@@ -156,21 +170,35 @@ function Install-Profile {
 
         $null = [File]::CreateSymbolicLink($ProfileTargetPath, $ProfileSource)
 
-        # Initialize PowerShell Profile with default settings
-        Invoke-RestMethod -Uri "https://raw.githubusercontent.com/StefanGreve/profile/master/settings.json" -OutFile $SettingsPath
+        # Initialize profile with default settings only on a fresh install
+        if (![File]::Exists($SettingsPath)) {
+            Invoke-RestMethod -Uri "https://raw.githubusercontent.com/StefanGreve/profile/master/settings.json" -OutFile $SettingsPath
+        }
 
-        Write-Host "✓" -ForegroundColor Green
+        Write-Host "done" -ForegroundColor Green
 
         Write-Host "[3/3] " -ForegroundColor DarkGray -NoNewline
         Write-Host "Install Dependencies . . . " -NoNewline
         $InstallScope = $ProfileKind.StartsWith("All") ? "AllUsers" : "CurrentUser"
         Install-Module PowerTools -Scope $InstallScope -Force
-        Write-Host "✓" -ForegroundColor Green
+        Write-Host "done" -ForegroundColor Green
 
         Write-Host ""
         Write-Host "PowerShell profile installed successfully." -ForegroundColor Green
         Write-Host "Linked `"${ProfileTargetPath}`" -> `"${ProfileSource}`"." -ForegroundColor DarkGray
         Write-Host "Restart PowerShell or run '. `$PROFILE' to load it now." -ForegroundColor DarkGray
+
+        # After a successful install, delete the installation directory from a previous run if present
+        if ($null -ne $PreviousTargetDirectory -and [Directory]::Exists($PreviousTargetDirectory)) {
+            if ($PSCmdlet.ShouldProcess($PreviousTargetDirectory, "Remove previous installation directory")) {
+                try {
+                    [Directory]::Delete($PreviousTargetDirectory, $true)
+                    Write-Host "Removed previous installation directory `"${PreviousTargetDirectory}`"." -ForegroundColor DarkGray
+                } catch {
+                    Write-Warning "Could not remove the previous installation directory `"${PreviousTargetDirectory}`": $($_.Exception.Message)"
+                }
+            }
+        }
     }
     end {
         # Installation succeeded; discard the backup of the previous profile.
