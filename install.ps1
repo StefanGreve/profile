@@ -74,8 +74,7 @@ function Install-Profile {
 
         if (!(Get-Command git -ErrorAction SilentlyContinue)) {
             Write-Error "git is required (for the profile), but could not be found in PATH." `
-                -Category NotInstalled `
-                -ErrorAction Stop
+                -Category NotInstalled
         }
 
         # UserInteractive stays $true even under -NonInteractive, so also require that input
@@ -106,7 +105,7 @@ function Install-Profile {
         $ProfileTargetPath = $PROFILE.$ProfileKind
         $ProfileBackupPath = "${ProfileTargetPath}.bak"
         $TargetDirectory = [Path]::Join($InstallDirectory, "profile")
-        $SettingsPath = [Path]::GetFullPath([Path]::Join($TargetDirectory, "settings.json"))
+        $SettingsPath = [Path]::GetFullPath([Path]::Join([Path]::GetDirectoryName($ProfileTargetPath), "settings.json"))
         $LinkProbePath = [Path]::Join([Path]::GetTempPath(), [Path]::GetRandomFileName())
 
         if ([Directory]::Exists($TargetDirectory)) {
