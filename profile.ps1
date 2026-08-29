@@ -6,9 +6,8 @@ using namespace System.Text
 
 using namespace Microsoft.PowerShell
 
-# Follow $PSCommandPath through its symlink target so settings.json is read from the profile's real directory
-$ProfilePath = (Get-Item -LiteralPath $PSCommandPath).ResolveLinkTarget($true)?.FullName ?? $PSCommandPath
-$SettingsPath = [Path]::Join([Path]::GetDirectoryName($ProfilePath), "settings.json")
+# settings.json lives next to the profile link itself
+$SettingsPath = [Path]::Join([Path]::GetDirectoryName($PSCommandPath), "settings.json")
 $SettingsFile = if (Test-Path $SettingsPath) {
     Get-Content -Path $SettingsPath | ConvertFrom-Json
 } else {
