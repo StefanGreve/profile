@@ -16,6 +16,9 @@
 - Hardened parameter validation: `Invoke-XKCD -Last` requires at least `1`, and the `-Path` parameters
   of `Get-FileCount`, `Get-FileSize`, `Install-Font`, and `Invoke-XKCD` reject null or empty values.
 - `Export-Branch` verifies that `git` is available before running and fails clearly if it is not.
+- `Get-Battery` reports a missing battery (e.g. on a desktop) and an unsupported operating system as
+  non-terminating errors that honor the caller's `-ErrorAction`, instead of always throwing; pass
+  `-ErrorAction Stop` to halt.
 
 ### Fixed
 
@@ -37,6 +40,8 @@
   its `finally` cleanup when the WMI query fails.
 - `Set-PowerState` no longer emits the `Boolean` from `SetSuspendState` to the pipeline.
 - `Set-SystemTheme` no longer emits the `osascript` echo on macOS.
+- `Stop-LocalServer` no longer aborts when it fails to stop one process on a port (e.g. without
+  sufficient privileges); it reports that failure and continues with the remaining processes.
 - Removed stale references to the former `Toolbox` module name and hardened the build script.
 - Corrected comment-based help across several public Cmdlets.
 

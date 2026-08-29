@@ -59,7 +59,12 @@ function Stop-LocalServer {
             if ($null -eq $Process) { continue }
 
             if ($PSCmdlet.ShouldProcess("Process ID=$($Process.Id) (Name: $($Process.ProcessName)) on port ${Port}", "Are you sure you want to force-stop this process?", "Stop Process")) {
-                Stop-Process -InputObject $Process -Force -ErrorAction Stop
+                try {
+                    Stop-Process -InputObject $Process -Force -ErrorAction Stop
+                } catch {
+                    Write-Error "Failed to stop process ID=$($Process.Id) (Name: $($Process.ProcessName)) on port ${Port}: $($_.Exception.Message)" `
+                        -Category $_.CategoryInfo.Category
+                }
             }
         }
     }

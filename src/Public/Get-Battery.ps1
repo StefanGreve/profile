@@ -34,9 +34,11 @@ function Get-Battery {
             $Win32Battery = Get-CimInstance -ClassName Win32_Battery
 
             if ($null -eq $Win32Battery) {
+                # No -ErrorAction Stop here so the caller's preference is honored; return to avoid
+                # building a Battery from the null instance when the error is non-terminating.
                 Write-Error "No battery detected on this device." `
-                    -Category ObjectNotFound `
-                    -ErrorAction Stop
+                    -Category ObjectNotFound
+                return
             }
 
             $ChargeRemaining = $Win32Battery.EstimatedChargeRemaining
@@ -96,8 +98,8 @@ function Get-Battery {
             [Battery]::new($ChargeRemaining, $Runtime, $IsCharging, $Status)
         } else {
             Write-Error $OperatingSystemNotSupportedError `
-                -Category NotImplemented `
-                -ErrorAction Stop
+                -Category NotImplemented
+            return
         }
 
         Write-Output $Battery
