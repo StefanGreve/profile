@@ -76,9 +76,8 @@ function Install-Certificate {
     )
     begin {
         if (!$IsWindows) {
-            Write-Error "This Cmdlet only works on the Windows Operating System" `
-                -Category NotImplemented `
-                -ErrorAction Stop
+            $ErrorRecord = New-TerminatingErrorRecord -Message "This Cmdlet only works on the Windows Operating System" -Category NotImplemented -ErrorId "WindowsOnly"
+            $PSCmdlet.ThrowTerminatingError($ErrorRecord)
         }
     }
     process {
@@ -135,7 +134,9 @@ function Install-Certificate {
             }
             catch [ArgumentException], [CryptographicException] {
                 Write-Error "Failed to load certificate '$FilePath' to the certificate store: $_" `
-                    -Category InvalidData
+                    -Category InvalidData `
+                    -ErrorId "CertificateImportFailed" `
+                    -TargetObject $FilePath
                 return
             }
             finally {
@@ -154,7 +155,9 @@ function Install-Certificate {
 
         if ($null -eq $PrivateKey) {
             Write-Error "The certificate '$FilePath' has no private key." `
-                -Category ObjectNotFound
+                -Category ObjectNotFound `
+                -ErrorId "PrivateKeyMissing" `
+                -TargetObject $FilePath
             return
         }
 

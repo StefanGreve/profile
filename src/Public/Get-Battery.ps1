@@ -37,7 +37,9 @@ function Get-Battery {
                 # No -ErrorAction Stop here so the caller's preference is honored; return to avoid
                 # building a Battery from the null instance when the error is non-terminating.
                 Write-Error "No battery detected on this device." `
-                    -Category ObjectNotFound
+                    -Category ObjectNotFound `
+                    -ErrorId "NoBatteryDetected" `
+                    -TargetObject ([Environment]::MachineName)
                 return
             }
 
@@ -97,9 +99,8 @@ function Get-Battery {
 
             [Battery]::new($ChargeRemaining, $Runtime, $IsCharging, $Status)
         } else {
-            Write-Error $OperatingSystemNotSupportedError `
-                -Category NotImplemented
-            return
+            $ErrorRecord = New-TerminatingErrorRecord -Message $OperatingSystemNotSupportedError -Category NotImplemented -ErrorId "OperatingSystemNotSupported"
+            $PSCmdlet.ThrowTerminatingError($ErrorRecord)
         }
 
         Write-Output $Battery

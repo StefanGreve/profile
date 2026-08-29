@@ -48,9 +48,8 @@ function Set-MonitorBrightness {
                     -Arguments @{ Timeout = [uint32] $Timeout; Brightness = [byte] $Brightness }
             }
             catch {
-                Write-Error "This computer may not support software-based brightness adjustments. Try updating your display adapter drivers to resolve the issue." `
-                    -Category DeviceError `
-                    -ErrorAction Stop
+                $ErrorRecord = New-TerminatingErrorRecord -Message "This computer may not support software-based brightness adjustments. Try updating your display adapter drivers to resolve the issue." -Category DeviceError -ErrorId "BrightnessControlUnsupported" -Exception $_.Exception
+                $PSCmdlet.ThrowTerminatingError($ErrorRecord)
             } finally {
                 # $WmiMonitor is null when brightness control is unsupported.
                 if ($null -ne $WmiMonitor) {
@@ -58,9 +57,8 @@ function Set-MonitorBrightness {
                 }
             }
         } else {
-            Write-Error $OperatingSystemNotSupportedError `
-                -Category NotImplemented `
-                -ErrorAction Stop
+            $ErrorRecord = New-TerminatingErrorRecord -Message $OperatingSystemNotSupportedError -Category NotImplemented -ErrorId "OperatingSystemNotSupported"
+            $PSCmdlet.ThrowTerminatingError($ErrorRecord)
         }
     }
 }

@@ -68,9 +68,8 @@ function Install-Font {
 
         if ($IsWindows) {
             if ($Scope -eq "Machine" -and !(Test-Elevation)) {
-                Write-Error "Installing fonts in the Machine scope requires an elevated (administrator) session." `
-                    -Category PermissionDenied `
-                    -ErrorAction Stop
+                $ErrorRecord = New-TerminatingErrorRecord -Message "Installing fonts in the Machine scope requires an elevated (administrator) session." -Category PermissionDenied -ErrorId "ElevationRequired"
+                $PSCmdlet.ThrowTerminatingError($ErrorRecord)
             }
 
             Add-Type -AssemblyName System.Drawing
@@ -112,7 +111,9 @@ namespace PowerTools {
 
                 if (!$SuffixMap.ContainsKey($Extension)) {
                     Write-Error "'$Source' is not a supported font file ($($SuffixMap.Keys -join ', '))." `
-                        -Category InvalidData
+                        -Category InvalidData `
+                        -ErrorId "UnsupportedFontFile" `
+                        -TargetObject $Source
                     continue
                 }
 
@@ -150,18 +151,9 @@ namespace PowerTools {
                     Write-Verbose "Installed '$FontName' to '$Destination' ($Scope scope)."
                 }
             }
-        } elseif ($IsLinux) {
-            Write-Error $OperatingSystemNotSupportedError `
-                -Category NotImplemented `
-                -ErrorAction Stop
-        } elseif ($IsMacOS) {
-            Write-Error $OperatingSystemNotSupportedError `
-                -Category NotImplemented `
-                -ErrorAction Stop
         } else {
-            Write-Error $OperatingSystemNotSupportedError `
-                -Category NotImplemented `
-                -ErrorAction Stop
+            $ErrorRecord = New-TerminatingErrorRecord -Message $OperatingSystemNotSupportedError -Category NotImplemented -ErrorId "OperatingSystemNotSupported"
+            $PSCmdlet.ThrowTerminatingError($ErrorRecord)
         }
     }
     end {

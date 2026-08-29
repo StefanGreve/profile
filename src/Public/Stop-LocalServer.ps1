@@ -49,7 +49,10 @@ function Stop-LocalServer {
         }
 
         if ($null -eq $ProcessIds -or $ProcessIds.Count -eq 0) {
-            Write-Error "No owning process found listening on port ${Port}." -Category ConnectionError
+            Write-Error "No owning process found listening on port ${Port}." `
+                -Category ConnectionError `
+                -ErrorId "NoProcessOnPort" `
+                -TargetObject $Port
             return
         }
 
@@ -63,7 +66,9 @@ function Stop-LocalServer {
                     Stop-Process -InputObject $Process -Force -ErrorAction Stop
                 } catch {
                     Write-Error "Failed to stop process ID=$($Process.Id) (Name: $($Process.ProcessName)) on port ${Port}: $($_.Exception.Message)" `
-                        -Category $_.CategoryInfo.Category
+                        -Category $_.CategoryInfo.Category `
+                        -ErrorId "StopProcessFailed" `
+                        -TargetObject $Process
                 }
             }
         }

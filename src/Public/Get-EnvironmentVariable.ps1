@@ -62,7 +62,10 @@ function Get-EnvironmentVariable {
         $EnvironmentVariables = [Environment]::GetEnvironmentVariable($Key, $Scope)
 
         if ([string]::IsNullOrEmpty($EnvironmentVariables)) {
-            Write-Error "Environment variable `"$Key`" is empty or not defined." -Category InvalidData
+            Write-Error "Environment variable `"$Key`" is empty or not defined." `
+                -Category InvalidData `
+                -ErrorId "EnvironmentVariableNotFound" `
+                -TargetObject $Key
             return
         }
 

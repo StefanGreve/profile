@@ -52,17 +52,15 @@ function Export-Branch {
 
     begin {
         if (!(Get-Command git -ErrorAction SilentlyContinue)) {
-            Write-Error "Git is not installed or could not be found in the current session." `
-                -Category NotInstalled `
-                -ErrorAction Stop
+            $ErrorRecord = New-TerminatingErrorRecord -Message "Git is not installed or could not be found in the current session." -Category NotInstalled -ErrorId "GitNotInstalled"
+            $PSCmdlet.ThrowTerminatingError($ErrorRecord)
         }
 
         git rev-parse --is-inside-work-tree *> $null
 
         if ($LASTEXITCODE -ne 0) {
-            Write-Error "The current directory is not inside a Git repository." `
-                -Category ObjectNotFound `
-                -ErrorAction Stop
+            $ErrorRecord = New-TerminatingErrorRecord -Message "The current directory is not inside a Git repository." -Category ObjectNotFound -ErrorId "NotInsideGitRepository"
+            $PSCmdlet.ThrowTerminatingError($ErrorRecord)
         }
 
         $Author = git config user.name
@@ -124,6 +122,7 @@ function Export-Branch {
         } else {
             Write-Error $OperatingSystemNotSupportedError `
                 -Category NotImplemented `
+                -ErrorId "OperatingSystemNotSupported" `
                 -ErrorAction Stop
         }
     }

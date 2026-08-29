@@ -19,6 +19,9 @@
 - `Get-Battery` reports a missing battery (e.g. on a desktop) and an unsupported operating system as
   non-terminating errors that honor the caller's `-ErrorAction`, instead of always throwing; pass
   `-ErrorAction Stop` to halt.
+- Standardized error reporting across the module: terminating errors now use
+  `$PSCmdlet.ThrowTerminatingError()` with unique error IDs, and non-terminating errors carry
+  `-ErrorId` and `-TargetObject`, so failures expose stable, filterable identities.
 
 ### Fixed
 

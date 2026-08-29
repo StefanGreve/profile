@@ -50,14 +50,20 @@ function Get-FileSize {
     process {
         foreach ($p in $Path) {
             if (!(Test-Path -LiteralPath $p)) {
-                Write-Error "The path '$p' does not exist." -Category ObjectNotFound
+                Write-Error "The path '$p' does not exist." `
+                    -Category ObjectNotFound `
+                    -ErrorId "PathNotFound" `
+                    -TargetObject $p
                 continue
             }
 
             $Item = Get-Item -LiteralPath $p
 
             if ($Item.PSIsContainer) {
-                Write-Error "The path '$p' refers to a directory, not a file." -Category InvalidArgument
+                Write-Error "The path '$p' refers to a directory, not a file." `
+                    -Category InvalidArgument `
+                    -ErrorId "PathIsDirectory" `
+                    -TargetObject $p
                 continue
             }
 

@@ -96,9 +96,8 @@ function Invoke-TextToSpeech {
 
     begin {
         if (!$IsWindows) {
-            Write-Error $OperatingSystemNotSupportedError `
-                -Category NotImplemented `
-                -ErrorAction Stop
+            $ErrorRecord = New-TerminatingErrorRecord -Message $OperatingSystemNotSupportedError -Category NotImplemented -ErrorId "OperatingSystemNotSupported"
+            $PSCmdlet.ThrowTerminatingError($ErrorRecord)
         }
 
         Add-Type -AssemblyName System.Speech

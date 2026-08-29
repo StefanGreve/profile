@@ -34,18 +34,16 @@ function Set-SystemTheme {
             $RegistryPath = Get-ItemProperty -Path "Registry::$Personalize"
             $RegistryPath | Set-ItemProperty -Name "AppsUseLightTheme" -Value ([int]($Theme -eq "Light"))
         } elseif ($IsLinux) {
-            Write-Error $OperatingSystemNotSupportedError `
-                -Category NotImplemented `
-                -ErrorAction Stop
+            $ErrorRecord = New-TerminatingErrorRecord -Message $OperatingSystemNotSupportedError -Category NotImplemented -ErrorId "OperatingSystemNotSupported"
+            $PSCmdlet.ThrowTerminatingError($ErrorRecord)
         } elseif ($IsMacOS) {
             $IsDarkTheme = $Theme -eq "Dark"
             # osascript echoes the result of its last statement; a 'set' yields the assigned
             # value, so discard it to honor the [void] contract on macOS.
             osascript -e "tell application `"System Events`" to tell appearance preferences to set dark mode to $IsDarkTheme" | Out-Null
         } else {
-            Write-Error $OperatingSystemNotSupportedError `
-                -Category NotImplemented `
-                -ErrorAction Stop
+            $ErrorRecord = New-TerminatingErrorRecord -Message $OperatingSystemNotSupportedError -Category NotImplemented -ErrorId "OperatingSystemNotSupported"
+            $PSCmdlet.ThrowTerminatingError($ErrorRecord)
         }
     }
 }

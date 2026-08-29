@@ -104,6 +104,8 @@ function Invoke-XKCD {
             if ($_ -le $From) {
                 Write-Error "The value of -To must be greater than -From" `
                     -Category InvalidArgument `
+                    -ErrorId "InvalidComicRange" `
+                    -TargetObject $_ `
                     -ErrorAction Stop
             }
 
@@ -177,15 +179,24 @@ function Invoke-XKCD {
             catch [HttpResponseException] {
                 # xkcd serves 404 for identifiers that do not map to a comic; any other status is a server fault
                 if ($_.Exception.Response.StatusCode -eq [HttpStatusCode]::NotFound) {
-                    Write-Error "A comic with ID=${Id} does not exist." -Category ObjectNotFound
+                    Write-Error "A comic with ID=${Id} does not exist." `
+                        -Category ObjectNotFound `
+                        -ErrorId "ComicNotFound" `
+                        -TargetObject $Id
                 } else {
-                    Write-Error "Failed to retrieve comic ID=${Id}: $($_.Exception.Message)" -Category ConnectionError
+                    Write-Error "Failed to retrieve comic ID=${Id}: $($_.Exception.Message)" `
+                        -Category ConnectionError `
+                        -ErrorId "ComicRetrievalFailed" `
+                        -TargetObject $Id
                 }
                 continue
             }
             catch {
                 # Transport-level failures (DNS, refused connection, TLS, timeout) never reach an HTTP status
-                Write-Error "Failed to retrieve comic ID=${Id}: $($_.Exception.Message)" -Category ConnectionError
+                Write-Error "Failed to retrieve comic ID=${Id}: $($_.Exception.Message)" `
+                    -Category ConnectionError `
+                    -ErrorId "ComicRetrievalFailed" `
+                    -TargetObject $Id
                 continue
             }
 
@@ -209,7 +220,9 @@ function Invoke-XKCD {
                     }
                     catch {
                         Write-Error "Failed to download comic ID=${Id} from '$($Response.img)': $($_.Exception.Message)" `
-                            -Category $_.CategoryInfo.Category
+                            -Category $_.CategoryInfo.Category `
+                            -ErrorId "ComicDownloadFailed" `
+                            -TargetObject $Id
                         continue
                     }
                 }

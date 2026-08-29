@@ -55,15 +55,24 @@ function Get-FileCount {
                 $FileCount = [Directory]::GetFiles($ResolvedPath, "*", $SearchOption).Length
             }
             catch [System.IO.DirectoryNotFoundException] {
-                Write-Error "The directory `"$p`" does not exist." -Category ObjectNotFound
+                Write-Error "The directory `"$p`" does not exist." `
+                    -Category ObjectNotFound `
+                    -ErrorId "DirectoryNotFound" `
+                    -TargetObject $p
                 continue
             }
             catch [System.UnauthorizedAccessException] {
-                Write-Error "Access to the directory `"$p`" is denied." -Category PermissionDenied
+                Write-Error "Access to the directory `"$p`" is denied." `
+                    -Category PermissionDenied `
+                    -ErrorId "DirectoryAccessDenied" `
+                    -TargetObject $p
                 continue
             }
             catch {
-                Write-Error "Failed to count files in `"$p`": $($_.Exception.Message)" -Category ReadError
+                Write-Error "Failed to count files in `"$p`": $($_.Exception.Message)" `
+                    -Category ReadError `
+                    -ErrorId "FileCountFailed" `
+                    -TargetObject $p
                 continue
             }
 
