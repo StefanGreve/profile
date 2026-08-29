@@ -72,6 +72,12 @@ function Install-Profile {
         Set-StrictMode -Version Latest
         $ErrorActionPreference = "Stop"
 
+        if (!(Get-Command git -ErrorAction SilentlyContinue)) {
+            Write-Error "git is required (for the profile), but could not be found in PATH." `
+                -Category NotInstalled `
+                -ErrorAction Stop
+        }
+
         # UserInteractive stays $true even under -NonInteractive, so also require that input
         # isn't redirected; the try/catch below is the final backstop if the host still refuses.
         $CanPrompt = [Environment]::UserInteractive -and !([Console]::IsInputRedirected)
