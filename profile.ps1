@@ -150,7 +150,9 @@ Set-PSReadLineKeyHandler -Key ")", "]", "}" -BriefDescription SmartClosingBraces
 
 #region Tab Completions
 
-dotnet completions script pwsh | Out-String | Invoke-Expression
+if (Get-Command "dotnet" -ErrorAction SilentlyContinue) {
+    dotnet completions script pwsh | Out-String | Invoke-Expression
+}
 
 #region Dotnet Suggest Shell Start
 if (Get-Command "dotnet-suggest" -ErrorAction SilentlyContinue) {
