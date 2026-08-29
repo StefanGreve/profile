@@ -52,11 +52,13 @@ foreach ($Module in $SettingsFile.Modules) {
     }
 }
 
-if ($null -ne $SettingsFile.DotSourceDirectory) {
-    if (!(Test-Path $SettingsFile.DotSourceDirectory)) {
-        Write-Warning "DotSourceDirectory `"$($SettingsFile.DotSourceDirectory)`" does not exist; no scripts were dot-sourced."
+if (![string]::IsNullOrWhiteSpace($SettingsFile.DotSourceDirectory)) {
+    $DotSourceDirectory = [Environment]::ExpandEnvironmentVariables($SettingsFile.DotSourceDirectory)
+
+    if (!(Test-Path $DotSourceDirectory)) {
+        Write-Warning "DotSourceDirectory `"$($DotSourceDirectory)`" does not exist; no scripts were dot-sourced."
     } else {
-        Get-ChildItem -Path $SettingsFile.DotSourceDirectory -Filter "*.ps1"
+        Get-ChildItem -Path $DotSourceDirectory -Filter "*.ps1"
             | ForEach-Object { . $_.FullName }
     }
 }
