@@ -58,7 +58,7 @@
             "description": "Native command-line tools to register argument completers for on profile launch. Each tool is only registered when it is also installed.",
             "items": {
                 "type": "string",
-                "enum": [ "bat", "delta", "deno", "gh", "op", "pip", "rustup", "uv", "winget" ]
+                "enum": [ "bat", "delta", "deno", "dotnet", "dotnet-suggest", "gh", "op", "pip", "rustup", "uv", "winget" ]
             },
             "uniqueItems": true
         },

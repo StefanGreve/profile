@@ -151,42 +151,41 @@ Set-PSReadLineKeyHandler -Key ")", "]", "}" -BriefDescription SmartClosingBraces
 
 #region Tab Completions
 
-if (Get-Command "dotnet" -ErrorAction SilentlyContinue) {
+$NativeCompletions = $SettingsFile.RegisterNativeCompletions
+
+# dotnet emits a ~176 KB completion script; heavy impact on profile load.
+if (($NativeCompletions -contains "dotnet") -and (Get-Command "dotnet" -ErrorAction SilentlyContinue)) {
     dotnet completions script pwsh | Out-String | Invoke-Expression
 }
 
-#region Dotnet Suggest Shell Start
-if (Get-Command "dotnet-suggest" -ErrorAction SilentlyContinue) {
-    $AvailableToComplete = (dotnet-suggest list) | Out-String
-    $AvailableToCompleteArray = $AvailableToComplete.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
+# dotnet-suggest runs `dotnet-suggest list` at load to enumerate registered tools (~120 ms); the
+# completer itself is a static scriptblock deferred to completion time. Moderate impact on profile load.
+if ($NativeCompletions -contains "dotnet-suggest") {
+    if (Get-Command "dotnet-suggest" -ErrorAction SilentlyContinue) {
+        $AvailableToComplete = (dotnet-suggest list) | Out-String
+        $AvailableToCompleteArray = $AvailableToComplete.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
 
-    Register-ArgumentCompleter -Native -CommandName $AvailableToCompleteArray -ScriptBlock {
-        param($WordToComplete, $CommandAst, $CursorPosition)
+        Register-ArgumentCompleter -Native -CommandName $AvailableToCompleteArray -ScriptBlock {
+            param($WordToComplete, $CommandAst, $CursorPosition)
 
-        $FullPath = (Get-Command $CommandAst.CommandElements[0]).Source
-        $Arguments = $CommandAst.Extent.ToString().Replace('"', '\"')
+            $FullPath = (Get-Command $CommandAst.CommandElements[0]).Source
+            $Arguments = $CommandAst.Extent.ToString().Replace('"', '\"')
 
-        dotnet-suggest get -e $FullPath --position $CursorPosition -- "$Arguments" | ForEach-Object {
-            [CompletionResult]::new($_, $_, 'ParameterValue', $_)
+            dotnet-suggest get -e $FullPath --position $CursorPosition -- "$Arguments" | ForEach-Object {
+                [CompletionResult]::new($_, $_, 'ParameterValue', $_)
+            }
         }
+
+        $env:DOTNET_SUGGEST_SCRIPT_VERSION = "1.0.2"
+    } else {
+        "Unable to provide System.CommandLine tab completion support unless the [dotnet-suggest] tool is first installed."
+        "See the following for tool installation: https://www.nuget.org/packages/dotnet-suggest"
     }
-} else {
-    "Unable to provide System.CommandLine tab completion support unless the [dotnet-suggest] tool is first installed."
-    "See the following for tool installation: https://www.nuget.org/packages/dotnet-suggest"
 }
 
-$env:DOTNET_SUGGEST_SCRIPT_VERSION = "1.0.2"
-#endregion
-
-# Opt-in per tool; the more completions you enable, the slower the profile loads. Except for winget,
-# each block below spawns the tool and pipes its emitted script through Invoke-Expression at load, so
-# the parse cost scales with the script size noted above each registration.
-$NativeCompletions = $SettingsFile.RegisterNativeCompletions
-
 if (($NativeCompletions -contains "winget") -and (Get-Command "winget" -ErrorAction SilentlyContinue)) {
-    # winget is a native C++ application, so it exposes its own completion backend
-    # independent of what dotnet-suggest is built upon. Registers a static scriptblock and defers the
-    # winget complete subprocess to completion time, so its impact on profile load is negligible.
+    # winget is a native C++ application, so it exposes its own completion
+    # backend independent of what dotnet-suggest is built upon.
     Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
         param($WordToComplete, $CommandAst, $CursorPosition)
 
