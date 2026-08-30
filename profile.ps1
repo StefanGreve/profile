@@ -153,9 +153,22 @@ Set-PSReadLineKeyHandler -Key ")", "]", "}" -BriefDescription SmartClosingBraces
 
 $NativeCompletions = $SettingsFile.RegisterNativeCompletions
 
-# dotnet emits a ~176 KB completion script; heavy impact on profile load.
+# dotnet emits a ~176 KB completion script; cache it to disk and regenerate only when the dotnet binary
+# changes, so the ~257 ms subprocess is paid once instead of on every launch (~75 ms parse thereafter).
 if (($NativeCompletions -contains "dotnet") -and (Get-Command "dotnet" -ErrorAction SilentlyContinue)) {
-    dotnet completions script pwsh | Out-String | Invoke-Expression
+    $DotnetPath = (Get-Command dotnet).Source
+    $CacheKey = (Get-Item $DotnetPath).LastWriteTimeUtc.Ticks
+    $CacheFile = [Path]::Join([Path]::GetTempPath(), "dotnet-completion.$CacheKey.ps1")
+
+    if (!(Test-Path $CacheFile)) {
+        # A new dotnet version yields a new cache key; sweep stale scripts before writing the current one.
+        Get-ChildItem -Path ([Path]::GetTempPath()) -Filter "dotnet-completion.*.ps1"
+            | Remove-Item -ErrorAction SilentlyContinue
+
+        dotnet completions script pwsh | Set-Content -Path $CacheFile -Encoding utf8
+    }
+
+    . $CacheFile
 }
 
 # dotnet-suggest runs `dotnet-suggest list` at load to enumerate registered tools (~120 ms); the
