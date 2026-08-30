@@ -1,8 +1,8 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/StefanGreve/profile/master/settings.schema.json",
+    "$id": "https://raw.githubusercontent.com/StefanGreve/profile/master/profile.config.schema.json",
     "title": "PowerShell Profile Settings",
-    "description": "Configuration for the PowerShell profile, read from the settings.json next to profile.ps1.",
+    "description": "Configuration for the PowerShell profile, read from the profile.config.json next to profile.ps1.",
     "type": "object",
     "additionalProperties": false,
     "properties": {

@@ -6,10 +6,10 @@ using namespace System.Text
 
 using namespace Microsoft.PowerShell
 
-# settings.json lives next to the profile link itself
-$SettingsPath = [Path]::Join([Path]::GetDirectoryName($PSCommandPath), "settings.json")
-$SettingsFile = if (Test-Path $SettingsPath) {
-    Get-Content -Path $SettingsPath -Raw | ConvertFrom-Json
+# profile.config.json lives next to the profile link itself
+$ProfileConfigPath = [Path]::Join([Path]::GetDirectoryName($PSCommandPath), "profile.config.json")
+$ProfileConfigFile = if (Test-Path $ProfileConfigPath) {
+    Get-Content -Path $ProfileConfigPath -Raw | ConvertFrom-Json
 } else {
     [PSCustomObject]@{
         DefaultCulture = "en-US"
@@ -18,11 +18,11 @@ $SettingsFile = if (Test-Path $SettingsPath) {
     }
 }
 
-[CultureInfo]::CurrentCulture = [CultureInfo]::CreateSpecificCulture($SettingsFile.DefaultCulture)
-$PSDefaultParameterValues["*:Encoding"] = $SettingsFile.DefaultEncoding
+[CultureInfo]::CurrentCulture = [CultureInfo]::CreateSpecificCulture($ProfileConfigFile.DefaultCulture)
+$PSDefaultParameterValues["*:Encoding"] = $ProfileConfigFile.DefaultEncoding
 $ErrorView = "ConciseView"
 
-if ($SettingsFile.EnableClassicProgressbar -eq $true) {
+if ($ProfileConfigFile.EnableClassicProgressbar -eq $true) {
     $PSStyle.Progress.View = "Classic"
     $Host.PrivateData.ProgressBackgroundColor = "Cyan"
     $Host.PrivateData.ProgressForegroundColor = "Yellow"
@@ -43,7 +43,7 @@ if ($IsWindows) {
     $global:Natural = { [Regex]::Replace($_.Name, "\d+", { $Args[0].Value.PadLeft(20) }) }
 }
 
-foreach ($Module in $SettingsFile.Modules) {
+foreach ($Module in $ProfileConfigFile.Modules) {
     if (Get-Module -Name $Module -ListAvailable) {
         Import-Module -Name $Module
     } else {
@@ -51,8 +51,8 @@ foreach ($Module in $SettingsFile.Modules) {
     }
 }
 
-if (![string]::IsNullOrWhiteSpace($SettingsFile.DotSourceDirectory)) {
-    $DotSourceDirectory = [Environment]::ExpandEnvironmentVariables($SettingsFile.DotSourceDirectory)
+if (![string]::IsNullOrWhiteSpace($ProfileConfigFile.DotSourceDirectory)) {
+    $DotSourceDirectory = [Environment]::ExpandEnvironmentVariables($ProfileConfigFile.DotSourceDirectory)
 
     if (!(Test-Path $DotSourceDirectory)) {
         Write-Warning "DotSourceDirectory `"$($DotSourceDirectory)`" does not exist; no scripts were dot-sourced."
@@ -151,7 +151,7 @@ Set-PSReadLineKeyHandler -Key ")", "]", "}" -BriefDescription SmartClosingBraces
 
 #region Tab Completions
 
-$NativeCompletions = $SettingsFile.RegisterNativeCompletions
+$NativeCompletions = $ProfileConfigFile.RegisterNativeCompletions
 
 # dotnet emits a ~176 KB completion script; cache it to disk and regenerate only when the dotnet binary
 # changes, so the ~257 ms subprocess is paid once instead of on every launch (~75 ms parse thereafter).
@@ -285,7 +285,7 @@ function prompt {
         # Name of branch takes precedence over any Git tag if not positioned on the default branch
         $Tag = if ($CurrentBranch -and $CurrentBranch -eq $DefaultBranch) { git tag --points-at HEAD }
         $Head = $Tag ?? $CurrentBranch ?? (git rev-parse --short HEAD)
-        $DisplayUserName = $SettingsFile.Prompt.EnableGitUserName -eq $true
+        $DisplayUserName = $ProfileConfigFile.Prompt.EnableGitUserName -eq $true
 
         #                          U        @     H
         [string]::Format(" {2}({0}{1}{2}{3}{4}{2}{5}){6}",
@@ -308,7 +308,7 @@ function prompt {
 
     $Host.UI.RawUI.WindowTitle = $WindowTitle
 
-    $Battery = if ($SettingsFile.Prompt.EnableBatteryStatus -eq $true) {
+    $Battery = if ($ProfileConfigFile.Prompt.EnableBatteryStatus -eq $true) {
         Get-Battery -ErrorAction SilentlyContinue
     }
 
@@ -365,7 +365,7 @@ function prompt {
         $PsPrompt.Append(")")
         $PsPrompt.Append($PSStyle.Foreground.White)
         # (HH:mm:ss)
-        if ($SettingsFile.Prompt.EnableTimestamp -eq $true) {
+        if ($ProfileConfigFile.Prompt.EnableTimestamp -eq $true) {
             $PsPrompt.Append(" ")
             $PsPrompt.Append($PSStyle.Foreground.BrightBlack)
             $PsPrompt.Append("(")

@@ -36,14 +36,14 @@ irm "https://raw.githubusercontent.com/StefanGreve/profile/master/install.ps1" |
 
 ## Settings Documentation
 
-The profile reads its configuration from a `settings.json` file that lives next to
+The profile reads its configuration from a `profile.config.json` file that lives next to
 `profile.ps1` (`install.ps1` downloads a default copy for you). Edit that file to
 customize the profile; documentation for the configuration options is provided in
 the form of a JSON schema file.
 
 ```json
 {
-    "$schema": "https://raw.githubusercontent.com/StefanGreve/profile/master/settings.schema.json",
+    "$schema": "https://raw.githubusercontent.com/StefanGreve/profile/master/profile.config.schema.json",
     "DefaultCulture": "en-US",
     "DefaultEncoding": "utf8",
     "DotSourceDirectory": "~/Documents/Scripts",
@@ -72,9 +72,9 @@ the form of a JSON schema file.
 > ```
 
 > [!TIP]
-> The shipped `settings.json` references a JSON schema for editor validation and
+> The shipped `profile.config.json` references a JSON schema for editor validation and
 > completion. Visual Studio Code downloads remote schemas only from trusted domains,
-> so add the following to your `settings.json` (User or Workspace) to allow it:
+> so add the following to your VS Code `settings.json` (User or Workspace) to allow it:
 > ```json
 > "json.schemaDownload.trustedDomains": {
 >     "https://raw.githubusercontent.com/": true

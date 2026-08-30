@@ -21,7 +21,7 @@ function Install-Profile {
         since creating the symbolic link requires administrator rights.
 
         Re-running the command overwrites a previous installation: the downloaded files
-        under -InstallDirectory and the linked profile are replaced. An existing settings.json
+        under -InstallDirectory and the linked profile are replaced. An existing profile.config.json
         is preserved, since it is user-owned configuration. If an earlier run linked to a
         different -InstallDirectory, that stale download directory is removed once the new
         installation succeeds. A pre-existing profile that is not one of these managed symbolic
@@ -110,7 +110,7 @@ function Install-Profile {
         $ProfileTargetPath = $PROFILE.$ProfileKind
         $ProfileBackupPath = "${ProfileTargetPath}.bak"
         $TargetDirectory = [Path]::GetFullPath([Path]::Join($InstallDirectory, "profile"))
-        $SettingsPath = [Path]::GetFullPath([Path]::Join([Path]::GetDirectoryName($ProfileTargetPath), "settings.json"))
+        $ConfigPath = [Path]::GetFullPath([Path]::Join([Path]::GetDirectoryName($ProfileTargetPath), "profile.config.json"))
         $LinkProbePath = [Path]::Join([Path]::GetTempPath(), [Path]::GetRandomFileName())
 
         $PreviousTargetDirectory = $null
@@ -170,9 +170,9 @@ function Install-Profile {
 
         $null = [File]::CreateSymbolicLink($ProfileTargetPath, $ProfileSource)
 
-        # Initialize profile with default settings only on a fresh install
-        if (![File]::Exists($SettingsPath)) {
-            Invoke-RestMethod -Uri "https://raw.githubusercontent.com/StefanGreve/profile/master/settings.json" -OutFile $SettingsPath
+        # Initialize profile with default configuration only on a fresh install
+        if (![File]::Exists($ConfigPath)) {
+            Invoke-RestMethod -Uri "https://raw.githubusercontent.com/StefanGreve/profile/master/profile.config.json" -OutFile $ConfigPath
         }
 
         Write-Host "done" -ForegroundColor Green
