@@ -90,7 +90,6 @@ itself is supported on all major platforms.
 
 | Cmdlet                       | ![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white) | ![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=F0F0F0&logoSize=auto) | ![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black) |
 | ---------------------------- | :--------: | :------: | :------: |
-| `Export-Branch`              | ✅         | ✅       | ✅       |
 | `Get-Battery`                | ✅         | ✅       | ❌       |
 | `Get-Definition`             | ✅         | ✅       | ✅       |
 | `Get-EnvironmentVariable`    | ✅         | ⚠️       | ⚠️       |

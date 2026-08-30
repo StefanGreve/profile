@@ -15,7 +15,6 @@
   per-item errors are now non-terminating; pass `-ErrorAction Stop` to halt on the first failure.
 - Hardened parameter validation: `Invoke-XKCD -Last` requires at least `1`, and the `-Path` parameters
   of `Get-FileCount`, `Get-FileSize`, `Install-Font`, and `Invoke-XKCD` reject null or empty values.
-- `Export-Branch` verifies that `git` is available before running and fails clearly if it is not.
 - `Get-Battery` reports a missing battery (e.g. on a desktop) and an unsupported operating system as
   non-terminating errors that honor the caller's `-ErrorAction`, instead of always throwing; pass
   `-ErrorAction Stop` to halt.
@@ -47,6 +46,10 @@
   sufficient privileges); it reports that failure and continues with the remaining processes.
 - Removed stale references to the former `Toolbox` module name and hardened the build script.
 - Corrected comment-based help across several public Cmdlets.
+
+### Removed
+
+- `Export-Branch` (`git-fire`) Cmdlet, which now lives in the configuration repository instead.
 
 ## Version 3.0.0 (22 Aug 2026)
 
