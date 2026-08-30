@@ -287,6 +287,15 @@ function prompt {
         )
     }
 
+    $CWD = [DirectoryInfo]::new($ExecutionContext.SessionState.Path.CurrentLocation)
+    $WindowTitle = $CWD.FullName.Replace($HOME, "~", [StringComparison]::OrdinalIgnoreCase)
+
+    if ($IsWindows) {
+        $WindowTitle = $WindowTitle.Replace([Environment]::SystemDirectory, "#", [StringComparison]::OrdinalIgnoreCase)
+    }
+
+    $Host.UI.RawUI.WindowTitle = $WindowTitle
+
     $Battery = if ($SettingsFile.Prompt.EnableBatteryStatus -eq $true) {
         Get-Battery -ErrorAction SilentlyContinue
     }
@@ -302,7 +311,7 @@ function prompt {
         $PsPrompt.Append([Environment]::MachineName)
         $PsPrompt.Append(" ")
         $PsPrompt.Append($PSStyle.Foreground.Green)
-        $PsPrompt.Append([DirectoryInfo]::new($ExecutionContext.SessionState.Path.CurrentLocation).BaseName)
+        $PsPrompt.Append($CWD.BaseName)
         $PsPrompt.Append($PSStyle.Foreground.White)
         $PsPrompt.Append("]")
         $PsPrompt.Append(" ")
