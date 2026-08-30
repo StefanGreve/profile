@@ -9,7 +9,7 @@ using namespace Microsoft.PowerShell
 # settings.json lives next to the profile link itself
 $SettingsPath = [Path]::Join([Path]::GetDirectoryName($PSCommandPath), "settings.json")
 $SettingsFile = if (Test-Path $SettingsPath) {
-    Get-Content -Path $SettingsPath | ConvertFrom-Json
+    Get-Content -Path $SettingsPath -Raw | ConvertFrom-Json
 } else {
     [PSCustomObject]@{
         DefaultCulture = "en-US"
