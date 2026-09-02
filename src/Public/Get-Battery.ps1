@@ -78,14 +78,30 @@ function Get-Battery {
 
             # The second 'Charging:' line comes from the AC Charger Information, and not the Battery Information section
             $IsCharging = $($BatteryInformation | grep "Charging:" | head -n 1 | awk -F ": " '{print ($2 == "Yes" ? 1 : 0)}') -eq 1
-            $ChargeRemaining = $BatteryInformation | grep "State of Charge (%)" | awk -F": " '{print $2}'
+            $ChargeLevel = $BatteryInformation | grep "State of Charge (%)" | awk -F": " '{print $2}'
+            $ChargeRemaining = 0
+
+            if (![int]::TryParse($ChargeLevel, [ref] $ChargeRemaining)) {
+                Write-Error "Unable to read the battery charge level from system_profiler output." `
+                    -Category InvalidResult `
+                    -ErrorId "BatteryChargeUnavailable" `
+                    -TargetObject $ChargeLevel
+                return
+            }
+
             $IsFullyCharged = $($BatteryInformation | grep "Fully Charged:" | awk -F ": " '{print ($2 == "Yes" ? 1 : 0)}') -eq 1
             $IsConnected = $($BatteryInformation | grep "Connected:" | awk -F ": " '{print ($2 == "Yes" ? 1 : 0)}') -eq 1
             $Condition = $BatteryInformation | grep "Condition:" | awk -F ": " '{print $2}'
 
             # The runtime cannot be estimated while the battery is charging and drawing from the AC, so we can short
-            # circuit the pmset expression again, similar to what the Windows-equivalent implementation is also doing
-            $Runtime = $IsCharging ? [TimeSpan]::Zero : [TimeSpan]::Parse($(pmset -g batt | grep -o "[0-9]*:[0-9][0-9]"))
+            # circuit the pmset expression again, similar to what the Windows-equivalent implementation is also doing.
+            # pmset also reports "(no estimate)" instead of a value when it cannot predict one, which leaves Zero.
+            $Runtime = [TimeSpan]::Zero
+
+            if (!$IsCharging) {
+                $Estimate = $(pmset -g batt | grep -o "[0-9]*:[0-9][0-9]" | head -n 1)
+                $null = [TimeSpan]::TryParse($Estimate, [ref] $Runtime)
+            }
 
             # The battery status will be displayed in order of (perceived) importance, and is a subset of the possible values
             # that could be returned on Windows
