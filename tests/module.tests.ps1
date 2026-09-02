@@ -3,7 +3,7 @@ using namespace System.IO
 param(
     [string] $ModuleName = "PowerTools",
 
-    [string] $Version,
+    [string] $Version = "0.0.0",
 
     [switch] $Build
 )
