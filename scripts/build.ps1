@@ -1,4 +1,6 @@
 using namespace System.IO
+using namespace System.Management.Automation
+using namespace System.Management.Automation.Language
 
 [CmdletBinding()]
 param(
@@ -40,11 +42,13 @@ process {
     $FunctionsToExport = Get-ChildItem -Path "./Public" -Filter "*.ps1"
         | Select-Object -ExpandProperty BaseName
 
-    $Aliases = $(Get-ChildItem -Path "./Public" -Filter "*.ps1"
-        | Get-Content
-        | Select-String -Pattern '\[Alias\("([^"]+)"\)\]').Matches.Groups
-        | Where-Object Name -EQ 1
-        | Select-Object -ExpandProperty Value
+    $Aliases = Get-ChildItem -Path "./Public" -Filter "*.ps1"
+        | ForEach-Object { [Parser]::ParseFile($_.FullName, [ref] $null, [ref] $null) }
+        | ForEach-Object { $_.FindAll({ $args[0] -is [FunctionDefinitionAst] }, $true) }
+        | Where-Object { $_.Body.ParamBlock }
+        | ForEach-Object { $_.Body.ParamBlock.Attributes }
+        | Where-Object { $_.TypeName.GetReflectionAttributeType() -eq [AliasAttribute] }
+        | ForEach-Object { $_.PositionalArguments.Value }
 
     $FileList = Get-ChildItem -Recurse -Path "."
         | Where-Object { ! $_.PSIsContainer }
