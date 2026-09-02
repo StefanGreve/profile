@@ -76,7 +76,7 @@ function Invoke-TextToSpeech {
 
             if ($null -eq $Voices) {
                 Add-Type -AssemblyName System.Speech
-                $SpeechSynthesizer = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
+                $SpeechSynthesizer = [System.Speech.Synthesis.SpeechSynthesizer]::new()
                 $Voices = [string[]]$SpeechSynthesizer.GetInstalledVoices().VoiceInfo.Name
                 $SpeechSynthesizer.Dispose()
 
@@ -101,7 +101,7 @@ function Invoke-TextToSpeech {
         }
 
         Add-Type -AssemblyName System.Speech
-        $SpeechSynthesizer = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
+        $SpeechSynthesizer = [System.Speech.Synthesis.SpeechSynthesizer]::new()
         $Voice = $PSBoundParameters['Voice']
 
         if (![string]::IsNullOrEmpty($Voice)) {
@@ -115,7 +115,7 @@ function Invoke-TextToSpeech {
     process {
         # Prime the audio device with a short pause so its start-up latency does not
         # clip the first word of the utterance.
-        $Prompt = New-Object -TypeName System.Speech.Synthesis.PromptBuilder
+        $Prompt = [System.Speech.Synthesis.PromptBuilder]::new()
         $Prompt.AppendBreak([System.Speech.Synthesis.PromptBreak]::Small)
         $Prompt.AppendText($Message)
         $SpeechSynthesizer.Speak($Prompt)
