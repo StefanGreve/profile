@@ -20,7 +20,8 @@ foreach ($Import in @($Classes + $Private + $Public)) {
     }
 }
 
-Export-ModuleMember -Function $Public.BaseName -Cmdlet * -Alias *
+# A script module has no cmdlets to export, so no '-Cmdlet *' here
+Export-ModuleMember -Function $Public.BaseName -Alias *
 
 #endregion
 

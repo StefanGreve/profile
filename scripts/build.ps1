@@ -75,6 +75,7 @@ process {
         Description = $Description
         ModuleVersion = $Version
         PowerShellVersion = $PowerShellVersion
+        CompatiblePSEditions = @("Core")
         Path = $ManifestPath
         FunctionsToExport = @($FunctionsToExport)
         AliasesToExport = @($Aliases)
