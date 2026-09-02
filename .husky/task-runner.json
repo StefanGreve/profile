@@ -30,7 +30,7 @@
             "-ExecutionPolicy",
             "ByPass",
             "-File",
-            "./scripts/build.ps1",
+            "./scripts/dev.ps1",
             "-Version",
             "0.0.0"
          ],

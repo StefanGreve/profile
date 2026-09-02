@@ -5,15 +5,18 @@
 #
 # Generated on: 11/25/2024
 #
+# NOTE: The values below are populated by scripts/build.ps1, which rewrites this file in full, so
+# manual edits do not survive a build. Release metadata is pinned in scripts/publish.ps1.
+#
 
 @{
     RootModule = "PowerTools.psm1"
     ModuleVersion = "2.0.0"
     GUID = "84f794f0-1d55-46d8-b1d8-dc589335f49a"
-    Author = "Stefan Greve"
-    CompanyName = "Advanced Systems"
-    Copyright = "(c) 2024 Advanced Systems. All rights reserved."
-    Description = "General purpose Cmdlets for all platforms."
+    Author = ""
+    CompanyName = ""
+    Copyright = ""
+    Description = ""
     PowerShellVersion = "7.4"
     FunctionsToExport = @()
     CmdletsToExport = @()
@@ -25,12 +28,6 @@
     TypesToProcess = @()
     FormatsToProcess = @()
     PrivateData = @{
-        PSData = @{
-            Tags = @("PSEdition_Core", "Windows", "MacOS", "Linux")
-            IconUri = "https://raw.githubusercontent.com/Advanced-Systems/assets/refs/heads/master/logos/png/adv-logo_85x85.png"
-            LicenseUri = "https://github.com/StefanGreve/profile/blob/master/LICENSE.md"
-            ProjectUri = "https://github.com/StefanGreve/profile"
-            ReleaseNotes = "https://github.com/StefanGreve/profile/blob/master/CHANGELOG.md"
-        }
+        PSData = @{}
     }
 }

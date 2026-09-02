@@ -2,15 +2,22 @@ using namespace System.IO
 
 [CmdletBinding()]
 param(
-    [string] $ModuleName = "PowerTools",
+    [Parameter(Mandatory)]
+    [string] $ModuleName,
 
-    [string] $Author = "Stefan Greve",
+    [Parameter(Mandatory)]
+    [string] $Author,
 
-    [string] $CompanyName = "Advanced Systems",
+    [Parameter(Mandatory)]
+    [string] $CompanyName,
 
-    [string] $Description = "General purpose Cmdlets for all platforms.",
+    [Parameter(Mandatory)]
+    [string] $Description,
 
-    [int] $FoundingYear = 2024,
+    [Parameter(Mandatory)]
+    [int] $FoundingYear,
+
+    [hashtable] $PrivateData = @{},
 
     [ValidateSet("7.4", "7.5", "7.6", "7.7")]
     [string] $PowerShellVersion = "7.4",
@@ -70,6 +77,48 @@ process {
         FileList = @($FileList)
         FormatsToProcess = @($Formats)
         ScriptsToProcess = @($Scripts)
+    }
+
+    # Update-ModuleManifest discards the PSData it receives through -PrivateData (it re-reads the copy
+    # in the manifest on disk instead), so the well-known keys have to travel as discrete parameters.
+    $PSDataParameters = @(
+        "Tags",
+        "LicenseUri",
+        "IconUri",
+        "ProjectUri",
+        "ReleaseNotes",
+        "Prerelease",
+        "ExternalModuleDependencies"
+    )
+
+    $PSData = $PrivateData["PSData"] ?? @{}
+
+    if ($PSData -isnot [hashtable]) {
+        Write-Error "The PSData entry of PrivateData must be a hashtable." -Category InvalidArgument -ErrorAction Stop
+    }
+
+    foreach ($Key in $PSData.Keys) {
+        if ($PSDataParameters -contains $Key) {
+            $ManifestArgs[$Key] = $PSData[$Key]
+        }
+        elseif ($Key -eq "RequireLicenseAcceptance") {
+            if ($PSData[$Key]) {
+                $ManifestArgs.RequireLicenseAcceptance = $true
+            }
+        }
+        else {
+            Write-Warning "Ignoring unsupported PSData key '${Key}' (Update-ModuleManifest drops it silently)."
+        }
+    }
+
+    $ModulePrivateData = @{}
+
+    foreach ($Key in @($PrivateData.Keys | Where-Object { $_ -ne "PSData" })) {
+        $ModulePrivateData[$Key] = $PrivateData[$Key]
+    }
+
+    if ($ModulePrivateData.Count) {
+        $ManifestArgs.PrivateData = $ModulePrivateData
     }
 
     # Reset FileList first: Update-ModuleManifest aborts if the current list references a missing file.
