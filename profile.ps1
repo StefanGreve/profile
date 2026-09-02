@@ -153,43 +153,100 @@ Set-PSReadLineKeyHandler -Key ")", "]", "}" -BriefDescription SmartClosingBraces
 
 $NativeCompletions = $ProfileConfigFile.RegisterNativeCompletions
 
-# dotnet emits a ~176 KB completion script; cache it to disk and regenerate only when the dotnet binary
-# changes, so the ~257 ms subprocess is paid once instead of on every launch (~75 ms parse thereafter).
-if (($NativeCompletions -contains "dotnet") -and (Get-Command "dotnet" -ErrorAction SilentlyContinue)) {
-    $DotnetPath = (Get-Command dotnet).Source
-    $CacheKey = (Get-Item $DotnetPath).LastWriteTimeUtc.Ticks
-    $CacheFile = [Path]::Join([Path]::GetTempPath(), "dotnet-completion.$CacheKey.ps1")
+function Resolve-CompletionCache {
+    [OutputType([string])]
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Name,
+
+        [Parameter(Mandatory)]
+        [scriptblock] $Generator,
+
+        [string[]] $WatchPath = @()
+    )
+
+    $Command = Get-Command $Name -ErrorAction SilentlyContinue
+
+    if (!$Command) { return $null }
+
+    $CacheKey = @($Command.Source) + $WatchPath
+        | Where-Object { Test-Path $_ }
+        | ForEach-Object { (Get-Item $_).LastWriteTimeUtc.Ticks }
+        | Sort-Object -Descending
+        | Select-Object -First 1
+
+    $CacheFile = [Path]::Join([Path]::GetTempPath(), "$Name-completion.$CacheKey.ps1")
 
     if (!(Test-Path $CacheFile)) {
-        # A new dotnet version yields a new cache key; sweep stale scripts before writing the current one.
-        Get-ChildItem -Path ([Path]::GetTempPath()) -Filter "dotnet-completion.*.ps1"
+        Get-ChildItem -Path ([Path]::GetTempPath()) -Filter "$Name-completion.*.ps1"
             | Remove-Item -ErrorAction SilentlyContinue
 
-        dotnet completions script pwsh | Set-Content -Path $CacheFile -Encoding utf8
-    }
+        # Out-String would wrap the larger scripts at the console width and flatten dotnet-suggest's
+        # list into one blob; an array keeps long lines intact and one tool name per line.
+        $Completion = & $Generator
 
-    . $CacheFile
-}
-
-# dotnet-suggest runs `dotnet-suggest list` at load to enumerate registered tools (~120 ms); the
-# completer itself is a static scriptblock deferred to completion time. Moderate impact on profile load.
-if ($NativeCompletions -contains "dotnet-suggest") {
-    if (Get-Command "dotnet-suggest" -ErrorAction SilentlyContinue) {
-        $AvailableToComplete = (dotnet-suggest list) | Out-String
-        $AvailableToCompleteArray = $AvailableToComplete.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
-
-        Register-ArgumentCompleter -Native -CommandName $AvailableToCompleteArray -ScriptBlock {
-            param($WordToComplete, $CommandAst, $CursorPosition)
-
-            $FullPath = (Get-Command $CommandAst.CommandElements[0]).Source
-            $Arguments = $CommandAst.Extent.ToString().Replace('"', '\"')
-
-            dotnet-suggest get -e $FullPath --position $CursorPosition -- "$Arguments" | ForEach-Object {
-                [CompletionResult]::new($_, $_, 'ParameterValue', $_)
-            }
+        if (!$Completion) {
+            Write-Warning "Failed to generate shell completions for `"$Name`"; skipping."
+            return $null
         }
 
-        $env:DOTNET_SUGGEST_SCRIPT_VERSION = "1.0.2"
+        Set-Content -Path $CacheFile -Value $Completion -Encoding utf8
+    }
+
+    return $CacheFile
+}
+
+$CompletionGenerators = [ordered]@{
+    dotnet = { dotnet completions script pwsh }           # ~176 KB
+    gh     = { gh completion --shell powershell }         # ~11 KB
+    bat    = { bat --completion ps1 }                     # ~18 KB
+    uv     = { uv generate-shell-completion powershell }  # ~730 KB
+    pip    = { pip completion --powershell }              # <1 KB, but a full Python startup
+    op     = { op completion powershell }                 # ~10 KB
+    delta  = { delta --generate-completion powershell }   # ~21 KB
+    rustup = { rustup completions powershell }            # ~47 KB
+    deno   = { deno completions powershell }              # ~625 KB
+}
+
+foreach ($Name in $CompletionGenerators.Keys) {
+    if ($NativeCompletions -notcontains $Name) { continue }
+
+    $CacheFile = Resolve-CompletionCache -Name $Name -Generator $CompletionGenerators[$Name]
+
+    if ($CacheFile) {
+        . $CacheFile
+    }
+}
+
+# dotnet-suggest emits a tool list rather than a completion script, so the list is what gets cached.
+if ($NativeCompletions -contains "dotnet-suggest") {
+    if (Get-Command "dotnet-suggest" -ErrorAction SilentlyContinue) {
+        $CacheFile = Resolve-CompletionCache -Name "dotnet-suggest" `
+            -WatchPath @(
+                [Path]::Join($HOME, ".dotnet", "tools")
+                [Path]::Join($HOME, ".dotnet-suggest-registration.txt")
+            ) `
+            -Generator { dotnet-suggest list }
+
+        $AvailableToCompleteArray = if ($CacheFile) {
+            Get-Content -Path $CacheFile | Where-Object { ![string]::IsNullOrWhiteSpace($_) }
+        }
+
+        if ($AvailableToCompleteArray) {
+            Register-ArgumentCompleter -Native -CommandName $AvailableToCompleteArray -ScriptBlock {
+                param($WordToComplete, $CommandAst, $CursorPosition)
+
+                $FullPath = (Get-Command $CommandAst.CommandElements[0]).Source
+                $Arguments = $CommandAst.Extent.ToString().Replace('"', '\"')
+
+                dotnet-suggest get -e $FullPath --position $CursorPosition -- "$Arguments" | ForEach-Object {
+                    [CompletionResult]::new($_, $_, 'ParameterValue', $_)
+                }
+            }
+
+            $env:DOTNET_SUGGEST_SCRIPT_VERSION = "1.0.2"
+        }
     } else {
         "Unable to provide System.CommandLine tab completion support unless the [dotnet-suggest] tool is first installed."
         "See the following for tool installation: https://www.nuget.org/packages/dotnet-suggest"
@@ -210,46 +267,6 @@ if (($NativeCompletions -contains "winget") -and (Get-Command "winget" -ErrorAct
             [CompletionResult]::new($_, $_, 'ParameterValue', $_)
         }
     }
-}
-
-# gh emits a ~11 KB completion script; light impact on profile load.
-if (($NativeCompletions -contains "gh") -and (Get-Command "gh" -ErrorAction SilentlyContinue)) {
-    gh completion --shell powershell | Out-String | Invoke-Expression
-}
-
-# bat emits an ~18 KB completion script; light impact on profile load.
-if (($NativeCompletions -contains "bat") -and (Get-Command "bat" -ErrorAction SilentlyContinue)) {
-    bat --completion ps1 | Out-String | Invoke-Expression
-}
-
-# uv emits a very large (~730 KB) completion script; heavy impact on profile load.
-if (($NativeCompletions -contains "uv") -and (Get-Command "uv" -ErrorAction SilentlyContinue)) {
-    uv generate-shell-completion powershell | Out-String | Invoke-Expression
-}
-
-# pip emits a sub-1 KB completion script; negligible impact on profile load.
-if (($NativeCompletions -contains "pip") -and (Get-Command "pip" -ErrorAction SilentlyContinue)) {
-    pip completion --powershell | Out-String | Invoke-Expression
-}
-
-# op emits a ~10 KB completion script; light impact on profile load.
-if (($NativeCompletions -contains "op") -and (Get-Command "op" -ErrorAction SilentlyContinue)) {
-    op completion powershell | Out-String | Invoke-Expression
-}
-
-# delta emits a ~21 KB completion script; light impact on profile load.
-if (($NativeCompletions -contains "delta") -and (Get-Command "delta" -ErrorAction SilentlyContinue)) {
-    delta --generate-completion powershell | Out-String | Invoke-Expression
-}
-
-# rustup emits a ~47 KB completion script; minor impact on profile load.
-if (($NativeCompletions -contains "rustup") -and (Get-Command "rustup" -ErrorAction SilentlyContinue)) {
-    rustup completions powershell | Out-String | Invoke-Expression
-}
-
-# deno emits a very large (~625 KB) completion script; heavy impact on profile load.
-if (($NativeCompletions -contains "deno") -and (Get-Command "deno" -ErrorAction SilentlyContinue)) {
-    deno completions powershell | Out-String | Invoke-Expression
 }
 
 #endregion
