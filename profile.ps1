@@ -6,6 +6,11 @@ using namespace System.Text
 
 using namespace Microsoft.PowerShell
 
+# pwsh reads no zsh startup file, so a session launched outside a shell only has launchd's minimal PATH
+if ($IsMacOS -and ($env:PATH -split ":") -notcontains "/opt/homebrew/bin") {
+    $env:PATH = & /bin/zsh -lc 'printf %s $PATH'
+}
+
 # profile.config.json lives next to the profile link itself
 $ProfileConfigPath = [Path]::Join([Path]::GetDirectoryName($PSCommandPath), "profile.config.json")
 $ProfileConfigFile = if (Test-Path $ProfileConfigPath) {
