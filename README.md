@@ -100,7 +100,7 @@ itself is supported on all major platforms.
 | `Get-Salt`                   | ✅         | ✅       | ✅       |
 | `Get-StringHash`             | ✅         | ✅       | ✅       |
 | `Install-Certificate`        | ✅         | ❌       | ❌       |
-| `Install-Font`               | ✅         | ❌       | ❌       |
+| `Install-Font`               | ✅         | ✅       | ❌       |
 | `Invoke-TextToSpeech`        | ✅         | ❌       | ❌       |
 | `Invoke-XKCD`                | ✅         | ✅       | ✅       |
 | `Remove-EnvironmentVariable` | ✅         | ⚠️       | ⚠️       |

@@ -7,6 +7,10 @@
 - `Set-MonitorBrightness` supports macOS. It drives the built-in panel through CoreGraphics and the
   DisplayServices framework, both of which ship with the operating system, so no external tooling is
   required. External monitors remain unsupported, because they expect DDC/CI.
+- `Install-Font` supports macOS. Fonts are copied to `~/Library/Fonts` (User scope) or
+  `/Library/Fonts` (Machine scope), which the operating system activates on its own. The macOS branch
+  accepts `.dfont` in addition to `.ttf`, `.ttc` and `.otf`, and rejects the Windows-only `.fon`
+  raster format.
 
 ### Changed
 
