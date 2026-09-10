@@ -71,7 +71,7 @@ function New-TerminatingErrorRecord {
         because ThrowTerminatingError must be invoked on the caller's $PSCmdlet for correct
         attribution.
     #>
-    [OutputType([ErrorRecord])]
+    [OutputType([System.Management.Automation.ErrorRecord])]
     param(
         [Parameter(Mandatory)]
         [string] $Message,

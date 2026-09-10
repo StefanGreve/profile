@@ -105,7 +105,7 @@ itself is supported on all major platforms.
 | `Invoke-XKCD`                | ✅         | ✅       | ✅       |
 | `Remove-EnvironmentVariable` | ✅         | ⚠️       | ⚠️       |
 | `Set-EnvironmentVariable`    | ✅         | ⚠️       | ⚠️       |
-| `Set-MonitorBrightness`      | ✅         | ❌       | ❌       |
+| `Set-MonitorBrightness`      | ✅         | ✅       | ❌       |
 | `Set-PowerState`             | ✅         | ✅       | ✅       |
 | `Set-SystemTheme`            | ✅         | ✅       | ❌       |
 | `Start-Timer`                | ✅         | ✅       | ✅       |

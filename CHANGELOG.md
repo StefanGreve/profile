@@ -2,6 +2,12 @@
 
 ## Version 3.0.1 (Unreleased)
 
+### Added
+
+- `Set-MonitorBrightness` supports macOS. It drives the built-in panel through CoreGraphics and the
+  DisplayServices framework, both of which ship with the operating system, so no external tooling is
+  required. External monitors remain unsupported, because they expect DDC/CI.
+
 ### Changed
 
 - `Invoke-XKCD -Download` skips existing files with a warning unless `-Force` is passed; `-Force`
