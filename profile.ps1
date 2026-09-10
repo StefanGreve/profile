@@ -1,3 +1,5 @@
+#Requires -Version 7.4
+
 using namespace System
 using namespace System.IO
 using namespace System.Management.Automation
