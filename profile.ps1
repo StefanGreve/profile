@@ -13,6 +13,12 @@ if ($IsMacOS -and ($env:PATH -split ":") -notcontains "/opt/homebrew/bin") {
     $env:PATH = & /bin/zsh -lc 'printf %s $PATH'
 }
 
+# gpg-agent draws the pinentry dialog on this terminal; without it a terminal pinentry fails with
+# "Inappropriate ioctl for device". Guarded because the profile also runs without a terminal attached.
+if (($IsMacOS -or $IsLinux) -and ![Console]::IsInputRedirected) {
+    $env:GPG_TTY = tty
+}
+
 # profile.config.json lives next to the profile link itself
 $ProfileConfigPath = [Path]::Join([Path]::GetDirectoryName($PSCommandPath), "profile.config.json")
 $ProfileConfigFile = if (Test-Path $ProfileConfigPath) {
