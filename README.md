@@ -58,10 +58,12 @@ the form of a JSON schema file.
 }
 ```
 
-> [!WARNING]
-> Enabling too many tab completions can degrade profile load performance slightly,
-> and the cost varies by program: some emit small completion scripts, while others
-> (notably `deno` and `uv`) emit very large ones that noticeably slow profile load.
+> [!NOTE]
+> Completion scripts are cached, so the generator only runs on the first profile load
+> and whenever the tool's executable changes. Later launches dot-source the cached
+> script, which removes the subprocess cost but not the parse cost: very large
+> completion scripts (notably `deno` and `uv`) still add measurable load time on
+> every start.
 
 > [!NOTE]
 > To enable tab completion for `dotnet` and .NET-based CLI programs, optionally install the following:
