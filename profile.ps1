@@ -329,8 +329,7 @@ function prompt {
         )
     }
 
-    $CWD = [DirectoryInfo]::new($ExecutionContext.SessionState.Path.CurrentLocation)
-    $WindowTitle = $CWD.FullName.Replace($HOME, "~", [StringComparison]::OrdinalIgnoreCase)
+    $WindowTitle = $PWD.Path.Replace($HOME, "~", [StringComparison]::OrdinalIgnoreCase)
 
     if ($IsWindows) {
         $WindowTitle = $WindowTitle.Replace([Environment]::SystemDirectory, "#", [StringComparison]::OrdinalIgnoreCase)
@@ -353,7 +352,7 @@ function prompt {
         $PsPrompt.Append([Environment]::MachineName)
         $PsPrompt.Append(" ")
         $PsPrompt.Append($PSStyle.Foreground.Green)
-        $PsPrompt.Append($CWD.BaseName)
+        $PsPrompt.Append([DirectoryInfo]::new($PWD.Path).BaseName)
         $PsPrompt.Append($PSStyle.Foreground.White)
         $PsPrompt.Append("]")
         $PsPrompt.Append(" ")
