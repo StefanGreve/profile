@@ -1,21 +1,18 @@
-using namespace System.Security
-
 function Test-Elevation {
     <#
         .SYNOPSIS
         Determines whether the current session runs with elevated (administrator) privileges.
 
         .DESCRIPTION
-        Tests whether the current user runs with elevated privileges. On Windows this checks
-        membership in the built-in Administrators role; on Linux and macOS it checks for a root
-        user ID (UID 0). Returns $null on operating systems that cannot be determined.
+        Tests whether the current process runs with elevated privileges. On Windows this checks
+        whether the process token is elevated; on Linux and macOS it checks for an effective user
+        ID of 0 (root).
 
         .INPUTS
         None. You can't pipe objects to Test-Elevation.
 
         .OUTPUTS
-        System.Boolean. True if the session is elevated, otherwise false. Returns $null when
-        the operating system cannot be determined.
+        System.Boolean. True if the session is elevated, otherwise false.
 
         .EXAMPLE
         PS> Test-Elevation
@@ -33,16 +30,6 @@ function Test-Elevation {
     param()
 
     process {
-        $IsElevated = if ($IsWindows) {
-            $CurrentUser = [Principal.WindowsPrincipal][Principal.WindowsIdentity]::GetCurrent()
-            $Administrator = [Principal.WindowsBuiltInRole]::Administrator
-            $CurrentUser.IsInRole($Administrator)
-        } elseif ($IsLinux -or $IsMacOS) {
-            $(id -u) -eq 0
-        } else {
-            $null
-        }
-
-        Write-Output $IsElevated
+        Write-Output ([Environment]::IsPrivilegedProcess)
     }
 }

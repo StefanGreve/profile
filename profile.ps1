@@ -3,7 +3,6 @@
 using namespace System
 using namespace System.IO
 using namespace System.Management.Automation
-using namespace System.Security
 using namespace System.Text
 
 using namespace Microsoft.PowerShell
@@ -41,16 +40,7 @@ if ($ProfileConfigFile.EnableClassicProgressbar -eq $true) {
     $Host.PrivateData.ProgressForegroundColor = "Yellow"
 }
 
-# Mirrors Test-Elevation so this profile doesn't depend on the PowerTools module
-$global:IsAdmin = if ($IsWindows) {
-    $CurrentUser = [Principal.WindowsPrincipal][Principal.WindowsIdentity]::GetCurrent()
-    $Administrator = [Principal.WindowsBuiltInRole]::Administrator
-    $CurrentUser.IsInRole($Administrator)
-} elseif ($IsLinux -or $IsMacOS) {
-    $(id -u) -eq 0
-} else {
-    $null
-}
+$global:IsAdmin = [Environment]::IsPrivilegedProcess
 
 if ($IsWindows) {
     $global:Natural = { [Regex]::Replace($_.Name, "\d+", { $Args[0].Value.PadLeft(20) }) }

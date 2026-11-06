@@ -31,6 +31,9 @@
 - Standardized error reporting across the module: terminating errors now use
   `$PSCmdlet.ThrowTerminatingError()` with unique error IDs, and non-terminating errors carry
   `-ErrorId` and `-TargetObject`, so failures expose stable, filterable identities.
+- `Test-Elevation` uses `Environment.IsPrivilegedProcess`. On Windows it now reports whether the process
+  token is elevated instead of whether the user belongs to the Administrators role, and it no longer
+  returns `$null` on unrecognized operating systems.
 
 ### Fixed
 
