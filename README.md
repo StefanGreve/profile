@@ -103,7 +103,7 @@ itself is supported on all major platforms.
 | `Get-StringHash`             | ✅         | ✅       | ✅       |
 | `Install-Certificate`        | ✅         | ❌       | ❌       |
 | `Install-Font`               | ✅         | ✅       | ❌       |
-| `Invoke-TextToSpeech`        | ✅         | ❌       | ❌       |
+| `Invoke-TextToSpeech`        | ✅         | ✅       | ❌       |
 | `Invoke-XKCD`                | ✅         | ✅       | ✅       |
 | `Remove-EnvironmentVariable` | ✅         | ⚠️       | ⚠️       |
 | `Set-EnvironmentVariable`    | ✅         | ⚠️       | ⚠️       |

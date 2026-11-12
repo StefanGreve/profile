@@ -1,15 +1,12 @@
-using namespace System.Collections.ObjectModel
-using namespace System.Management.Automation
-
 function Invoke-TextToSpeech {
     <#
         .SYNOPSIS
         Converts text into spoken audio using speech synthesis.
 
         .DESCRIPTION
-        Speaks the supplied message out loud using the System.Speech synthesizer.
-        The speaking rate and volume can be adjusted, and on Windows a specific
-        installed voice can be selected. This function is only supported on Windows.
+        Speaks the supplied message out loud using the System.Speech synthesizer on Windows
+        and the say command on macOS. The speaking rate and volume can be adjusted, and a
+        specific installed voice can be selected.
 
         .PARAMETER Message
         Specifies the text to be spoken. This value can be piped to the function.
@@ -23,9 +20,11 @@ function Invoke-TextToSpeech {
         (silent) and 100 (loudest). The default volume is 60.
 
         .PARAMETER Voice
-        Specifies the voice used for speech synthesis. This dynamic parameter is
-        only available on Windows and is validated against the set of installed
-        voices. If omitted, the default system voice is used.
+        Specifies the voice used for speech synthesis. Tab completion lists the installed
+        voices, and any other name raises a VoiceNotFound error. On macOS, a voice whose
+        name carries its language, such as "Anna (German (Germany))", can also be selected
+        by its bare name, which leaves the choice among its variants to say. If omitted,
+        the default system voice is used.
 
         .INPUTS
         System.String. You can pipe the message to be spoken to Invoke-TextToSpeech.
@@ -43,6 +42,22 @@ function Invoke-TextToSpeech {
 
         Speaks a piped message slightly faster than normal at 80% volume.
 
+        .EXAMPLE
+        PS> Invoke-TextToSpeech -Message "Hallo, Welt." -Voice Anna
+
+        Speaks a German message with the voice Anna on macOS.
+
+        .NOTES
+        On macOS, the function invokes the say command that ships with the operating system.
+        Because say expects words per minute, -Rate follows the logarithmic SAPI scale around
+        the default of 175 words per minute, from a third (-10) to three times (10) that rate.
+        -Volume is applied through the embedded speech command [[volm]], and say interprets
+        other embedded commands in the message as well, such as [[slnc 500]]. Linux is not
+        supported and raises a NotImplemented error.
+
+        On both platforms, every message starts with a short pause, so that the start-up
+        latency of the audio device does not clip the first word.
+
         .LINK
         https://learn.microsoft.com/en-us/dotnet/api/system.speech.synthesis.speechsynthesizer
     #>
@@ -59,69 +74,96 @@ function Invoke-TextToSpeech {
 
         [ValidateRange(0, 100)]
         [Parameter()]
-        [int] $Volume = 60
+        [int] $Volume = 60,
+
+        [ValidateNotNullOrEmpty()]
+        [Parameter()]
+        [string] $Voice
     )
 
-    dynamicparam {
-        $ParameterDictionary = [RuntimeDefinedParameterDictionary]::new()
-
-        if ($IsWindows) {
-            $VoiceAttribute = [ParameterAttribute]::new()
-            $VoiceAttribute.HelpMessage = "Specifies the voice used for speech synthesis."
-
-            $AttributeCollection = [Collection[Attribute]]::new()
-            $AttributeCollection.Add($VoiceAttribute)
-
-            $Voices = Get-Variable -Name InstalledVoices -Scope Script -ValueOnly -ErrorAction Ignore
-
-            if ($null -eq $Voices) {
-                Add-Type -AssemblyName System.Speech
-                $SpeechSynthesizer = [System.Speech.Synthesis.SpeechSynthesizer]::new()
-                $Voices = [string[]]$SpeechSynthesizer.GetInstalledVoices().VoiceInfo.Name
-                $SpeechSynthesizer.Dispose()
-
-                Set-Variable -Name InstalledVoices -Scope Script -Value $Voices
-            }
-
-            $ValidateSetAttribute = [ValidateSetAttribute]::new($Voices)
-            $AttributeCollection.Add($ValidateSetAttribute)
-
-            $ParameterName = "Voice"
-            $VoiceParameter = [RuntimeDefinedParameter]::new($ParameterName, [string], $AttributeCollection)
-            $ParameterDictionary.Add($ParameterName, $VoiceParameter)
-        }
-
-        return $ParameterDictionary
-    }
-
     begin {
-        if (!$IsWindows) {
+        if (!$IsWindows -and !$IsMacOS) {
             $ErrorRecord = New-TerminatingErrorRecord -Message $OperatingSystemNotSupportedError -Category NotImplemented -ErrorId "OperatingSystemNotSupported"
             $PSCmdlet.ThrowTerminatingError($ErrorRecord)
         }
 
-        Add-Type -AssemblyName System.Speech
-        $SpeechSynthesizer = [System.Speech.Synthesis.SpeechSynthesizer]::new()
-        $Voice = $PSBoundParameters['Voice']
+        if ($PSBoundParameters.ContainsKey("Voice")) {
+            $InstalledVoices = @(Get-InstalledVoice)
 
-        if (![string]::IsNullOrEmpty($Voice)) {
-            $SpeechSynthesizer.SelectVoice($Voice)
+            if ($IsMacOS) {
+                # Once several variants of a voice are installed, macOS qualifies each with its language, as in
+                # "Anna (German (Germany))". say still resolves the bare name, so that form is accepted as well.
+                $InstalledVoices += $InstalledVoices -replace '\s+\(.+\)$'
+            }
+
+            # The comparison ignores case, so adopting the installed name also normalizes the casing.
+            $InstalledVoice = $InstalledVoices -eq $Voice | Select-Object -First 1
+
+            if ($null -eq $InstalledVoice) {
+                $ErrorRecord = New-TerminatingErrorRecord -Message "Voice `"$Voice`" is not installed." `
+                    -Category ObjectNotFound -ErrorId "VoiceNotFound" -TargetObject $Voice
+                $PSCmdlet.ThrowTerminatingError($ErrorRecord)
+            }
+
+            $Voice = $InstalledVoice
         }
 
-        $SpeechSynthesizer.Rate = $Rate
-        $SpeechSynthesizer.Volume = $Volume
+        if ($IsWindows) {
+            Add-Type -AssemblyName System.Speech
+            $SpeechSynthesizer = [System.Speech.Synthesis.SpeechSynthesizer]::new()
+
+            if (![string]::IsNullOrEmpty($Voice)) {
+                $SpeechSynthesizer.SelectVoice($Voice)
+            }
+
+            $SpeechSynthesizer.Rate = $Rate
+            $SpeechSynthesizer.Volume = $Volume
+        } else {
+            # say expects words per minute. The SAPI scale is logarithmic and spans a third to three times the
+            # default rate, which is 175 words per minute for say.
+            $DefaultWordsPerMinute = 175
+            $WordsPerMinute = [int] ($DefaultWordsPerMinute * [Math]::Pow(3, $Rate / 10))
+            $SayArguments = @("-r", $WordsPerMinute)
+
+            if (![string]::IsNullOrEmpty($Voice)) {
+                $SayArguments += "-v", $Voice
+            }
+
+            # The 500 ms pause matches PromptBreak.Small and is stretched, because say shortens silence at faster rates.
+            # Each embedded command needs its own brackets, because say reads a semicolon-separated list aloud.
+            $Silence = [Math]::Max(500, [int] (500 * $WordsPerMinute / $DefaultWordsPerMinute))
+            $SpeechCommands = "[[volm $($Volume / 100)]][[slnc $Silence]]"
+        }
     }
 
     process {
-        # Prime the audio device with a short pause so its start-up latency does not
-        # clip the first word of the utterance.
-        $Prompt = [System.Speech.Synthesis.PromptBuilder]::new()
-        $Prompt.AppendBreak([System.Speech.Synthesis.PromptBreak]::Small)
-        $Prompt.AppendText($Message)
-        $SpeechSynthesizer.Speak($Prompt)
+        if ($IsWindows) {
+            # Prime the audio device with a short pause so its start-up latency does not
+            # clip the first word of the utterance.
+            $Prompt = [System.Speech.Synthesis.PromptBuilder]::new()
+            $Prompt.AppendBreak([System.Speech.Synthesis.PromptBreak]::Small)
+            $Prompt.AppendText($Message)
+            $SpeechSynthesizer.Speak($Prompt)
+        } else {
+            $Diagnostics = say @SayArguments -- "$SpeechCommands $Message" 2>&1
+
+            if ($LASTEXITCODE -ne 0) {
+                # say can follow the reason on its first line with an Objective-C backtrace.
+                $Reason = $Diagnostics | Select-Object -First 1
+                Write-Error "Failed to speak the message (say exit code ${LASTEXITCODE}). $Reason" `
+                    -Category DeviceError `
+                    -ErrorId "SpeechSynthesisFailed" `
+                    -TargetObject $Message
+            }
+        }
     }
 
     clean {
-        $SpeechSynthesizer.Dispose()
+        # begin can terminate before it creates the synthesizer, and strict mode rejects reading unset variables.
+        $SpeechSynthesizer = Get-Variable -Name SpeechSynthesizer -Scope Local -ValueOnly -ErrorAction Ignore
+
+        if ($null -ne $SpeechSynthesizer) {
+            $SpeechSynthesizer.Dispose()
+        }
     }
 }

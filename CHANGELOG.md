@@ -11,6 +11,10 @@
   `/Library/Fonts` (Machine scope), which the operating system activates on its own. The macOS branch
   accepts `.dfont` in addition to `.ttf`, `.ttc` and `.otf`, and rejects the Windows-only `.fon`
   raster format.
+- `Invoke-TextToSpeech` supports macOS through the built-in `say` command, so no external tooling is
+  required. `-Rate` follows the logarithmic SAPI scale around the default of 175 words per minute,
+  `-Volume` is applied through the embedded `[[volm]]` speech command, and every message starts with a
+  short pause, as on Windows, so that the first word is not clipped.
 
 ### Changed
 
@@ -18,6 +22,10 @@
   previously had no effect.
 - `Invoke-TextToSpeech` caches the installed-voice list per session instead of building a
   `SpeechSynthesizer` on every call.
+- `Invoke-TextToSpeech -Voice` is no longer a dynamic parameter: it offers tab completion for the
+  installed voices, and an unknown voice raises a concise `VoiceNotFound` error instead of a validation
+  error that lists every installed voice. On macOS, it also accepts the bare name of a voice that carries
+  its language, such as `Anna` for `Anna (German (Germany))`.
 - `Set-MonitorBrightness -Brightness` is now mandatory, so a bare call no longer defaults to `0` and
   blanks the screen.
 - `Get-Definition`, `Stop-LocalServer`, `Get-EnvironmentVariable`, and `Install-Certificate` accept
@@ -37,8 +45,10 @@
 
 ### Fixed
 
-- `Invoke-TextToSpeech` works on Windows again (the `Voice` parameter is now read from
-  `$PSBoundParameters`) and no longer clips the first spoken word.
+- `Invoke-TextToSpeech` works on Windows again (reading `-Voice` no longer fails under the module's
+  strict mode) and no longer clips the first spoken word.
+- `Invoke-TextToSpeech` no longer follows the error for an invalid `-Voice` or an unsupported operating
+  system with a second error about the undefined `$SpeechSynthesizer` variable.
 - `Test-Elevation` reports elevation correctly on macOS by checking for a root user ID (UID 0).
 - `Start-Timer` rejects a zero duration (`-Seconds`, `-Minutes`, and `-Hours` require at least `1`) and
   no longer overshoots the requested duration by about a second.
